@@ -54,10 +54,18 @@ namespace Kurisu.Framework.Animation
         {
             if (IsPlaying && currentController == animatorController) return;
             //If graph has root controller, destroy it
-            if (playableGraph.IsValid() && !mixerPointer.GetInput(1).IsNull())
+            if (playableGraph.IsValid())
             {
-                playableGraph.Stop();
-                playableGraph.Destroy();
+                if (mixerPointer.GetInput(1).IsNull())
+                {
+                    PlayInternal(animatorController, fadeInTime);
+                    return;
+                }
+                else
+                {
+                    playableGraph.Stop();
+                    playableGraph.Destroy();
+                }
             }
             CreateNewGraph();
             PlayInternal(animatorController, fadeInTime);
@@ -166,6 +174,30 @@ namespace Kurisu.Framework.Animation
         public void Play(int stateNameHash)
         {
             playablePointer.Play(stateNameHash);
+        }
+        public void SetFloat(string name, float value)
+        {
+            playablePointer.SetFloat(name, value);
+        }
+        public void SetFloat(int id, float value)
+        {
+            playablePointer.SetFloat(id, value);
+        }
+        public void SetInteger(string name, int value)
+        {
+            playablePointer.SetInteger(name, value);
+        }
+        public void SetInteger(int id, int value)
+        {
+            playablePointer.SetInteger(id, value);
+        }
+        public void SetTrigger(string name)
+        {
+            playablePointer.SetTrigger(name);
+        }
+        public void SetTrigger(int id)
+        {
+            playablePointer.SetTrigger(id);
         }
         public void Dispose()
         {
