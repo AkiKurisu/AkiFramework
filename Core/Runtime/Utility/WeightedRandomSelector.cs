@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 namespace Kurisu.Framework.Utility
 {
     public class WeightedRandomSelector<T>
@@ -13,7 +14,7 @@ namespace Kurisu.Framework.Utility
         {
             items = new List<T>(capacity);
             weights = new List<double>(capacity);
-            random = new System.Random(capacity);
+            random = new System.Random();
         }
         public WeightedRandomSelector()
         {
