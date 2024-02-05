@@ -16,6 +16,7 @@ namespace Kurisu.Framework.Animation
         /// </summary>
         /// <value></value>
         public Animator Animator { get; }
+        private RuntimeAnimatorController sourceController;
         private PlayableGraph playableGraph;
         private AnimationPlayableOutput playableOutput;
         private Playable mixerPointer;
@@ -53,6 +54,7 @@ namespace Kurisu.Framework.Animation
         public void Play(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
         {
             if (IsPlaying && currentController == animatorController) return;
+            sourceController = Animator.runtimeAnimatorController;
             //If graph has root controller, destroy it
             if (playableGraph.IsValid())
             {
@@ -79,14 +81,20 @@ namespace Kurisu.Framework.Animation
             rootMixer.SetInputWeight(1, 0);
             rootHandle.Cancel();
             if (fadeInTime > 0)
-                rootHandle = Task.Schedule(() => FadeIn(rootMixer, 1), x => FadeIn(rootMixer, x / fadeInTime), fadeInTime);
+                rootHandle = Task.Schedule(SetInGraph, x => FadeIn(rootMixer, x / fadeInTime), fadeInTime);
             else
-                FadeIn(rootMixer, 1);
+                SetInGraph();
             if (!IsPlaying) playableGraph.Play();
+        }
+        private void SetInGraph()
+        {
+            FadeIn(rootMixer, 1);
+            Animator.runtimeAnimatorController = null;
         }
         public void CrossFade(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
         {
             if (IsPlaying && currentController == animatorController) return;
+            sourceController = Animator.runtimeAnimatorController;
             //Graph is destroyed, create new graph and play instead
             if (!playableGraph.IsValid())
             {
@@ -145,14 +153,15 @@ namespace Kurisu.Framework.Animation
             }
             subHandleMap.Clear();
             rootHandle.Cancel();
+            Animator.runtimeAnimatorController = sourceController;
             if (fadeOutTime < 0)
             {
-                SetStop();
+                SetOutGraph();
                 return;
             }
-            rootHandle = Task.Schedule(SetStop, x => FadeIn(rootMixer, 1 - x / 0.25f), 0.25f);
+            rootHandle = Task.Schedule(SetOutGraph, x => FadeIn(rootMixer, 1 - x / 0.25f), 0.25f);
         }
-        private void SetStop()
+        private void SetOutGraph()
         {
             FadeIn(rootMixer, 0);
             playableGraph.Stop();
@@ -201,6 +210,8 @@ namespace Kurisu.Framework.Animation
         }
         public void Dispose()
         {
+            currentController = null;
+            sourceController = null;
             if (playableGraph.IsValid())
                 playableGraph.Destroy();
         }
