@@ -22,7 +22,8 @@ namespace Kurisu.Framework.Animation
         private Playable mixerPointer;
         private Playable rootMixer;
         private AnimatorControllerPlayable playablePointer;
-        private RuntimeAnimatorController currentController;
+        public AnimatorControllerPlayable CurrentPlayable => playablePointer;
+        public RuntimeAnimatorController currentController;
         public bool IsPlaying
         {
             get
@@ -168,21 +169,22 @@ namespace Kurisu.Framework.Animation
             playableGraph.Destroy();
             currentController = null;
         }
-        public void CrossFade(string stateName, float transitionTime)
+        public void Dispose()
         {
-            playablePointer.CrossFade(stateName, transitionTime);
+            currentController = null;
+            sourceController = null;
+            if (playableGraph.IsValid())
+                playableGraph.Destroy();
         }
-        public void CrossFade(int stateNameHash, float transitionTime)
+        #region Wrap
+        public float GetFloat(string name)
         {
-            playablePointer.CrossFade(stateNameHash, transitionTime);
+            return playablePointer.GetFloat(name);
         }
-        public void Play(string stateName)
+
+        public float GetFloat(int id)
         {
-            playablePointer.Play(stateName);
-        }
-        public void Play(int stateNameHash)
-        {
-            playablePointer.Play(stateNameHash);
+            return playablePointer.GetFloat(id);
         }
         public void SetFloat(string name, float value)
         {
@@ -192,10 +194,37 @@ namespace Kurisu.Framework.Animation
         {
             playablePointer.SetFloat(id, value);
         }
+        public bool GetBool(string name)
+        {
+            return playablePointer.GetBool(name);
+        }
+        public bool GetBool(int id)
+        {
+            return playablePointer.GetBool(id);
+        }
+        public void SetBool(string name, bool value)
+        {
+            playablePointer.SetBool(name, value);
+        }
+
+        public void SetBool(int id, bool value)
+        {
+            playablePointer.SetBool(id, value);
+        }
+
+        public int GetInteger(string name)
+        {
+            return playablePointer.GetInteger(name);
+        }
+        public int GetInteger(int id)
+        {
+            return playablePointer.GetInteger(id);
+        }
         public void SetInteger(string name, int value)
         {
             playablePointer.SetInteger(name, value);
         }
+
         public void SetInteger(int id, int value)
         {
             playablePointer.SetInteger(id, value);
@@ -204,16 +233,151 @@ namespace Kurisu.Framework.Animation
         {
             playablePointer.SetTrigger(name);
         }
+
         public void SetTrigger(int id)
         {
             playablePointer.SetTrigger(id);
         }
-        public void Dispose()
+
+        public void ResetTrigger(string name)
         {
-            currentController = null;
-            sourceController = null;
-            if (playableGraph.IsValid())
-                playableGraph.Destroy();
+            playablePointer.ResetTrigger(name);
         }
+        public void ResetTrigger(int id)
+        {
+            playablePointer.ResetTrigger(id);
+        }
+        public bool IsParameterControlledByCurve(string name)
+        {
+            return playablePointer.IsParameterControlledByCurve(name);
+        }
+        public bool IsParameterControlledByCurve(int id)
+        {
+            return playablePointer.IsParameterControlledByCurve(id);
+        }
+
+        public int GetLayerCount()
+        {
+            return playablePointer.GetLayerCount();
+        }
+
+        public string GetLayerName(int layerIndex)
+        {
+            return playablePointer.GetLayerName(layerIndex);
+        }
+
+        public int GetLayerIndex(string layerName)
+        {
+            return playablePointer.GetLayerIndex(layerName);
+        }
+        public float GetLayerWeight(int layerIndex)
+        {
+            return playablePointer.GetLayerWeight(layerIndex);
+        }
+        public void SetLayerWeight(int layerIndex, float weight)
+        {
+            playablePointer.SetLayerWeight(layerIndex, weight);
+        }
+
+        public AnimatorStateInfo GetCurrentAnimatorStateInfo(int layerIndex)
+        {
+            return playablePointer.GetCurrentAnimatorStateInfo(layerIndex);
+        }
+
+        public AnimatorStateInfo GetNextAnimatorStateInfo(int layerIndex)
+        {
+            return playablePointer.GetNextAnimatorStateInfo(layerIndex);
+        }
+
+        public AnimatorTransitionInfo GetAnimatorTransitionInfo(int layerIndex)
+        {
+            return playablePointer.GetAnimatorTransitionInfo(layerIndex);
+        }
+
+        public AnimatorClipInfo[] GetCurrentAnimatorClipInfo(int layerIndex)
+        {
+            return playablePointer.GetCurrentAnimatorClipInfo(layerIndex);
+        }
+
+        public void GetCurrentAnimatorClipInfo(int layerIndex, List<AnimatorClipInfo> clips)
+        {
+            playablePointer.GetCurrentAnimatorClipInfo(layerIndex, clips);
+        }
+
+        public void GetNextAnimatorClipInfo(int layerIndex, List<AnimatorClipInfo> clips)
+        {
+            playablePointer.GetNextAnimatorClipInfo(layerIndex, clips);
+        }
+        public int GetCurrentAnimatorClipInfoCount(int layerIndex)
+        {
+            return playablePointer.GetCurrentAnimatorClipInfoCount(layerIndex);
+        }
+        public int GetNextAnimatorClipInfoCount(int layerIndex)
+        {
+            return playablePointer.GetNextAnimatorClipInfoCount(layerIndex);
+        }
+
+        public AnimatorClipInfo[] GetNextAnimatorClipInfo(int layerIndex)
+        {
+            return playablePointer.GetNextAnimatorClipInfo(layerIndex);
+        }
+        public bool IsInTransition(int layerIndex)
+        {
+            return playablePointer.IsInTransition(layerIndex);
+        }
+
+        public int GetParameterCount()
+        {
+            return playablePointer.GetParameterCount();
+        }
+
+        public AnimatorControllerParameter GetParameter(int index)
+        {
+            return playablePointer.GetParameter(index);
+        }
+
+        public void CrossFadeInFixedTime(string stateName, float transitionDuration, int layer = -1, float fixedTime = 0f)
+        {
+            playablePointer.CrossFadeInFixedTime(stateName, transitionDuration, layer, fixedTime);
+        }
+        public void CrossFadeInFixedTime(int stateNameHash, float transitionDuration, int layer = -1, float fixedTime = 0.0f)
+        {
+            playablePointer.CrossFadeInFixedTime(stateNameHash, transitionDuration, layer, fixedTime);
+        }
+        public void CrossFade(string stateName, float transitionDuration, int layer = -1, float normalizedTime = float.NegativeInfinity)
+        {
+            playablePointer.CrossFade(stateName, transitionDuration, layer, normalizedTime);
+        }
+
+        public void CrossFade(int stateNameHash, float transitionDuration, int layer = -1, float normalizedTime = float.NegativeInfinity)
+        {
+            playablePointer.CrossFade(stateNameHash, transitionDuration, layer, normalizedTime);
+        }
+        public void PlayInFixedTime(string stateName, int layer = -1, float fixedTime = float.NegativeInfinity)
+        {
+            playablePointer.PlayInFixedTime(stateName, layer, fixedTime);
+        }
+
+        public void PlayInFixedTime(int stateNameHash, int layer = -1, float fixedTime = float.NegativeInfinity)
+        {
+            playablePointer.PlayInFixedTime(stateNameHash, layer, fixedTime);
+        }
+
+        public void Play(string stateName, int layer = -1, float normalizedTime = float.NegativeInfinity)
+        {
+            playablePointer.Play(stateName, layer, normalizedTime);
+        }
+
+
+        public void Play(int stateNameHash, int layer = -1, float normalizedTime = float.NegativeInfinity)
+        {
+            playablePointer.Play(stateNameHash, layer, normalizedTime);
+        }
+
+        public bool HasState(int layerIndex, int stateID)
+        {
+            return playablePointer.HasState(layerIndex, stateID);
+        }
+        #endregion
     }
 }
