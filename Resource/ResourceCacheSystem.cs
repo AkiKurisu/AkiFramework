@@ -10,34 +10,29 @@ namespace Kurisu.Framework.Resource
     {
         private readonly Dictionary<string, ResourceHandle<TAsset>> internalHandles = new();
         private readonly Dictionary<string, TAsset> cacheMap = new();
-        private readonly Dictionary<string, Action<TAsset>> loadQueue = new();
-        protected virtual string AddressFormat(string inputAddress)
-        {
-            return inputAddress;
-        }
         public bool TryGetAsset(string address, out TAsset asset)
         {
             return cacheMap.TryGetValue(address, out asset);
         }
-        public ResourceHandle<TAsset> LoadAssetAsync(string address, Action<TAsset> callBack)
+        public ResourceHandle<TAsset> LoadAssetAsync(string address, Action<TAsset> callBack = null)
         {
-            //If is loading in back ground then add callBack instead
-            if (loadQueue.ContainsKey(address))
+            if (internalHandles.TryGetValue(address, out var internalHandle))
             {
-                if (callBack != null) loadQueue[address] += callBack;
-                return internalHandles[address];
+                if (internalHandle.IsDone())
+                {
+                    callBack?.Invoke(internalHandle.Result);
+                    return internalHandle;
+                }
+                else
+                {
+                    internalHandle.RegisterCallBack(callBack);
+                }
             }
-            //Enqueue new loading job
-            loadQueue.Add(address, (asset) =>
-            {
-                loadQueue.Remove(address);
-                callBack?.Invoke(asset);
-            });
             //Create a new resource load call, also track it's handle
-            var handle = ResourceSystem.AsyncLoadAsset<TAsset>(AddressFormat(address), (asset) =>
+            var handle = ResourceSystem.AsyncLoadAsset<TAsset>(address, (asset) =>
             {
                 cacheMap.Add(address, asset);
-                loadQueue[address](asset);
+                callBack?.Invoke(asset);
             });
             internalHandles.Add(address, handle);
             return handle;
