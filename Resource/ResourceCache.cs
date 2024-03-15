@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 namespace Kurisu.Framework.Resource
 {
     /// <summary>
-    /// System to loading and cache specific asset
+    /// Loading and cache specific asset
     /// </summary>
     /// <typeparam name="TAsset"></typeparam>
-    public class ResourceCacheSystem<TAsset> : IDisposable where TAsset : UnityEngine.Object
+    public class ResourceCache<TAsset> : IDisposable where TAsset : UnityEngine.Object
     {
         private readonly Dictionary<string, ResourceHandle<TAsset>> internalHandles = new();
         private readonly Dictionary<string, TAsset> cacheMap = new();
@@ -14,7 +15,23 @@ namespace Kurisu.Framework.Resource
         {
             return cacheMap.TryGetValue(address, out asset);
         }
-        public ResourceHandle<TAsset> LoadAssetAsync(string address, Action<TAsset> callBack = null)
+        public async Task<TAsset> LoadAssetAsync(string address)
+        {
+            if (!cacheMap.TryGetValue(address, out TAsset asset))
+            {
+                asset = await LoadNewAssetAsync(address).Task;
+            }
+            return asset;
+        }
+        public TAsset LoadAsset(string address)
+        {
+            if (!cacheMap.TryGetValue(address, out TAsset asset))
+            {
+                asset = LoadNewAssetAsync(address).WaitForCompletion();
+            }
+            return asset;
+        }
+        public ResourceHandle<TAsset> LoadNewAssetAsync(string address, Action<TAsset> callBack = null)
         {
             if (internalHandles.TryGetValue(address, out var internalHandle))
             {
@@ -27,15 +44,16 @@ namespace Kurisu.Framework.Resource
                 {
                     internalHandle.RegisterCallBack(callBack);
                 }
+                return internalHandle;
             }
             //Create a new resource load call, also track it's handle
-            var handle = ResourceSystem.AsyncLoadAsset<TAsset>(address, (asset) =>
+            internalHandle = ResourceSystem.AsyncLoadAsset<TAsset>(address, (asset) =>
             {
                 cacheMap.Add(address, asset);
                 callBack?.Invoke(asset);
             });
-            internalHandles.Add(address, handle);
-            return handle;
+            internalHandles.Add(address, internalHandle);
+            return internalHandle;
         }
         public void Dispose()
         {
