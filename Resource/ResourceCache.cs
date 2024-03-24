@@ -1,6 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+#if UNITASK_SUPPORT
+using Cysharp.Threading.Tasks;
+#else
+using System.Runtime.CompilerServices;
+#endif
 namespace Kurisu.Framework.Resource
 {
     /// <summary>
@@ -15,11 +19,15 @@ namespace Kurisu.Framework.Resource
         {
             return cacheMap.TryGetValue(address, out asset);
         }
+#if UNITASK_SUPPORT
+        public async UniTask<TAsset> LoadAssetAsync(string address)
+#else
         public async Task<TAsset> LoadAssetAsync(string address)
+#endif
         {
             if (!cacheMap.TryGetValue(address, out TAsset asset))
             {
-                asset = await LoadNewAssetAsync(address).Task;
+                asset = await LoadNewAssetAsync(address);
             }
             return asset;
         }

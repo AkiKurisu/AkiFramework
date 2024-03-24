@@ -1,3 +1,8 @@
+#if UNITASK_SUPPORT
+using Cysharp.Threading.Tasks;
+#else
+using System.Runtime.CompilerServices;
+#endif
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 namespace Kurisu.Framework.Resource
@@ -20,6 +25,25 @@ namespace Kurisu.Framework.Resource
         {
             return new CustomUnRegister(() => ResourceSystem.ReleaseAsset(handle));
         }
+#if UNITASK_SUPPORT
+        public static UniTask<T>.Awaiter GetAwaiter<T>(this ResourceHandle<T> handle)
+        {
+            return handle.InternalHandle.GetAwaiter();
+        }
+        public static UniTask.Awaiter GetAwaiter(this ResourceHandle handle)
+        {
+            return handle.InternalHandle.GetAwaiter();
+        }
+#else
+        public static TaskAwaiter<T> GetAwaiter<T>(this ResourceHandle<T> handle)
+        {
+            return handle.Task.GetAwaiter();
+        }
+        public static TaskAwaiter GetAwaiter(this ResourceHandle handle)
+        {
+            return handle.Task.GetAwaiter();
+        }
+#endif
         /// <summary>
         /// Whether resource handle is empty
         /// </summary>

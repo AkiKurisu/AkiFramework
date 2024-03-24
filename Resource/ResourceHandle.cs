@@ -1,5 +1,9 @@
 using System;
-using System.Threading.Tasks;
+#if UNITASK_SUPPORT
+using Cysharp.Threading.Tasks;
+#else
+using System.Runtime.CompilerServices;
+#endif
 using UnityEngine.ResourceManagement.AsyncOperations;
 namespace Kurisu.Framework.Resource
 {
@@ -8,7 +12,11 @@ namespace Kurisu.Framework.Resource
         internal readonly int handleID;
         internal readonly AsyncOperationHandle InternalHandle => ResourceSystem.CastOperationHandle(handleID);
         public readonly object Result => InternalHandle.Result;
+#if UNITASK_SUPPORT
+        public readonly UniTask Task => InternalHandle.ToUniTask();
+#else
         public readonly Task Task => InternalHandle.Task;
+#endif
         public ResourceHandle(int handleID)
         {
             this.handleID = handleID;
@@ -31,7 +39,11 @@ namespace Kurisu.Framework.Resource
         internal readonly int handleID;
         internal readonly AsyncOperationHandle<T> InternalHandle => ResourceSystem.CastOperationHandle<T>(handleID);
         public readonly T Result => InternalHandle.Result;
+#if UNITASK_SUPPORT
+        public readonly UniTask<T> Task => InternalHandle.ToUniTask();
+#else
         public readonly Task<T> Task => InternalHandle.Task;
+#endif
         public ResourceHandle(int handleID)
         {
             this.handleID = handleID;
