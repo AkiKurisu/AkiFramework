@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 #if UNITASK_SUPPORT
 using Cysharp.Threading.Tasks;
 #else
-using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 #endif
 namespace Kurisu.Framework.Resource
 {
@@ -15,16 +16,15 @@ namespace Kurisu.Framework.Resource
     {
         private readonly Dictionary<string, ResourceHandle<TAsset>> internalHandles = new();
         private readonly Dictionary<string, TAsset> cacheMap = new();
-        public bool TryGetAsset(string address, out TAsset asset)
-        {
-            return cacheMap.TryGetValue(address, out asset);
-        }
+        private readonly Dictionary<string, int> versionMap = new();
+        public int Version { get; private set; } = 0;
 #if UNITASK_SUPPORT
         public async UniTask<TAsset> LoadAssetAsync(string address)
 #else
         public async Task<TAsset> LoadAssetAsync(string address)
 #endif
         {
+            versionMap[address] = Version;
             if (!cacheMap.TryGetValue(address, out TAsset asset))
             {
                 asset = await LoadNewAssetAsync(address);
@@ -33,13 +33,14 @@ namespace Kurisu.Framework.Resource
         }
         public TAsset LoadAsset(string address)
         {
+            versionMap[address] = Version;
             if (!cacheMap.TryGetValue(address, out TAsset asset))
             {
                 asset = LoadNewAssetAsync(address).WaitForCompletion();
             }
             return asset;
         }
-        public ResourceHandle<TAsset> LoadNewAssetAsync(string address, Action<TAsset> callBack = null)
+        private ResourceHandle<TAsset> LoadNewAssetAsync(string address, Action<TAsset> callBack = null)
         {
             if (internalHandles.TryGetValue(address, out var internalHandle))
             {
@@ -70,6 +71,17 @@ namespace Kurisu.Framework.Resource
                 ResourceSystem.ReleaseAsset(handle);
             }
         }
-
+        public IEnumerable<string> GetCacheAssetsAddress() => cacheMap.Keys;
+        public void UpdateVersion() => ++Version;
+        public void ReleaseAssetsWithVersion(int version)
+        {
+            versionMap.Where(p => p.Value == version).Select(p => p.Key).ToList().ForEach(ads =>
+            {
+                ResourceSystem.ReleaseAsset(internalHandles[ads]);
+                cacheMap.Remove(ads);
+                internalHandles.Remove(ads);
+                versionMap.Remove(ads);
+            });
+        }
     }
 }

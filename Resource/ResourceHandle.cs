@@ -2,7 +2,7 @@ using System;
 #if UNITASK_SUPPORT
 using Cysharp.Threading.Tasks;
 #else
-using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 #endif
 using UnityEngine.ResourceManagement.AsyncOperations;
 namespace Kurisu.Framework.Resource

@@ -3,7 +3,8 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 namespace Kurisu.Framework.Resource
 {
     /// <summary>
-    /// Invoke complete call back when all async resource is loaded
+    /// Invoke complete call back when all async resource is loaded.
+    /// Used for react patten.
     /// </summary>
     public class ResourceAsyncSequence : IPooled
     {
