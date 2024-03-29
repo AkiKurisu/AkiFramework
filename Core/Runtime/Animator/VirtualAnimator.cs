@@ -55,7 +55,6 @@ namespace Kurisu.Framework.Animation
         public void Play(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
         {
             if (IsPlaying && currentController == animatorController) return;
-            sourceController = Animator.runtimeAnimatorController;
             //If graph has root controller, destroy it
             if (playableGraph.IsValid())
             {
@@ -75,6 +74,7 @@ namespace Kurisu.Framework.Animation
         }
         private void PlayInternal(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
         {
+            sourceController = Animator.runtimeAnimatorController;
             playablePointer = AnimatorControllerPlayable.Create(playableGraph, currentController = animatorController);
             //Connect to second input of mixer
             playableGraph.Connect(playablePointer, 0, rootMixer, 1);
@@ -95,7 +95,6 @@ namespace Kurisu.Framework.Animation
         public void CrossFade(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
         {
             if (IsPlaying && currentController == animatorController) return;
-            sourceController = Animator.runtimeAnimatorController;
             //Graph is destroyed, create new graph and play instead
             if (!playableGraph.IsValid())
             {
