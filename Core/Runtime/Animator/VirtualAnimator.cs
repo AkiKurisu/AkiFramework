@@ -159,7 +159,7 @@ namespace Kurisu.Framework.Animation
                 SetOutGraph();
                 return;
             }
-            rootHandle = Task.Schedule(SetOutGraph, x => FadeIn(rootMixer, 1 - x / 0.25f), 0.25f);
+            rootHandle = Task.Schedule(SetOutGraph, x => FadeIn(rootMixer, 1 - x / fadeOutTime), fadeOutTime);
         }
         private void SetOutGraph()
         {
