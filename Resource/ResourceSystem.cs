@@ -45,6 +45,14 @@ namespace Kurisu.Framework.Resource
             Intersection
         }
         #region  Asset Load
+        /// <summary>
+        /// Load asset
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="action"></param>
+        /// <param name="unRegisterHandle"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public static ResourceHandle<T> AsyncLoadAsset<T>(string address, Action<T> action, IUnRegisterHandle unRegisterHandle)
         {
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
@@ -55,9 +63,16 @@ namespace Kurisu.Framework.Resource
                 resourceHandle.GetUnRegister().AttachUnRegister(unRegisterHandle);
             return resourceHandle;
         }
+        /// <summary>
+        /// Load asset
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="action"></param>
+        /// <param name="bindObject"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public static ResourceHandle<T> AsyncLoadAsset<T>(string address, Action<T> action = null, GameObject bindObject = null)
         {
-
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
             if (action != null)
                 handle.Completed += (h) => action.Invoke(h.Result);
@@ -69,25 +84,41 @@ namespace Kurisu.Framework.Resource
         }
         #endregion
         #region Instantiate
+        /// <summary>
+        /// Instantiate GameObject
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="parent"></param>
+        /// <param name="action"></param>
+        /// <param name="bindObject"></param>
+        /// <returns></returns>
         public static ResourceHandle<GameObject> AsyncInstantiate(string address, Transform parent, Action<GameObject> action = null, GameObject bindObject = null)
         {
             AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
             var resourceHandle = CreateHandle(handle);
+            handle.Completed += (h) => instanceIDMap.Add(h.Result.GetInstanceID(), resourceHandle.handleID);
             if (action != null)
-                handle.Completed += (h) => { instanceIDMap.Add(h.Result.GetInstanceID(), resourceHandle.handleID); action.Invoke(h.Result); };
+                handle.Completed += (h) => action.Invoke(h.Result);
             if (bindObject != null)
                 new CustomUnRegister(() => ReleaseInstance(resourceHandle.Result)).AttachUnRegister(bindObject);
             return resourceHandle;
         }
         #endregion
         #region Release
+        /// <summary>
+        /// Release resource handle, should align with <see cref="AsyncLoadAsset"/>
+        /// </summary>
+        /// <param name="handle"></param>
         public static void ReleaseAsset(ResourceHandle handle)
         {
             if (handle.InternalHandle.Equals(null) || handle.InternalHandle.Result != null)
                 Addressables.Release(handle.InternalHandle);
             internalHandleMap.Remove(handle.handleID);
         }
-
+        /// <summary>
+        /// Release GameObject Instance, should align with <see cref="AsyncInstantiate"/>
+        /// </summary>
+        /// <param name="obj"></param>
         public static void ReleaseInstance(GameObject obj)
         {
             if (instanceIDMap.TryGetValue(obj.GetInstanceID(), out int handleID))

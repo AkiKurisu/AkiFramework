@@ -17,7 +17,8 @@ namespace Kurisu.Framework
             instance = FindObjectOfType<GameRoot>();
             if (instance == null)
             {
-                Debug.Log("Can not find Game Root !");
+                GameObject managerObject = new() { name = nameof(GameRoot) };
+                instance = managerObject.AddComponent<GameRoot>();
             }
             return instance;
         }

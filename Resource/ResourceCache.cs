@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Kurisu.Framework.Resource
 {
     /// <summary>
-    /// Loading and cache specific asset
+    /// Loading and cache specific asset as a group
     /// </summary>
     /// <typeparam name="TAsset"></typeparam>
     public class ResourceCache<TAsset> : IDisposable where TAsset : UnityEngine.Object
@@ -72,7 +72,14 @@ namespace Kurisu.Framework.Resource
             }
         }
         public IEnumerable<string> GetCacheAssetsAddress() => cacheMap.Keys;
+        /// <summary>
+        /// Update version
+        /// </summary>
         public void UpdateVersion() => ++Version;
+        /// <summary>
+        /// Release all assets with target version
+        /// </summary>
+        /// <param name="version"></param>
         public void ReleaseAssetsWithVersion(int version)
         {
             versionMap.Where(p => p.Value == version).Select(p => p.Key).ToList().ForEach(ads =>
