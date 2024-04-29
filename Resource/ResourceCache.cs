@@ -75,7 +75,7 @@ namespace Kurisu.Framework.Resource
         /// <summary>
         /// Update version
         /// </summary>
-        public void UpdateVersion() => ++Version;
+        public int UpdateVersion() => ++Version;
         /// <summary>
         /// Release all assets with target version
         /// </summary>
@@ -89,6 +89,15 @@ namespace Kurisu.Framework.Resource
                 internalHandles.Remove(ads);
                 versionMap.Remove(ads);
             });
+        }
+        /// <summary>
+        /// Update version and release assets with last version
+        /// </summary>
+        public void UpdateVersionAndReleaseAssets()
+        {
+            int version = Version;
+            UpdateVersion();
+            ReleaseAssetsWithVersion(version);
         }
     }
 }
