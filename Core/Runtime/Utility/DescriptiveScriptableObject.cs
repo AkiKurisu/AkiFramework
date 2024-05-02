@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-namespace Kurisu.Framework.Utility.ManagedObjects
+namespace Kurisu.Framework
 {
     /// <summary>
     /// Base class for all ScriptableObjects with a developer-facing description.

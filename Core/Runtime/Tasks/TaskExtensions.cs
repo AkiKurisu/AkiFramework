@@ -25,16 +25,6 @@ namespace Kurisu.Framework.Tasks
             return Timer.Register(duration, onComplete, onUpdate, isLooped, useRealTime, behaviour);
         }
         /// <summary>
-        /// Schedule a unmanaged task
-        /// </summary>
-        /// <param name="task"></param>
-        /// <returns></returns>
-        public static JobHandle Schedule(this AkiTask task)
-        {
-            TaskManager.Instance.RegisterTask(task);
-            return TaskManager.Instance.CreateJobHandle(task);
-        }
-        /// <summary>
         /// Schedule a job
         /// </summary>
         /// <param name="job"></param>

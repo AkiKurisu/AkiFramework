@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 namespace Kurisu.Framework.Tasks
 {
@@ -20,27 +19,17 @@ namespace Kurisu.Framework.Tasks
         }
         private const int ManagedTaskCapacity = 200;
         private const int RunningTaskCapacity = 100;
-        private readonly HashSet<int> managedJobIDs = new(ManagedTaskCapacity);
-        private readonly Dictionary<int, ITask> managedTasks = new(ManagedTaskCapacity);
-        private List<ITask> _tasks = new(RunningTaskCapacity);
+        internal readonly HashSet<int> managedJobIDs = new(ManagedTaskCapacity);
+        internal readonly Dictionary<int, ITask> managedTasks = new(ManagedTaskCapacity);
+        internal List<ITask> _tasks = new(RunningTaskCapacity);
         //Start from id=1, should not be 0 since it roles as default/invalid job symbol
-        private int jobID = 1;
+        internal int jobID = 1;
         // buffer adding timers so we don't edit a collection during iteration
         private List<ITask> _tasksToAdd = new(RunningTaskCapacity);
         public static TaskManager Instance => instance != null ? instance : GetInstance();
         public static bool IsInitialized => instance != null;
         private static TaskManager instance;
 #if UNITY_EDITOR
-        public int CurrentJobID => jobID;
-        public int ManagedJobCount => managedJobIDs.Count;
-        public int UnManagedTaskCount
-        {
-            get
-            {
-                return managedTasks.Count(x => x.Value is AkiTask);
-            }
-        }
-        public int UpdatingTaskCount => _tasks.Count;
         public event Action EditorUpdate;
 #endif
         private static TaskManager GetInstance()

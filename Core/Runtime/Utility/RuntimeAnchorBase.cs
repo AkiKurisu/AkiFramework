@@ -1,7 +1,6 @@
-using Kurisu.Framework.Utility.ManagedObjects;
 using UnityEngine;
 using UnityEngine.Events;
-namespace Kurisu.Framework.Utility.RuntimeAnchors
+namespace Kurisu.Framework
 {
 	public class RuntimeAnchorBase<T> : DescriptiveScriptableObject
 	{

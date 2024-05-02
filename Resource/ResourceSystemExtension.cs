@@ -9,14 +9,6 @@ namespace Kurisu.Framework.Resource
 {
     public static class ResourceSystemExtension
     {
-        public static void AddTo(this ResourceHandle handle, ResourceAsyncSequence sequence)
-        {
-            sequence.Add(handle.InternalHandle);
-        }
-        public static void AddTo<T>(this ResourceHandle<T> handle, ResourceAsyncSequence sequence) where T : Object
-        {
-            sequence.Add(handle.InternalHandle);
-        }
         internal static CustomUnRegister GetUnRegister<T>(this ResourceHandle<T> handle)
         {
             return new CustomUnRegister(() => ResourceSystem.ReleaseAsset(handle));

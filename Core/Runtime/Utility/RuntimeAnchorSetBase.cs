@@ -1,8 +1,7 @@
-﻿using Kurisu.Framework.Utility.ManagedObjects;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-namespace Kurisu.Framework.Utility.RuntimeAnchors
+namespace Kurisu.Framework
 {
 	public class RuntimeAnchorSetBase<T> : ManagedObject
 	{

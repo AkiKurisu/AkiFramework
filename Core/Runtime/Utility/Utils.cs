@@ -1,7 +1,7 @@
 using UnityEngine;
 namespace Kurisu.Framework
 {
-    public static class AkiMethod
+    public static class Utils
     {
         public static Vector3 GetScreenPosition(float width, float height, Vector3 target)
         {
@@ -17,7 +17,7 @@ namespace Kurisu.Framework
             return pos;
         }
         /// <summary>
-        ///Quadratic Bezier curve, dynamically draw a curve based on three points
+        /// Quadratic Bezier curve, dynamically draw a curve based on three points
         /// </summary>
         /// <param name="t">The arrival coefficient is 0 for the start and 1 for the arrival</param>
         /// <param name="p0">Starting point</param>

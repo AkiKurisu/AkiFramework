@@ -1,7 +1,7 @@
 ﻿#if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace Kurisu.Framework.Utility.ManagedObjects
+namespace Kurisu.Framework
 {
 
     /// <summary>
@@ -13,7 +13,9 @@ namespace Kurisu.Framework.Utility.ManagedObjects
 #if UNITY_EDITOR
     [InitializeOnLoad]
 #endif
+#pragma warning disable UNT0009 
     public abstract class ManagedObject : DescriptiveScriptableObject
+#pragma warning restore UNT0009
     {
         abstract protected void OnReset();
 

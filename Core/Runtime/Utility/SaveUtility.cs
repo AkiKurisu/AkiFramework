@@ -1,7 +1,7 @@
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
-namespace Kurisu.Framework.Utility
+namespace Kurisu.Framework
 {
     public class SaveUtility
     {

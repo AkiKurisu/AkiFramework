@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using System;
-using Kurisu.Framework.Tasks;
 using System.Collections;
 namespace Kurisu.Framework.Resource
 {
@@ -130,14 +129,6 @@ namespace Kurisu.Framework.Resource
         }
         #endregion
         #region  Multi Assets Load
-        public static ResourceAsyncSequence GetAsyncSequence()
-        {
-            var sequence = PoolManager.Instance.GetObject<ResourceAsyncSequence>();
-            sequence.Reset();
-            //Check sequence is completed if no asset was added
-            Timer.Schedule(sequence.Check);
-            return sequence;
-        }
         public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(object key, Action<IList<T>> action, GameObject bindObject = null)
         {
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null);

@@ -24,7 +24,7 @@ namespace Kurisu.Framework
         }
 
         protected T mValue;
-
+        private Action<T> mOnValueChanged = (v) => { };
         public T Value
         {
             get => GetValue();
@@ -56,13 +56,11 @@ namespace Kurisu.Framework
         {
             mOnValueChanged?.Invoke(mValue);
         }
-
-        private Action<T> mOnValueChanged = (v) => { };
-        /// <summary>
-        /// 注册更新回调函数
-        /// </summary>
-        /// <param name="onValueChanged">添加的回调</param>
-        /// <returns>可注销对象</returns>
+        public void Release()
+        {
+            mValue = default;
+            mOnValueChanged = null;
+        }
         public IUnRegister Register(Action<T> onValueChanged)
         {
             mOnValueChanged += onValueChanged;
