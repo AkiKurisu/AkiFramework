@@ -8,8 +8,8 @@ namespace Kurisu.Framework.Editor
     public class TaskManagerEditor : UnityEditor.Editor
     {
         private TaskManager Manager => target as TaskManager;
-        private int CurrentJobID => Manager.jobID;
-        private int ManagedJobCount => Manager.managedJobIDs.Count;
+        private int CurrentJobID => Manager.taskId;
+        private int ManagedJobCount => Manager.managedTaskIds.Count;
         private int UnManagedTaskCount
         {
             get

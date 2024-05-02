@@ -34,12 +34,12 @@ namespace Kurisu.Framework.Animation
         /// <summary>
         /// Handle for root blending task
         /// </summary>
-        private JobHandle rootHandle;
+        private TaskHandle rootHandle;
         /// <summary>
         /// Handle for subTree blending task
         /// </summary>
         /// <returns></returns>
-        private readonly Dictionary<RuntimeAnimatorController, JobHandle> subHandleMap = new();
+        private readonly Dictionary<RuntimeAnimatorController, TaskHandle> subHandleMap = new();
         public VirtualAnimator(Animator animator)
         {
             Animator = animator;

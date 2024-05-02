@@ -30,11 +30,11 @@ namespace Kurisu.Framework.Tasks
         /// <param name="job"></param>
         /// <param name="delay"></param>
         /// <returns></returns>
-        public static JobHandle Schedule(this IJob job, float delay)
+        public static TaskHandle Schedule(this IJob job, float delay)
         {
             var timer = Timer.Register(delay, job.Execute);
-            var handle = TaskManager.Instance.CreateJobHandle(timer);
-            timer.OnComplete += () => TaskManager.Instance.ReleaseJob(handle.JobID);
+            var handle = TaskManager.Instance.CreateTaskHandle(timer);
+            timer.OnComplete += () => TaskManager.Instance.ReleaseTask(handle.TaskId);
             return handle;
         }
         /// <summary>
@@ -54,18 +54,18 @@ namespace Kurisu.Framework.Tasks
         /// <param name="callBack"></param>
         /// <param name="delay"></param>
         /// <returns></returns>
-        public static JobHandle Schedule(Action callBack, float delay)
+        public static TaskHandle Schedule(Action callBack, float delay)
         {
             var timer = Timer.Register(delay, callBack);
-            var handle = TaskManager.Instance.CreateJobHandle(timer);
-            timer.OnComplete += () => TaskManager.Instance.ReleaseJob(handle.JobID);
+            var handle = TaskManager.Instance.CreateTaskHandle(timer);
+            timer.OnComplete += () => TaskManager.Instance.ReleaseTask(handle.TaskId);
             return handle;
         }
-        public static JobHandle Schedule(Action callBack, Action<float> onUpdate, float delay)
+        public static TaskHandle Schedule(Action callBack, Action<float> onUpdate, float delay)
         {
             var timer = Timer.Register(delay, callBack, onUpdate);
-            var handle = TaskManager.Instance.CreateJobHandle(timer);
-            timer.OnComplete += () => TaskManager.Instance.ReleaseJob(handle.JobID);
+            var handle = TaskManager.Instance.CreateTaskHandle(timer);
+            timer.OnComplete += () => TaskManager.Instance.ReleaseTask(handle.TaskId);
             return handle;
         }
         /// <summary>

@@ -19,11 +19,11 @@ namespace Kurisu.Framework.Tasks
         }
         private const int ManagedTaskCapacity = 200;
         private const int RunningTaskCapacity = 100;
-        internal readonly HashSet<int> managedJobIDs = new(ManagedTaskCapacity);
+        internal readonly HashSet<int> managedTaskIds = new(ManagedTaskCapacity);
         internal readonly Dictionary<int, ITask> managedTasks = new(ManagedTaskCapacity);
         internal List<ITask> _tasks = new(RunningTaskCapacity);
         //Start from id=1, should not be 0 since it roles as default/invalid job symbol
-        internal int jobID = 1;
+        internal int taskId = 1;
         // buffer adding timers so we don't edit a collection during iteration
         private List<ITask> _tasksToAdd = new(RunningTaskCapacity);
         public static TaskManager Instance => instance != null ? instance : GetInstance();
@@ -116,9 +116,9 @@ namespace Kurisu.Framework.Tasks
                 _tasksToAdd.Clear();
             }
 
-            foreach (ITask timer in _tasks)
+            foreach (ITask task in _tasks)
             {
-                timer.Update();
+                task.Update();
             }
         }
         private void ReleaseAndRecycleTask()
@@ -134,60 +134,60 @@ namespace Kurisu.Framework.Tasks
                 _tasks.Remove(_tasks[i]);
             }
         }
-        public JobHandle CreateJobHandle(ITask task)
+        public TaskHandle CreateTaskHandle(ITask task)
         {
-            int id = jobID++;
+            int id = taskId++;
             if (debugMode)
             {
-                Debug.Log("Job create, task hash : " + task.GetHashCode());
+                Debug.Log("Task create, task hash : " + task.GetHashCode());
             }
-            var handle = new JobHandle(id);
-            managedJobIDs.Add(id);
+            var handle = new TaskHandle(id);
+            managedTaskIds.Add(id);
             managedTasks.Add(id, task);
             return handle;
         }
         /// <summary>
-        /// Whether job is valid, false means internal task is disposed and maybe recyled so you should not call it
+        /// Whether task is valid, false means internal task is disposed and maybe recycled so you should not call it
         /// </summary>
-        /// <param name="jobID"></param>
+        /// <param name="taskId"></param>
         /// <returns></returns>
-        public bool IsValidJob(int jobID)
+        public bool IsValidTask(int taskId)
         {
-            return managedJobIDs.Contains(jobID);
+            return managedTaskIds.Contains(taskId);
         }
         /// <summary>
-        /// Find internal task if job is valid
+        /// Find internal task if taskId is valid
         /// </summary>
-        /// <param name="jobID"></param>
+        /// <param name="taskId"></param>
         /// <param name="task"></param>
         /// <returns></returns>
-        public bool TryGetTask(int jobID, out ITask task)
+        public bool TryGetTask(int taskId, out ITask task)
         {
-            return managedTasks.TryGetValue(jobID, out task);
+            return managedTasks.TryGetValue(taskId, out task);
         }
         /// <summary>
-        /// Cancel target job
+        /// Cancel target task
         /// </summary>
-        /// <param name="jobID"></param>
-        public void CancelJob(int jobID)
+        /// <param name="taskId"></param>
+        public void CancelTask(int taskId)
         {
-            var task = managedTasks[jobID];
+            var task = managedTasks[taskId];
             if (debugMode)
             {
                 Debug.Log("Job cancel, task hash : " + task.GetHashCode());
             }
             task.Cancel();
-            managedTasks.Remove(jobID);
-            managedJobIDs.Remove(jobID);
+            managedTasks.Remove(taskId);
+            managedTaskIds.Remove(taskId);
         }
         /// <summary>
-        /// Remove job from managed
+        /// Remove task from managed
         /// </summary>
-        /// <param name="jobID"></param>
-        public void ReleaseJob(int jobID)
+        /// <param name="taskId"></param>
+        public void ReleaseTask(int taskId)
         {
-            managedTasks.Remove(jobID);
-            managedJobIDs.Remove(jobID);
+            managedTasks.Remove(taskId);
+            managedTaskIds.Remove(taskId);
         }
     }
 }

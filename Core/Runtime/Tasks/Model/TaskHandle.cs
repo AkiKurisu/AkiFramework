@@ -3,21 +3,21 @@ namespace Kurisu.Framework.Tasks
     /// <summary>
     /// Handle give you access to target task
     /// </summary>
-    public readonly struct JobHandle
+    public readonly struct TaskHandle
     {
-        public int JobID { get; }
+        public int TaskId { get; }
         public readonly bool IsValid
         {
             get
             {
-                return TaskManager.Instance.IsValidJob(JobID);
+                return TaskManager.Instance.IsValidTask(TaskId);
             }
         }
         public readonly bool IsDone
         {
             get
             {
-                if (TaskManager.Instance.TryGetTask(JobID, out ITask task))
+                if (TaskManager.Instance.TryGetTask(TaskId, out ITask task))
                 {
                     return task.IsDone;
                 }
@@ -32,19 +32,19 @@ namespace Kurisu.Framework.Tasks
         {
             get
             {
-                if (TaskManager.Instance.TryGetTask(JobID, out ITask task))
+                if (TaskManager.Instance.TryGetTask(TaskId, out ITask task))
                 {
                     return task;
                 }
                 return null;
             }
         }
-        public JobHandle(int jobID)
+        public TaskHandle(int taskId)
         {
-            JobID = jobID;
+            TaskId = taskId;
         }
         /// <summary>
-        /// Cancel a task if task is valid (Haven't been disposed or done)
+        /// Cancel a task if task is valid (haven't been disposed or done)
         /// </summary>
         /// <value></value>
         public void Cancel()
@@ -52,7 +52,7 @@ namespace Kurisu.Framework.Tasks
             //Task manager is destroyed
             if (!TaskManager.IsInitialized) return;
             if (!IsValid) return;
-            TaskManager.Instance.CancelJob(JobID);
+            TaskManager.Instance.CancelTask(TaskId);
         }
     }
 }
