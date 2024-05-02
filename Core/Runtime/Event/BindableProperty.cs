@@ -11,9 +11,9 @@ namespace Kurisu.Framework
     {
         T Value { get; }
 
-        IUnRegister RegisterWithInitValue(Action<T> action);
+        IUnRegisterHandle RegisterWithInitValue(Action<T> action);
         void UnRegister(Action<T> onValueChanged);
-        IUnRegister Register(Action<T> onValueChanged);
+        IUnRegisterHandle Register(Action<T> onValueChanged);
     }
 
     public class BindableProperty<T> : IBindableProperty<T>
@@ -61,13 +61,13 @@ namespace Kurisu.Framework
             mValue = default;
             mOnValueChanged = null;
         }
-        public IUnRegister Register(Action<T> onValueChanged)
+        public IUnRegisterHandle Register(Action<T> onValueChanged)
         {
             mOnValueChanged += onValueChanged;
-            return new CustomUnRegister(() => { UnRegister(onValueChanged); });
+            return new UnRegisterCallBackHandle(() => { UnRegister(onValueChanged); });
         }
 
-        public IUnRegister RegisterWithInitValue(Action<T> onValueChanged)
+        public IUnRegisterHandle RegisterWithInitValue(Action<T> onValueChanged)
         {
             onValueChanged(mValue);
             return Register(onValueChanged);

@@ -52,7 +52,7 @@ namespace Kurisu.Framework.Resource
         /// <param name="unRegisterHandle"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static ResourceHandle<T> AsyncLoadAsset<T>(string address, Action<T> action, IUnRegisterHandle unRegisterHandle)
+        public static ResourceHandle<T> AsyncLoadAsset<T>(string address, Action<T> action, IUnRegister unRegisterHandle)
         {
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
             if (action != null)
@@ -99,7 +99,7 @@ namespace Kurisu.Framework.Resource
             if (action != null)
                 handle.Completed += (h) => action.Invoke(h.Result);
             if (bindObject != null)
-                new CustomUnRegister(() => ReleaseInstance(resourceHandle.Result)).AttachUnRegister(bindObject);
+                new UnRegisterCallBackHandle(() => ReleaseInstance(resourceHandle.Result)).AttachUnRegister(bindObject);
             return resourceHandle;
         }
         #endregion
@@ -139,7 +139,7 @@ namespace Kurisu.Framework.Resource
                 resourceHandle.GetUnRegister().AttachUnRegister(bindObject);
             return resourceHandle;
         }
-        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(object key, Action<IList<T>> action, IUnRegisterHandle unRegisterHandle)
+        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(object key, Action<IList<T>> action, IUnRegister unRegisterHandle)
         {
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null);
             if (action != null)
@@ -149,7 +149,7 @@ namespace Kurisu.Framework.Resource
                 resourceHandle.GetUnRegister().AttachUnRegister(unRegisterHandle);
             return resourceHandle;
         }
-        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(IEnumerable key, MergeMode mode, Action<IList<T>> action, IUnRegisterHandle unRegisterHandle)
+        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(IEnumerable key, MergeMode mode, Action<IList<T>> action, IUnRegister unRegisterHandle)
         {
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null, (Addressables.MergeMode)mode);
             if (action != null)

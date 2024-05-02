@@ -9,13 +9,13 @@ namespace Kurisu.Framework.Resource
 {
     public static class ResourceSystemExtension
     {
-        internal static CustomUnRegister GetUnRegister<T>(this ResourceHandle<T> handle)
+        internal static UnRegisterCallBackHandle GetUnRegister<T>(this ResourceHandle<T> handle)
         {
-            return new CustomUnRegister(() => ResourceSystem.ReleaseAsset(handle));
+            return new UnRegisterCallBackHandle(() => ResourceSystem.ReleaseAsset(handle));
         }
-        internal static CustomUnRegister GetUnRegister(this ResourceHandle handle)
+        internal static UnRegisterCallBackHandle GetUnRegister(this ResourceHandle handle)
         {
-            return new CustomUnRegister(() => ResourceSystem.ReleaseAsset(handle));
+            return new UnRegisterCallBackHandle(() => ResourceSystem.ReleaseAsset(handle));
         }
 #if UNITASK_SUPPORT
         public static UniTask<T>.Awaiter GetAwaiter<T>(this ResourceHandle<T> handle)

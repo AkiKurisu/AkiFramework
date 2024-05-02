@@ -8,7 +8,7 @@ namespace Kurisu.Framework
     }
     public interface IAkiEvent<T> : IAkiEvent where T : Delegate
     {
-        IUnRegister Register(T onEvent);
+        IUnRegisterHandle Register(T onEvent);
         void UnRegister(T onEvent);
     }
 
@@ -16,10 +16,10 @@ namespace Kurisu.Framework
     {
         private Action mOnEvent = () => { };
 
-        public IUnRegister Register(Action onEvent)
+        public IUnRegisterHandle Register(Action onEvent)
         {
             mOnEvent += onEvent;
-            return new CustomUnRegister(() => { UnRegister(onEvent); });
+            return new UnRegisterCallBackHandle(() => { UnRegister(onEvent); });
         }
 
         public void UnRegister(Action onEvent)
@@ -36,10 +36,10 @@ namespace Kurisu.Framework
     {
         private Action<T> mOnEvent = e => { };
 
-        public IUnRegister Register(Action<T> onEvent)
+        public IUnRegisterHandle Register(Action<T> onEvent)
         {
             mOnEvent += onEvent;
-            return new CustomUnRegister(() => { UnRegister(onEvent); });
+            return new UnRegisterCallBackHandle(() => { UnRegister(onEvent); });
         }
 
         public void UnRegister(Action<T> onEvent)
@@ -57,10 +57,10 @@ namespace Kurisu.Framework
     {
         private Action<T, K> mOnEvent = (t, k) => { };
 
-        public IUnRegister Register(Action<T, K> onEvent)
+        public IUnRegisterHandle Register(Action<T, K> onEvent)
         {
             mOnEvent += onEvent;
-            return new CustomUnRegister(() => { UnRegister(onEvent); });
+            return new UnRegisterCallBackHandle(() => { UnRegister(onEvent); });
         }
 
         public void UnRegister(Action<T, K> onEvent)
@@ -78,10 +78,10 @@ namespace Kurisu.Framework
     {
         private Action<T, K, S> mOnEvent = (t, k, s) => { };
 
-        public IUnRegister Register(Action<T, K, S> onEvent)
+        public IUnRegisterHandle Register(Action<T, K, S> onEvent)
         {
             mOnEvent += onEvent;
-            return new CustomUnRegister(() => { UnRegister(onEvent); });
+            return new UnRegisterCallBackHandle(() => { UnRegister(onEvent); });
         }
 
         public void UnRegister(Action<T, K, S> onEvent)

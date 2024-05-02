@@ -61,11 +61,11 @@ namespace Kurisu.Framework
             //Register callback to global
             EventSystem.Register(this, callback);
         }
-        public IUnRegister RegisterCallbackWithUnRegister<TEventType>(Action<TEventType> callback) where TEventType : EventBase<TEventType>, new()
+        public IUnRegisterHandle RegisterCallbackWithUnRegister<TEventType>(Action<TEventType> callback) where TEventType : EventBase<TEventType>, new()
         {
             //Register callback to global
             EventSystem.Register(this, callback);
-            return new CustomUnRegister(() => UnRegisterCallback(callback));
+            return new UnRegisterCallBackHandle(() => UnRegisterCallback(callback));
         }
         public void UnRegisterCallback<TEventType>(Action<TEventType> callback) where TEventType : EventBase<TEventType>, new()
         {
@@ -98,7 +98,7 @@ namespace Kurisu.Framework
                 mEvent.GetEvent<AkiEvent<T>>()?.Trigger(args);
             }
         }
-        public static IUnRegister Register<T>(IEventHandler eventHandler, Action<T> onEvent)
+        public static IUnRegisterHandle Register<T>(IEventHandler eventHandler, Action<T> onEvent)
         {
             if (!mEvents.TryGetValue(eventHandler, out var mEvent)) mEvent = mEvents[eventHandler] = new();
             var e = mEvent.GetOrAddEvent<AkiEvent<T>>();

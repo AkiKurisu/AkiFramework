@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using UnityEngine.Events;
 namespace Kurisu.Framework
 {
     public static class FrameworkExtension
@@ -20,10 +21,6 @@ namespace Kurisu.Framework
         {
             PoolManager.Instance.PushObject(obj, overrideName);
         }
-        public static bool IsNull(this GameObject obj)
-        {
-            return obj == null;
-        }
         public static void RegisterOnce(this IAkiEvent<Action> akiEvent, Action action)
         {
             action += () => akiEvent.UnRegister(action);
@@ -43,6 +40,68 @@ namespace Kurisu.Framework
         {
             action += (a, b, c) => akiEvent.UnRegister(action);
             akiEvent.Register(action);
+        }
+        #region UnityEvents
+        public static void SubscribeOnce<T>(this UnityEvent<T> unityEvent, UnityAction<T> action)
+        {
+            action += (a) => unityEvent.RemoveListener(action);
+            unityEvent.AddListener(action);
+        }
+        public static void SubscribeOnce(this UnityEvent unityEvent, UnityAction action)
+        {
+            action += () => unityEvent.RemoveListener(action);
+            unityEvent.AddListener(action);
+        }
+        public static void Subscribe(this UnityEvent unityEvent, UnityAction action, IUnRegister unRegister)
+        {
+            unityEvent.AddListener(action);
+            unRegister.AddUnRegisterHandle(new UnRegisterCallBackHandle(() => unityEvent.RemoveListener(action)));
+        }
+        public static void Subscribe(this UnityEvent unityEvent, UnityAction action, GameObject gameObject)
+        {
+            unityEvent.AddListener(action);
+            gameObject.GetUnRegister().AddUnRegisterHandle(new UnRegisterCallBackHandle(() => unityEvent.RemoveListener(action)));
+        }
+        public static void Subscribe<T>(this UnityEvent<T> unityEvent, UnityAction<T> action, IUnRegister unRegister)
+        {
+            unityEvent.AddListener(action);
+            unRegister.AddUnRegisterHandle(new UnRegisterCallBackHandle(() => unityEvent.RemoveListener(action)));
+        }
+        public static void Subscribe<T>(this UnityEvent<T> unityEvent, UnityAction<T> action, GameObject gameObject)
+        {
+            unityEvent.AddListener(action);
+            gameObject.GetUnRegister().AddUnRegisterHandle(new UnRegisterCallBackHandle(() => unityEvent.RemoveListener(action)));
+        }
+        #endregion
+        /// <summary>
+        /// Release unRegister handle when GameObject destroy
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <param name="gameObject"></param>
+        /// <returns></returns>
+        public static IUnRegisterHandle AttachUnRegister(this IUnRegisterHandle handle, GameObject gameObject)
+        {
+            gameObject.GetUnRegister().AddUnRegisterHandle(handle);
+            return handle;
+        }
+        /// <summary>
+        /// Release unRegister handle managed by a unRegister
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <param name="gameObject"></param>
+        /// <returns></returns>
+        public static IUnRegisterHandle AttachUnRegister(this IUnRegisterHandle handle, IUnRegister unRegister)
+        {
+            unRegister.AddUnRegisterHandle(handle);
+            return handle;
+        }
+        public static UnRegisterOnDestroyTrigger GetUnRegister(this GameObject gameObject)
+        {
+            if (!gameObject.TryGetComponent<UnRegisterOnDestroyTrigger>(out var trigger))
+            {
+                trigger = gameObject.AddComponent<UnRegisterOnDestroyTrigger>();
+            }
+            return trigger;
         }
     }
 

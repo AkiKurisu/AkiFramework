@@ -3,19 +3,19 @@ using UnityEngine;
 using System;
 namespace Kurisu.Framework
 {
-    public interface IUnRegister
+    public interface IUnRegisterHandle
     {
         void UnRegister();
     }
-    public interface IUnRegisterHandle
+    public interface IUnRegister
     {
-        void AddUnRegister(IUnRegister unRegister);
-        void RemoveUnRegister(IUnRegister unRegister);
+        void AddUnRegisterHandle(IUnRegisterHandle handle);
+        void RemoveUnRegisterHandle(IUnRegisterHandle handle);
     }
-    public struct CustomUnRegister : IUnRegister
+    public struct UnRegisterCallBackHandle : IUnRegisterHandle
     {
         private Action OnUnRegister { get; set; }
-        public CustomUnRegister(Action onUnRegister)
+        public UnRegisterCallBackHandle(Action onUnRegister)
         {
             OnUnRegister = onUnRegister;
         }
@@ -25,16 +25,16 @@ namespace Kurisu.Framework
             OnUnRegister = null;
         }
     }
-    public class UnRegisterHandle : IUnRegisterHandle, IDisposable
+    public class UnRegister : IUnRegister, IDisposable
     {
-        private readonly HashSet<IUnRegister> mUnRegisters = new();
+        private readonly HashSet<IUnRegisterHandle> mUnRegisters = new();
 
-        public void AddUnRegister(IUnRegister unRegister)
+        public void AddUnRegisterHandle(IUnRegisterHandle unRegister)
         {
             mUnRegisters.Add(unRegister);
         }
 
-        public void RemoveUnRegister(IUnRegister unRegister)
+        public void RemoveUnRegisterHandle(IUnRegisterHandle unRegister)
         {
             mUnRegisters.Remove(unRegister);
         }
@@ -45,61 +45,30 @@ namespace Kurisu.Framework
             {
                 unRegister.UnRegister();
             }
-
             mUnRegisters.Clear();
         }
     }
-    public class UnRegisterOnDestroyTrigger : MonoBehaviour, IUnRegisterHandle
+    public class UnRegisterOnDestroyTrigger : MonoBehaviour, IUnRegister
     {
-        private readonly HashSet<IUnRegister> mUnRegisters = new();
+        private readonly HashSet<IUnRegisterHandle> handles = new();
 
-        public void AddUnRegister(IUnRegister unRegister)
+        public void AddUnRegisterHandle(IUnRegisterHandle unRegister)
         {
-            mUnRegisters.Add(unRegister);
+            handles.Add(unRegister);
         }
 
-        public void RemoveUnRegister(IUnRegister unRegister)
+        public void RemoveUnRegisterHandle(IUnRegisterHandle unRegister)
         {
-            mUnRegisters.Remove(unRegister);
+            handles.Remove(unRegister);
         }
 
         private void OnDestroy()
         {
-            foreach (var unRegister in mUnRegisters)
+            foreach (var unRegister in handles)
             {
                 unRegister.UnRegister();
             }
-
-            mUnRegisters.Clear();
-        }
-    }
-
-    public static class UnRegisterExtension
-    {
-        /// <summary>
-        /// Release UnRegister when GameObject destroy
-        /// </summary>
-        /// <param name="unRegister"></param>
-        /// <param name="gameObject"></param>
-        /// <returns></returns>
-        public static IUnRegister AttachUnRegister(this IUnRegister unRegister, GameObject gameObject)
-        {
-            gameObject.GetUnRegister().AddUnRegister(unRegister);
-            return unRegister;
-        }
-        public static IUnRegister AttachUnRegister(this IUnRegister unRegister, IUnRegisterHandle trigger)
-        {
-            trigger.AddUnRegister(unRegister);
-            return unRegister;
-        }
-        public static UnRegisterOnDestroyTrigger GetUnRegister(this GameObject gameObject)
-        {
-            var trigger = gameObject.GetComponent<UnRegisterOnDestroyTrigger>();
-            if (!trigger)
-            {
-                trigger = gameObject.AddComponent<UnRegisterOnDestroyTrigger>();
-            }
-            return trigger;
+            handles.Clear();
         }
     }
 }

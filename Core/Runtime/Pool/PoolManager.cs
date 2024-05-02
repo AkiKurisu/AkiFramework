@@ -143,7 +143,7 @@ namespace Kurisu.Framework
         public void ClearGameObject(string prefabName)
         {
             GameObject go = transform.Find(prefabName).gameObject;
-            if (!go.IsNull())
+            if (go)
             {
                 Destroy(go);
                 gameObjectPoolDic.Remove(prefabName);
