@@ -14,12 +14,19 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "ADDRESSABLES_INSATLL"
+    ],
     "versionDefines": [
         {
             "name": "com.cysharp.unitask",
             "expression": "2.5.3",
             "define": "UNITASK_SUPPORT"
+        },
+        {
+            "name": "com.unity.addressables",
+            "expression": "1.21.0",
+            "define": "ADDRESSABLES_INSATLL"
         }
     ],
     "noEngineReferences": false

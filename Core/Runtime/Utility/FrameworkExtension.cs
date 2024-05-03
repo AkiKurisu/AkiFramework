@@ -15,11 +15,11 @@ namespace Kurisu.Framework
         }
         public static void ObjectPushPool(this IPooled obj)
         {
-            PoolManager.Instance.PushObject(obj);
+            PoolManager.Instance.ReleaseObject(obj);
         }
         public static void ObjectPushPool(this IPooled obj, string overrideName)
         {
-            PoolManager.Instance.PushObject(obj, overrideName);
+            PoolManager.Instance.ReleaseObject(obj, overrideName);
         }
         public static void RegisterOnce(this IAkiEvent<Action> akiEvent, Action action)
         {

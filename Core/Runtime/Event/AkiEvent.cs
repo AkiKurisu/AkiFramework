@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 namespace Kurisu.Framework
 {
-    public interface IAkiEvent
-    {
-
-    }
+    public interface IAkiEvent { }
     public interface IAkiEvent<T> : IAkiEvent where T : Delegate
     {
         IUnRegisterHandle Register(T onEvent);

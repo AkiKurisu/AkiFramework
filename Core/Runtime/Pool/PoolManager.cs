@@ -12,15 +12,15 @@ namespace Kurisu.Framework
             {
                 if (instance == null)
                 {
-                    GameObject managerObject = new() { name = "PoolManager" };
+                    GameObject managerObject = new() { name = nameof(PoolManager) };
                     instance = managerObject.AddComponent<PoolManager>();
                 }
                 return instance;
             }
         }
         private static PoolManager instance;
-        public Dictionary<string, GameObjectPool> gameObjectPoolDic = new();
-        public Dictionary<string, ObjectPool> objectPoolDic = new();
+        private readonly Dictionary<string, GameObjectPool> gameObjectPoolDic = new();
+        private readonly Dictionary<string, ObjectPool> objectPoolDic = new();
         private void OnDestroy()
         {
             if (instance == this) instance = null;
@@ -80,23 +80,23 @@ namespace Kurisu.Framework
             }
         }
 
-        public void PushObject(object obj)
+        public void ReleaseObject(object obj)
         {
             string name = obj.GetType().FullName;
             if (objectPoolDic.ContainsKey(name))
             {
-                objectPoolDic[name].Push(obj);
+                objectPoolDic[name].Release(obj);
             }
             else
             {
                 objectPoolDic.Add(name, new ObjectPool(obj));
             }
         }
-        public void PushObject(object obj, string overrideName)
+        public void ReleaseObject(object obj, string overrideName)
         {
             if (objectPoolDic.ContainsKey(overrideName))
             {
-                objectPoolDic[overrideName].Push(obj);
+                objectPoolDic[overrideName].Release(obj);
             }
             else
             {

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using UnityEngine.Pool;
 namespace Kurisu.Framework.Tasks
 {
     /// <summary>
@@ -135,7 +136,7 @@ namespace Kurisu.Framework.Tasks
         }
         public void Dispose()
         {
-            pool.Push(this);
+            pool.Release(this);
         }
         /// <summary>
         /// Pause a running timer. A paused timer can be resumed from the same point it was paused.

@@ -1,0 +1,16 @@
+{
+    "name": "Kurisu.Framework.Example",
+    "rootNamespace": "Kurisu.Framework.Example",
+    "references": [
+        "GUID:e61a2a07ba2680848ad23eef5b7c024b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

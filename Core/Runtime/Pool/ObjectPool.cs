@@ -1,16 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 namespace Kurisu.Framework
 {
-    public class ObjectPool
+    internal class ObjectPool
     {
         private const int PoolCapacity = 10;
+        public ObjectPool() { }
         public ObjectPool(object obj)
         {
-            Push(obj);
+            Release(obj);
         }
         internal readonly Queue<object> poolQueue = new(PoolCapacity);
-        public void Push(object obj)
+        public void Release(object obj)
         {
             poolQueue.Enqueue(obj);
         }
@@ -21,34 +21,6 @@ namespace Kurisu.Framework
                 return result;
             }
             return null;
-        }
-    }
-    public class ObjectPool<T>
-    {
-        private const int PoolCapacity = 10;
-        private readonly Func<T> instanceFunc;
-        public ObjectPool(Func<T> instanceFunc)
-        {
-            this.instanceFunc = instanceFunc;
-            poolQueue = new(PoolCapacity);
-        }
-        public ObjectPool(Func<T> instanceFunc, int capacity)
-        {
-            this.instanceFunc = instanceFunc;
-            poolQueue = new(capacity);
-        }
-        internal readonly Queue<T> poolQueue;
-        public void Push(T obj)
-        {
-            poolQueue.Enqueue(obj);
-        }
-        public T Get()
-        {
-            if (!poolQueue.TryDequeue(out T result))
-            {
-                result = instanceFunc();
-            }
-            return result;
         }
     }
 }
