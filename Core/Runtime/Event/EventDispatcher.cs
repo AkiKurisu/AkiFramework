@@ -107,7 +107,7 @@ namespace Kurisu.Framework.Events
         {
             new CallBackDispatchingStrategy()
         };
-        internal static EventDispatcher CreateDefault()
+        public static EventDispatcher CreateDefault()
         {
             return new EventDispatcher(defaultStrategies);
         }
