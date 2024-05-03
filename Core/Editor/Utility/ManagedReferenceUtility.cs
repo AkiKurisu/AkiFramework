@@ -5,7 +5,6 @@ namespace Kurisu.Framework.Editor
 {
 	public static class ManagedReferenceUtility
 	{
-
 		public static object SetManagedReference(this SerializedProperty property, Type type)
 		{
 			object obj = (type != null) ? Activator.CreateInstance(type) : null;

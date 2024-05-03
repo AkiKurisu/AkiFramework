@@ -8,8 +8,8 @@ namespace Kurisu.Framework.Editor
     public class TaskManagerEditor : UnityEditor.Editor
     {
         private TaskManager Manager => target as TaskManager;
-        private int CurrentJobID => Manager.taskId;
-        private int ManagedJobCount => Manager.managedTaskIds.Count;
+        private int CurrentTaskId => Manager.taskId;
+        private int ManagedTaskCount => Manager.managedTaskIds.Count;
         private int UnManagedTaskCount
         {
             get
@@ -21,12 +21,12 @@ namespace Kurisu.Framework.Editor
         private void OnEnable()
         {
             if (!Application.isPlaying) return;
-            Manager.EditorUpdate += Repaint;
+            EditorApplication.update += Repaint;
         }
         private void OnDisable()
         {
             if (!Application.isPlaying) return;
-            Manager.EditorUpdate -= Repaint;
+            EditorApplication.update -= Repaint;
         }
         public override void OnInspectorGUI()
         {
@@ -41,16 +41,15 @@ namespace Kurisu.Framework.Editor
                 EditorGUILayout.HelpBox("Enter play mode to track jobs and tasks", MessageType.Info);
                 return;
             }
-            var manager = target as TaskManager;
-            GUILayout.Label($"Current Job ID : {CurrentJobID}");
-            GUILayout.Label($"Managed Job Count : {ManagedJobCount}");
-            GUILayout.Label($"Unmanaged Task Count : {UnManagedTaskCount}");
+            GUILayout.Label($"Current task Id : {CurrentTaskId}");
+            GUILayout.Label($"Managed task count : {ManagedTaskCount}");
+            GUILayout.Label($"Unmanaged task count : {UnManagedTaskCount}");
             int count;
-            if ((count = UnManagedTaskCount - ManagedJobCount) > 0)
+            if ((count = UnManagedTaskCount - ManagedTaskCount) > 0)
             {
                 EditorGUILayout.HelpBox($"Task leak, {count} tasks can not be recycled", MessageType.Warning);
             }
-            GUILayout.Label($"Updating Task Count : {UpdatingTaskCount}");
+            GUILayout.Label($"Updating task count : {UpdatingTaskCount}");
         }
     }
 }

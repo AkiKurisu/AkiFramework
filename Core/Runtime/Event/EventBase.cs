@@ -85,13 +85,11 @@ namespace Kurisu.Framework.Events
         }
 
 
-        // Original target. May be different than 'target' when propagating event and 'target.isCompositeRoot' is true.
-        internal IEventHandler LeafTarget { get; private set; }
-
         IEventHandler m_Target;
 
         /// <summary>
-        /// The target visual element that received this event. Unlike currentTarget, this target does not change when the event is sent to other elements along the propagation path.
+        /// The target handler that received this event. 
+        /// Unlike currentTarget, this target does not change when the event is sent to other elements along the propagation path.
         /// </summary>
         public IEventHandler Target
         {
@@ -99,7 +97,6 @@ namespace Kurisu.Framework.Events
             set
             {
                 m_Target = value;
-                LeafTarget ??= value;
             }
         }
 
@@ -210,7 +207,8 @@ namespace Kurisu.Framework.Events
         IEventHandler m_CurrentTarget;
 
         /// <summary>
-        /// The current target of the event. This is the VisualElement, in the propagation path, for which event handlers are currently being executed.
+        /// The current target of the event. 
+        /// This is the eventHandler, in the propagation path, for which event handlers are currently being executed.
         /// </summary>
         public virtual IEventHandler CurrentTarget
         {
@@ -222,7 +220,8 @@ namespace Kurisu.Framework.Events
         }
 
         /// <summary>
-        /// Indicates whether the event is being dispatched to a visual element. An event cannot be re-dispatched while it being dispatched. If you need to recursively dispatch an event, it is recommended that you use a copy of the event.
+        /// Indicates whether the event is being dispatched to a eventHandler. 
+        /// An event cannot be re-dispatched while it being dispatched. If you need to recursively dispatch an event, it is recommended that you use a copy of the event.
         /// </summary>
         public bool Dispatch
         {
@@ -313,7 +312,6 @@ namespace Kurisu.Framework.Events
             TriggerEventId = 0;
             EventId = s_NextEventId++;
 
-            LeafTarget = null;
             Target = null;
 
             SkipElements.Clear();
@@ -408,7 +406,8 @@ namespace Kurisu.Framework.Events
         }
 
         /// <summary>
-        /// Gets an event from the event pool. Use this function instead of creating new events. Events obtained using this method need to be released back to the pool. You can use `Dispose()` to release them.
+        /// Gets an event from the event pool. Use this function instead of creating new events. 
+        /// Events obtained using this method need to be released back to the pool. You can use `Dispose()` to release them.
         /// </summary>
         /// <returns>An initialized event.</returns>
         public static T GetPooled()
@@ -434,7 +433,7 @@ namespace Kurisu.Framework.Events
         {
             if (evt.Pooled)
             {
-                // Reset the event before pooling to avoid leaking VisualElement
+                // Reset the event before pooling to avoid leaking
                 evt.Init();
 
                 s_Pool.Release(evt);

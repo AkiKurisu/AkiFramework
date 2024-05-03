@@ -27,7 +27,7 @@ namespace Kurisu.Framework.Events
         public CallbackEventHandler EventHandler { get; private set; }
         private static EventSystem GetInstance()
         {
-#if UNITY_EDITOR_WIN
+#if UNITY_EDITOR
             if (!Application.isPlaying) return null;
 #endif
             if (instance == null)

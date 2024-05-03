@@ -29,12 +29,9 @@ namespace Kurisu.Framework.Tasks
         public static TaskManager Instance => instance != null ? instance : GetInstance();
         public static bool IsInitialized => instance != null;
         private static TaskManager instance;
-#if UNITY_EDITOR
-        public event Action EditorUpdate;
-#endif
         private static TaskManager GetInstance()
         {
-#if UNITY_EDITOR_WIN
+#if UNITY_EDITOR
             if (!Application.isPlaying) return null;
 #endif
             if (instance == null)
@@ -103,9 +100,6 @@ namespace Kurisu.Framework.Tasks
         {
             UpdateAllTasks();
             ReleaseAndRecycleTask();
-#if UNITY_EDITOR
-            EditorUpdate?.Invoke();
-#endif
         }
 
         private void UpdateAllTasks()

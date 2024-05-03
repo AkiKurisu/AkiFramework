@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using UnityEngine;
 namespace Kurisu.Framework.Events
 {
-    public enum InvokePolicy
+    internal enum InvokePolicy
     {
         Default = default,
         IncludeDisabled
@@ -263,8 +264,7 @@ namespace Kurisu.Framework.Events
             }
 
             m_IsInvoking++;
-            //var requiresIncludeDisabledPolicy = evt.SkipDisabledElements && evt.currentTarget is VisualElement ve && !ve.enabledInHierarchy;
-            var requiresIncludeDisabledPolicy = false;
+            var requiresIncludeDisabledPolicy = evt.SkipDisabledElements && evt.CurrentTarget is Behaviour ve && !ve.isActiveAndEnabled;
             for (var i = 0; i < m_Callbacks.Count; i++)
             {
                 if (evt.IsImmediatePropagationStopped)
