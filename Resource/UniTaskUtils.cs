@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using UnityEngine.Assertions;
 using UnityEngine.Pool;
 namespace Kurisu.Framework.Resource
 {
@@ -62,10 +63,17 @@ namespace Kurisu.Framework.Resource
     }
     public class SequenceTask<T> : List<UniTask<T>>, IDisposable
     {
-        private static readonly ObjectPool<SequenceTask<T>> pool = new(() => new(), (e) => e.Clear());
+        private static readonly ObjectPool<SequenceTask<T>> pool = new(() => new(), (e) => { e.Clear(); e.results = null; });
+        private T[] results;
         public static SequenceTask<T> Get()
         {
             return pool.Get();
+        }
+        public static SequenceTask<T> GetNonAlloc(T[] results)
+        {
+            var task = pool.Get();
+            task.results = results;
+            return task;
         }
         public void Dispose()
         {
@@ -77,7 +85,8 @@ namespace Kurisu.Framework.Resource
         }
         private async UniTask<T[]> AwaitAsSequence()
         {
-            var results = new T[Count];
+            results ??= new T[Count];
+            Assert.IsTrue(results.Length >= Count);
             for (int i = 0; i < Count; ++i)
             {
                 results[i] = await this[i];
