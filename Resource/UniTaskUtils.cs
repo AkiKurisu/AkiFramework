@@ -21,6 +21,22 @@ namespace Kurisu.Framework.Resource
             return UniTask.WhenAll(this).GetAwaiter();
         }
     }
+    public class ParallelTask<T> : List<UniTask<T>>, IDisposable
+    {
+        private static readonly ObjectPool<ParallelTask<T>> pool = new(() => new(), (e) => e.Clear());
+        public static ParallelTask<T> Get()
+        {
+            return pool.Get();
+        }
+        public void Dispose()
+        {
+            pool.Release(this);
+        }
+        public UniTask<T[]>.Awaiter GetAwaiter()
+        {
+            return UniTask.WhenAll(this).GetAwaiter();
+        }
+    }
     public class SequenceTask : List<UniTask>, IDisposable
     {
         private static readonly ObjectPool<SequenceTask> pool = new(() => new(), (e) => e.Clear());
@@ -42,6 +58,31 @@ namespace Kurisu.Framework.Resource
             {
                 await task;
             };
+        }
+    }
+    public class SequenceTask<T> : List<UniTask<T>>, IDisposable
+    {
+        private static readonly ObjectPool<SequenceTask<T>> pool = new(() => new(), (e) => e.Clear());
+        public static SequenceTask<T> Get()
+        {
+            return pool.Get();
+        }
+        public void Dispose()
+        {
+            pool.Release(this);
+        }
+        public UniTask<T[]>.Awaiter GetAwaiter()
+        {
+            return AwaitAsSequence().GetAwaiter();
+        }
+        private async UniTask<T[]> AwaitAsSequence()
+        {
+            var results = new T[Count];
+            for (int i = 0; i < Count; ++i)
+            {
+                results[i] = await this[i];
+            };
+            return results;
         }
     }
 }
