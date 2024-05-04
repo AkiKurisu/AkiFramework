@@ -561,16 +561,29 @@ namespace Kurisu.Framework.Events
 
             var type = obj.GetType();
             var objectName = GetTypeDisplayName(type);
+            // Two kinds
+            // MonoBehaviour implements IEventHandler
             if (obj is Behaviour behaviour)
             {
                 objectName += "#" + behaviour.gameObject.name;
+                if (withHashCode)
+                {
+                    //Prefer to use instanceID at runtime
+                    objectName += " (" + behaviour.GetInstanceID().ToString("x8") + ")";
+                }
             }
-            if (obj is BehaviourCallbackEventHandler bce)
+            // EventHandler attached to a MonoBehaviour
+            else if (obj is IBehaviourScope bs)
             {
-                objectName += "#" + bce.AttachedBehaviour.gameObject.name;
+                objectName += "#" + bs.AttachedBehaviour.gameObject.name;
+                if (withHashCode)
+                {
+                    //Prefer to use instanceID at runtime
+                    objectName += " (" + bs.AttachedBehaviour.GetInstanceID().ToString("x8") + ")";
+                }
             }
 
-            if (withHashCode)
+            else if (withHashCode)
             {
                 objectName += " (" + obj.GetHashCode().ToString("x8") + ")";
             }

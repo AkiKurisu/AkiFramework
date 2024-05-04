@@ -11,6 +11,8 @@ using Unity.CodeEditor;
 using BoolChangeEvent = UnityEngine.UIElements.ChangeEvent<bool>;
 using StringChangeEvent = UnityEngine.UIElements.ChangeEvent<string>;
 using Newtonsoft.Json.Linq;
+using System.Text;
+using Newtonsoft.Json;
 namespace Kurisu.Framework.Events.Editor
 {
     internal class EventsDebuggerWindow : EditorWindow
@@ -1131,46 +1133,22 @@ namespace Kurisu.Framework.Events.Editor
             ClearEventBaseInfo();
             if (eventBase == null)
                 return;
-            m_EventBaseInfo.text += JsonTreeConverter.ConvertToTreeString(eventBase.JsonData);
+            m_EventBaseInfo.text += FormatJson(eventBase.JsonData);
         }
-    }
-    public class JsonTreeConverter
-    {
-        public static string ConvertToTreeString(string json)
+        /// <summary>
+        /// Only format for indent level 0
+        /// </summary>
+        /// <param name="json"></param>
+        /// <returns></returns>
+        public static string FormatJson(string json)
         {
-            JToken root = JToken.Parse(json);
-            return ConvertToTreeStringHelper(root, 0);
-        }
-
-        private static string ConvertToTreeStringHelper(JToken token, int indentLevel)
-        {
-            string indent = new(' ', indentLevel * 4);
-            string treeString = "";
-
-            switch (token.Type)
+            StringBuilder stringBuilder = new();
+            JObject obj = JsonConvert.DeserializeObject<JObject>(json);
+            foreach (var property in obj.Properties())
             {
-                case JTokenType.Object:
-                    foreach (JProperty property in token.Children<JProperty>())
-                    {
-                        string childTreeString = ConvertToTreeStringHelper(property.Value, indentLevel + 1);
-                        treeString += $"{indent}{property.Name}: {childTreeString}\n";
-                    }
-                    break;
-
-                case JTokenType.Array:
-                    foreach (JToken child in token.Children())
-                    {
-                        string childTreeString = ConvertToTreeStringHelper(child, indentLevel + 1);
-                        treeString += $"{indent}- {childTreeString}\n";
-                    }
-                    break;
-
-                default:
-                    treeString += $"{token}\n";
-                    break;
+                stringBuilder.AppendLine(property.Name + ": " + property.Value.ToString());
             }
-
-            return treeString;
+            return stringBuilder.ToString();
         }
     }
 }
