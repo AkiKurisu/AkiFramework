@@ -4,9 +4,9 @@ namespace Kurisu.Framework.Events
     /// <summary>
     /// CallbackEventHandler of having behaviour lifetime scope.
     /// </summary>
-    public abstract class BehaviourCallbackEventHandler : CallbackEventHandler
+    public abstract class BehaviourCallbackEventHandler : CallbackEventHandler, IBehaviourScope
     {
-        internal protected Behaviour AttachedBehaviour { get; set; }
+        public Behaviour AttachedBehaviour { get; set; }
         public BehaviourCallbackEventHandler(Behaviour attachedBehaviour) : base()
         {
             AttachedBehaviour = attachedBehaviour;
@@ -148,7 +148,7 @@ namespace Kurisu.Framework.Events
                         {
                             using (new EventDebuggerLogExecuteDefaultAction(evt))
                             {
-                                if (evt.SkipDisabledElements && this is BehaviourCallbackEventHandler me && !me.IsActiveAndEnabled)
+                                if (evt.SkipDisabledElements && this is IBehaviourScope bs && !bs.AttachedBehaviour.isActiveAndEnabled)
                                     ExecuteDefaultActionDisabledAtTarget(evt);
                                 else
                                     ExecuteDefaultActionAtTarget(evt);
@@ -163,7 +163,7 @@ namespace Kurisu.Framework.Events
                         {
                             using (new EventDebuggerLogExecuteDefaultAction(evt))
                             {
-                                if (evt.SkipDisabledElements && this is BehaviourCallbackEventHandler me && !me.IsActiveAndEnabled)
+                                if (evt.SkipDisabledElements && this is IBehaviourScope bs && !bs.AttachedBehaviour.isActiveAndEnabled)
                                     ExecuteDefaultActionDisabled(evt);
                                 else
                                     ExecuteDefaultAction(evt);

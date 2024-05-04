@@ -1,3 +1,4 @@
+using UnityEngine;
 namespace Kurisu.Framework.Events
 {
     /// <summary>
@@ -17,5 +18,12 @@ namespace Kurisu.Framework.Events
         /// <param name="evt">The event to handle.</param>
         void HandleEvent(EventBase evt);
 
+    }
+    /// <summary>
+    /// Interface for class have behaviour lifetime scope
+    /// </summary>
+    public interface IBehaviourScope
+    {
+        Behaviour AttachedBehaviour { get; }
     }
 }

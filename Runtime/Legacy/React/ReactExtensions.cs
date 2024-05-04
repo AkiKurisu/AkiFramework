@@ -1,26 +1,39 @@
-﻿using System;
-using Kurisu.Framework.Events;
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 namespace Kurisu.Framework
 {
-    public static class FrameworkExtension
+    public static class ReactExtensions
     {
-        public static void GameObjectPushPool(this GameObject go, string overrideName = null)
+        /// <summary>
+        /// Release unRegister handle when GameObject destroy
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <param name="gameObject"></param>
+        /// <returns></returns>
+        public static IUnRegisterHandle AttachUnRegister(this IUnRegisterHandle handle, GameObject gameObject)
         {
-            PoolManager.Instance.PushGameObject(go, overrideName);
+            gameObject.GetUnRegister().AddUnRegisterHandle(handle);
+            return handle;
         }
-        public static void GameObjectPushPool(this Component com, string overrideName = null)
+        /// <summary>
+        /// Release unRegister handle managed by a unRegister
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <param name="gameObject"></param>
+        /// <returns></returns>
+        public static IUnRegisterHandle AttachUnRegister(this IUnRegisterHandle handle, IUnRegister unRegister)
         {
-            GameObjectPushPool(com.gameObject, overrideName);
+            unRegister.AddUnRegisterHandle(handle);
+            return handle;
         }
-        public static void ObjectPushPool(this IPooled obj)
+        public static UnRegisterOnDestroyTrigger GetUnRegister(this GameObject gameObject)
         {
-            PoolManager.Instance.ReleaseObject(obj);
-        }
-        public static void ObjectPushPool(this IPooled obj, string overrideName)
-        {
-            PoolManager.Instance.ReleaseObject(obj, overrideName);
+            if (!gameObject.TryGetComponent<UnRegisterOnDestroyTrigger>(out var trigger))
+            {
+                trigger = gameObject.AddComponent<UnRegisterOnDestroyTrigger>();
+            }
+            return trigger;
         }
         public static void RegisterOnce(this IAkiEvent<Action> akiEvent, Action action)
         {
@@ -74,40 +87,5 @@ namespace Kurisu.Framework
             gameObject.GetUnRegister().AddUnRegisterHandle(new UnRegisterCallBackHandle(() => unityEvent.RemoveListener(action)));
         }
         #endregion
-        /// <summary>
-        /// Release unRegister handle when GameObject destroy
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <param name="gameObject"></param>
-        /// <returns></returns>
-        public static IUnRegisterHandle AttachUnRegister(this IUnRegisterHandle handle, GameObject gameObject)
-        {
-            gameObject.GetUnRegister().AddUnRegisterHandle(handle);
-            return handle;
-        }
-        /// <summary>
-        /// Release unRegister handle managed by a unRegister
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <param name="gameObject"></param>
-        /// <returns></returns>
-        public static IUnRegisterHandle AttachUnRegister(this IUnRegisterHandle handle, IUnRegister unRegister)
-        {
-            unRegister.AddUnRegisterHandle(handle);
-            return handle;
-        }
-        public static UnRegisterOnDestroyTrigger GetUnRegister(this GameObject gameObject)
-        {
-            if (!gameObject.TryGetComponent<UnRegisterOnDestroyTrigger>(out var trigger))
-            {
-                trigger = gameObject.AddComponent<UnRegisterOnDestroyTrigger>();
-            }
-            return trigger;
-        }
-        public static IUnRegisterHandle RegisterCallbackWithUnRegister<TEventType>(this CallbackEventHandler handler, EventCallback<TEventType> callback) where TEventType : EventBase<TEventType>, new()
-        {
-            handler.RegisterCallback(callback);
-            return new UnRegisterCallBackHandle(() => handler.UnregisterCallback(callback));
-        }
     }
 }

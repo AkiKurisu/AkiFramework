@@ -10,7 +10,6 @@ namespace Kurisu.Framework
     public interface IReadonlyBindableProperty<T>
     {
         T Value { get; }
-
         IUnRegisterHandle RegisterWithInitValue(Action<T> action);
         void UnRegister(Action<T> onValueChanged);
         IUnRegisterHandle Register(Action<T> onValueChanged);

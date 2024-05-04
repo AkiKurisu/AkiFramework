@@ -330,7 +330,7 @@ namespace Kurisu.Framework.Events
             var listeners = s_Listeners.ToList();
             foreach (var eventRegistrationListener in listeners)
             {
-                var key = eventRegistrationListener.Key as BehaviourCallbackEventHandler; // Behavior that sends events
+                var key = eventRegistrationListener.Key as IBehaviourScope; // Behavior that sends events
                 if (key?.AttachedBehaviour == null)
                     s_Listeners.Remove(eventRegistrationListener.Key);
             }
