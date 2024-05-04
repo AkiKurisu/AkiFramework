@@ -523,7 +523,7 @@
 
 #eventsDebugger #eventsRegistrationsContainer .callback-list-element {
     flex: 1;
-    /* overflow: hidden; */
+    overflow: hidden;
     text-overflow: ellipsis;
     margin-top: 0;
     margin-bottom: 0;

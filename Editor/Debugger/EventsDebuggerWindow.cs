@@ -8,7 +8,8 @@ using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEditor.UIElements;
 using Unity.CodeEditor;
-using ToggleEvent = UnityEngine.UIElements.ChangeEvent<bool>;
+using BoolChangeEvent = UnityEngine.UIElements.ChangeEvent<bool>;
+using StringChangeEvent = UnityEngine.UIElements.ChangeEvent<string>;
 using Newtonsoft.Json.Linq;
 namespace Kurisu.Framework.Events.Editor
 {
@@ -238,7 +239,7 @@ namespace Kurisu.Framework.Events.Editor
 
         private void InitializeRegisteredCallbacksBinding()
         {
-            m_EventRegistrationsListView.fixedItemHeight = 18;
+            m_EventRegistrationsListView.fixedItemHeight = 20;
             m_EventRegistrationsListView.makeItem += () =>
             {
                 var lineContainer = new VisualElement { pickingMode = PickingMode.Position };
@@ -413,7 +414,7 @@ namespace Kurisu.Framework.Events.Editor
             m_EventCallbacksScrollView = (ScrollView)rootVisualElement.MandatoryQ("eventCallbacksScrollView");
 
             m_EventTypeFilter = toolbar.MandatoryQ<EventTypeSearchField>("filter-event-type");
-            m_EventTypeFilter.RegisterCallback<ToggleEvent>(OnFilterChange);
+            m_EventTypeFilter.RegisterCallback<StringChangeEvent>(OnFilterChange);
             m_SuspendListeningToggle = rootVisualElement.MandatoryQ<ToolbarToggle>("suspend");
             m_SuspendListeningToggle.RegisterValueChangedCallback(SuspendListening);
             var clearLogsButton = rootVisualElement.MandatoryQ<ToolbarButton>("clear-logs");
@@ -494,7 +495,7 @@ namespace Kurisu.Framework.Events.Editor
             eventBaseInfoScrollView.StretchToParentSize();
 
             m_CallbackTypeFilter = rootVisualElement.MandatoryQ<ToolbarSearchField>("filter-registered-callback");
-            m_CallbackTypeFilter.RegisterCallback<ToggleEvent>(OnRegisteredCallbackFilterChange);
+            m_CallbackTypeFilter.RegisterCallback<StringChangeEvent>(OnRegisteredCallbackFilterChange);
             m_CallbackTypeFilter.tooltip = "Type in element name, type or id to filter callbacks.";
 
             m_EventRegistrationsListView = rootVisualElement.MandatoryQ<ListView>("eventsRegistrationsListView");
@@ -547,7 +548,7 @@ namespace Kurisu.Framework.Events.Editor
                     .ToDictionary(c => c.key, c => c.value));
         }
 
-        private void SuspendListening(ToggleEvent evt)
+        private void SuspendListening(BoolChangeEvent evt)
         {
             m_Debugger.Suspended = evt.newValue;
             m_SuspendListeningToggle.text = m_Debugger.Suspended ? "Record" : "Suspend";
@@ -670,7 +671,7 @@ namespace Kurisu.Framework.Events.Editor
             }
         }
 
-        private void TogglePlayback(ToggleEvent evt)
+        private void TogglePlayback(BoolChangeEvent evt)
         {
             if (!m_Debugger.IsReplaying)
                 return;
@@ -845,9 +846,9 @@ namespace Kurisu.Framework.Events.Editor
         }
 
 
-        private void OnFilterChange(ToggleEvent e)
+        private void OnFilterChange(StringChangeEvent e)
         {
-            if (e.newValue)
+            if (e.newValue != null)
                 return;
 
             m_StateList = m_EventTypeFilter.State.Select(pair => new EventTypeFilterStateStruct { key = pair.Key, value = pair.Value }).ToList();
@@ -858,7 +859,7 @@ namespace Kurisu.Framework.Events.Editor
             DisplayRegisteredEventCallbacks();
         }
 
-        private void OnRegisteredCallbackFilterChange(ToggleEvent e)
+        private void OnRegisteredCallbackFilterChange(StringChangeEvent _)
         {
             DisplayRegisteredEventCallbacks();
         }
@@ -1087,7 +1088,6 @@ namespace Kurisu.Framework.Events.Editor
                 return;
 
             m_ModificationCount = eventDebuggerModificationCount;
-
             UpdateEventsLog();
             UpdateLogCount();
             UpdateSelectionCount();

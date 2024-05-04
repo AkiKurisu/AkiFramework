@@ -104,7 +104,7 @@ namespace Kurisu.Framework
             }
             return trigger;
         }
-        public static IUnRegisterHandle RegisterCallbackWithUnRegister<TEventType>(this CallbackEventHandler handler, EventCallback<TEventType> callback, IUnRegister unRegister) where TEventType : EventBase<TEventType>, new()
+        public static IUnRegisterHandle RegisterCallbackWithUnRegister<TEventType>(this CallbackEventHandler handler, EventCallback<TEventType> callback) where TEventType : EventBase<TEventType>, new()
         {
             handler.RegisterCallback(callback);
             return new UnRegisterCallBackHandle(() => handler.UnregisterCallback(callback));
