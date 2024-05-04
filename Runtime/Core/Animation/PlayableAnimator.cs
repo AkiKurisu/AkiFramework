@@ -4,12 +4,12 @@ using Kurisu.Framework.Tasks;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
-namespace Kurisu.Framework.Animation
+namespace Kurisu.Framework.Playables
 {
     /// <summary>
-    /// Virtual animator can cross fade multi RuntimeAnimatorController
+    /// Playable animator can cross fade multi RuntimeAnimatorController
     /// </summary>
-    public class VirtualAnimator : IDisposable
+    public class PlayableAnimator : IDisposable
     {
         /// <summary>
         /// Bind animator
@@ -40,7 +40,8 @@ namespace Kurisu.Framework.Animation
         /// </summary>
         /// <returns></returns>
         private readonly Dictionary<RuntimeAnimatorController, TaskHandle> subHandleMap = new();
-        public VirtualAnimator(Animator animator)
+        private bool isFadeOut;
+        public PlayableAnimator(Animator animator)
         {
             Animator = animator;
             CreateNewGraph();
@@ -54,6 +55,11 @@ namespace Kurisu.Framework.Animation
         }
         public void Play(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
         {
+            if (isFadeOut)
+            {
+                rootHandle.Cancel();
+                SetOutGraph();
+            }
             if (IsPlaying && currentController == animatorController) return;
             //If graph has root controller, destroy it
             if (playableGraph.IsValid())
@@ -94,6 +100,11 @@ namespace Kurisu.Framework.Animation
         }
         public void CrossFade(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
         {
+            if (isFadeOut)
+            {
+                rootHandle.Cancel();
+                SetOutGraph();
+            }
             if (IsPlaying && currentController == animatorController) return;
             //Graph is destroyed, create new graph and play instead
             if (!playableGraph.IsValid())
@@ -159,11 +170,13 @@ namespace Kurisu.Framework.Animation
                 SetOutGraph();
                 return;
             }
+            isFadeOut = true;
             rootHandle = Task.Schedule(SetOutGraph, x => FadeIn(rootMixer, 1 - x / fadeOutTime), fadeOutTime);
         }
         private void SetOutGraph()
         {
             FadeIn(rootMixer, 0);
+            isFadeOut = false;
             playableGraph.Stop();
             playableGraph.Destroy();
             currentController = null;
