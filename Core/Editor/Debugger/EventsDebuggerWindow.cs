@@ -9,7 +9,6 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using Unity.CodeEditor;
 using ToggleEvent = UnityEngine.UIElements.ChangeEvent<bool>;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 namespace Kurisu.Framework.Events.Editor
 {
@@ -383,7 +382,7 @@ namespace Kurisu.Framework.Events.Editor
             var choiceCount = m_EventTypeFilter.GetSelectedCount();
             var choiceCountString = $"{choiceCount} event type{(choiceCount > 1 ? "s" : "")}";
 
-            m_EventRegistrationTitle.text = k_RegisteredEventCallbacksPrefix + choiceCountString + (CoordinatorDebug == null ? " - [No Panel Selected]" : "");
+            m_EventRegistrationTitle.text = k_RegisteredEventCallbacksPrefix + choiceCountString + (CoordinatorDebug == null ? " - [No Coordinator Selected]" : "");
 
             var nbEvents = m_EventTypeFilter.State.Count(s => s.Key > 0);
             var nbFilteredEvents = m_EventTypeFilter.State.Count(s => s.Key > 0 && s.Value);

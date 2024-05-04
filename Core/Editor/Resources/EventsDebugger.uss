@@ -33,7 +33,7 @@
     justify-content: center;
 }
 
-#eventsDebugger .toolbar #panelSelectPopup {
+#eventsDebugger .toolbar #coordinatorSelectPopup {
     min-width: 110px;
     flex-grow: 0;
 }

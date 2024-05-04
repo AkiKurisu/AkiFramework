@@ -54,13 +54,13 @@ namespace Kurisu.Framework.Events.Editor
             m_Toolbar.RegisterCallback<MouseDownEvent>((e) =>
             {
                 if (e.target == m_CoordinatorSelect)
-                    RefreshPanelChoices();
+                    RefreshCoordinatorChoices();
             }, TrickleDown.TrickleDown);
 
             m_CoordinatorChoices = new List<ICoordinatorChoice>();
             m_CoordinatorSelect = new ToolbarMenu
             {
-                name = "panelSelectPopup",
+                name = "coordinatorSelectPopup",
                 variant = ToolbarMenu.Variant.Popup,
                 text = "Select a coordinator"
             };
@@ -68,13 +68,13 @@ namespace Kurisu.Framework.Events.Editor
             m_Toolbar.Insert(0, m_CoordinatorSelect);
 
             if (!string.IsNullOrEmpty(m_LastVisualTreeName))
-                m_RestoreSelectionScheduledItem = m_Toolbar.schedule.Execute(RestorePanelSelection).Every(500);
+                m_RestoreSelectionScheduledItem = m_Toolbar.schedule.Execute(RestoreCoordinatorSelection).Every(500);
         }
 
         public void OnDisable()
         {
             var lastTreeName = m_LastVisualTreeName;
-            SelectCoordinatorToDebug(null);
+            SelectCoordinatorChoice(null);
             if (CoordinatorDebug) CoordinatorDebug.DetachDebugger(this);
             m_LastVisualTreeName = lastTreeName;
         }
@@ -83,7 +83,7 @@ namespace Kurisu.Framework.Events.Editor
         {
             var lastTreeName = m_LastVisualTreeName;
             m_SelectedCoordinator = null;
-            SelectCoordinatorToDebug(null);
+            SelectCoordinatorChoice(null);
 
             m_LastVisualTreeName = lastTreeName;
         }
@@ -100,7 +100,7 @@ namespace Kurisu.Framework.Events.Editor
         private void TrySelectWindow()
         {
             MonoEventCoordinator monoEventCoordinator = Object.FindAnyObjectByType<MonoEventCoordinator>();
-            SelectPanelToDebug(monoEventCoordinator);
+            SelectCoordinatorToDebug(monoEventCoordinator);
 
             if (m_SelectedCoordinator != null)
             {
@@ -117,39 +117,39 @@ namespace Kurisu.Framework.Events.Editor
         }
 
         protected virtual void OnSelectCoordinateDebug(IEventCoordinator pdbg) { }
-        protected virtual void OnRestorePanelSelection() { }
+        protected virtual void OnRestoreCoordinatorSelection() { }
 
-        protected virtual void PopulatePanelChoices(List<ICoordinatorChoice> panelChoices)
+        protected virtual void PopulateCoordinatorChoices(List<ICoordinatorChoice> coordinatorChoices)
         {
             MonoEventCoordinator[] monoEventCoordinators = Object.FindObjectsByType<MonoEventCoordinator>(FindObjectsSortMode.InstanceID);
-            panelChoices.AddRange(monoEventCoordinators.Select(x => new CoordinatorChoice(x)));
+            coordinatorChoices.AddRange(monoEventCoordinators.Select(x => new CoordinatorChoice(x)));
         }
 
-        private void RefreshPanelChoices()
+        private void RefreshCoordinatorChoices()
         {
             m_CoordinatorChoices.Clear();
-            PopulatePanelChoices(m_CoordinatorChoices);
+            PopulateCoordinatorChoices(m_CoordinatorChoices);
 
             var menu = m_CoordinatorSelect.menu;
             menu.ClearItems();
 
-            foreach (var panelChoice in m_CoordinatorChoices)
+            foreach (var coordinatorChoice in m_CoordinatorChoices)
             {
-                menu.AppendAction(panelChoice.ToString(), OnSelectPanel, DropdownMenuAction.AlwaysEnabled, panelChoice);
+                menu.AppendAction(coordinatorChoice.ToString(), OnSelectCoordinator, DropdownMenuAction.AlwaysEnabled, coordinatorChoice);
             }
         }
 
-        private void OnSelectPanel(DropdownMenuAction action)
+        private void OnSelectCoordinator(DropdownMenuAction action)
         {
             if (m_RestoreSelectionScheduledItem != null && m_RestoreSelectionScheduledItem.isActive)
                 m_RestoreSelectionScheduledItem.Pause();
 
-            SelectCoordinatorToDebug(action.userData as ICoordinatorChoice);
+            SelectCoordinatorChoice(action.userData as ICoordinatorChoice);
         }
 
-        private void RestorePanelSelection()
+        private void RestoreCoordinatorSelection()
         {
-            RefreshPanelChoices();
+            RefreshCoordinatorChoices();
             if (m_CoordinatorChoices.Count > 0)
             {
                 if (!string.IsNullOrEmpty(m_LastVisualTreeName))
@@ -160,36 +160,36 @@ namespace Kurisu.Framework.Events.Editor
                         var vt = m_CoordinatorChoices[i];
                         if (vt.ToString() == m_LastVisualTreeName)
                         {
-                            SelectCoordinatorToDebug(vt);
+                            SelectCoordinatorChoice(vt);
                             break;
                         }
                     }
                 }
 
                 if (m_SelectedCoordinator != null)
-                    OnRestorePanelSelection();
+                    OnRestoreCoordinatorSelection();
                 else
-                    SelectCoordinatorToDebug(null);
+                    SelectCoordinatorChoice(null);
 
                 m_RestoreSelectionScheduledItem.Pause();
             }
         }
 
-        protected virtual void SelectCoordinatorToDebug(ICoordinatorChoice pc)
+        protected virtual void SelectCoordinatorChoice(ICoordinatorChoice cc)
         {
             // Detach debugger from current panel
             if (CoordinatorDebug != null)
                 CoordinatorDebug.DetachDebugger(this);
             string menuText;
 
-            if (pc != null && ValidateDebuggerConnection(pc.Coordinator))
+            if (cc != null && ValidateDebuggerConnection(cc.Coordinator))
             {
-                pc.Coordinator.AttachDebugger(this);
-                m_SelectedCoordinator = pc;
-                m_LastVisualTreeName = pc.ToString();
+                cc.Coordinator.AttachDebugger(this);
+                m_SelectedCoordinator = cc;
+                m_LastVisualTreeName = cc.ToString();
 
                 OnSelectCoordinateDebug(CoordinatorDebug);
-                menuText = pc.ToString();
+                menuText = cc.ToString();
             }
             else
             {
@@ -204,19 +204,19 @@ namespace Kurisu.Framework.Events.Editor
             m_CoordinatorSelect.text = menuText;
         }
 
-        protected void SelectPanelToDebug(MonoEventCoordinator panel)
+        protected void SelectCoordinatorToDebug(MonoEventCoordinator coordinator)
         {
             // Select new tree
-            if (m_SelectedCoordinator?.Coordinator != panel)
+            if (m_SelectedCoordinator?.Coordinator != coordinator)
             {
-                SelectCoordinatorToDebug(null);
-                RefreshPanelChoices();
+                SelectCoordinatorChoice(null);
+                RefreshCoordinatorChoices();
                 for (int i = 0; i < m_CoordinatorChoices.Count; i++)
                 {
                     var pc = m_CoordinatorChoices[i];
-                    if (pc.Coordinator == panel)
+                    if (pc.Coordinator == coordinator)
                     {
-                        SelectCoordinatorToDebug(pc);
+                        SelectCoordinatorChoice(pc);
                         break;
                     }
                 }
