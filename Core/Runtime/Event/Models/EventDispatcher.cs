@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using UnityEngine.Pool;
+using UnityEngine;
+using Debug = UnityEngine.Debug;
 namespace Kurisu.Framework.Events
 {
     public enum DispatchMode
@@ -59,15 +60,61 @@ namespace Kurisu.Framework.Events
             return !left.Equals(right);
         }
     }
-    /// <summary>
-    /// Interface to certain event processing environment
-    /// </summary>
-    public interface IEventCoordinator
+    public abstract class MonoEventCoordinator : MonoBehaviour, IEventCoordinator
     {
-        /// <summary>
-        /// This coordinator EventDispatcher.
-        /// </summary>
-        EventDispatcher Dispatcher { get; }
+        public abstract EventDispatcher Dispatcher { get; }
+        private readonly HashSet<ICoordinatorDebugger> m_Debuggers = new();
+        internal void AttachDebugger(ICoordinatorDebugger debugger)
+        {
+            if (debugger != null && m_Debuggers.Add(debugger))
+            {
+                debugger.CoordinatorDebug = this;
+            }
+        }
+        internal void DetachDebugger(ICoordinatorDebugger debugger)
+        {
+            if (debugger != null)
+            {
+                debugger.CoordinatorDebug = null;
+                m_Debuggers.Remove(debugger);
+            }
+        }
+        internal void DetachAllDebuggers()
+        {
+            foreach (var debugger in m_Debuggers)
+            {
+                debugger.CoordinatorDebug = null;
+                debugger.Disconnect();
+            }
+        }
+        internal IEnumerable<ICoordinatorDebugger> GetAttachedDebuggers()
+        {
+            return m_Debuggers;
+        }
+        public void Refresh()
+        {
+            foreach (var debugger in m_Debuggers)
+            {
+                debugger.Refresh();
+            }
+        }
+        public bool InterceptEvent(EventBase ev)
+        {
+            bool intercepted = false;
+            foreach (var debugger in m_Debuggers)
+            {
+                intercepted |= debugger.InterceptEvent(ev);
+            }
+            return intercepted;
+        }
+
+        public void PostProcessEvent(EventBase ev)
+        {
+            foreach (var debugger in m_Debuggers)
+            {
+                debugger.PostProcessEvent(ev);
+            }
+        }
     }
     /// <summary>
     /// Dispatches events to a <see cref="IEventCoordinator"/>.
@@ -88,7 +135,7 @@ namespace Kurisu.Framework.Events
         private static readonly ObjectPool<Queue<EventRecord>> k_EventQueuePool = new(() => new Queue<EventRecord>());
         private Queue<EventRecord> m_Queue;
         uint m_GateCount;
-
+        private readonly DebuggerEventDispatchingStrategy m_DebuggerEventDispatchingStrategy;
         private struct DispatchContext
         {
             public uint m_GateCount;
@@ -99,8 +146,11 @@ namespace Kurisu.Framework.Events
         public EventDispatcher(IList<IEventDispatchingStrategy> strategies)
         {
             m_DispatchingStrategies = new List<IEventDispatchingStrategy>();
+#if UNITY_EDITOR
+            m_DebuggerEventDispatchingStrategy = new DebuggerEventDispatchingStrategy();
+            m_DispatchingStrategies.Add(m_DebuggerEventDispatchingStrategy);
+#endif
             m_DispatchingStrategies.AddRange(strategies);
-
             m_Queue = k_EventQueuePool.Get();
         }
         private static readonly IEventDispatchingStrategy[] defaultStrategies =
@@ -112,7 +162,7 @@ namespace Kurisu.Framework.Events
             return new EventDispatcher(defaultStrategies);
         }
         private readonly bool m_Immediate = false;
-        bool DispatchImmediately
+        private bool DispatchImmediately
         {
             get { return m_Immediate || m_GateCount == 0; }
         }
@@ -227,12 +277,12 @@ namespace Kurisu.Framework.Events
                 if (!evt.StopDispatch && !evt.IsPropagationStopped)
                 {
                     ApplyDispatchingStrategies(evt, coordinator);
-
-
-                    evt.PostDispatch(coordinator);
                 }
+#if UNITY_EDITOR
+                m_DebuggerEventDispatchingStrategy.PostDispatch(evt, coordinator);
+#endif
+                evt.PostDispatch(coordinator);
             }
-
             void ApplyDispatchingStrategies(EventBase evt, IEventCoordinator coordinator)
             {
                 foreach (var strategy in m_DispatchingStrategies)

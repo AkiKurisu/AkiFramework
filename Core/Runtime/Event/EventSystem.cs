@@ -1,29 +1,33 @@
 using UnityEngine;
 namespace Kurisu.Framework.Events
 {
-    public class EventSystem : MonoBehaviour
+    public class EventSystem : MonoEventCoordinator
     {
-        private class GlobalCallbackEventHandler : CallbackEventHandler, IEventCoordinator
+        private class GlobalCallbackEventHandler : BehaviourCallbackEventHandler
         {
-            public GlobalCallbackEventHandler(EventDispatcher dispatcher)
+            public GlobalCallbackEventHandler(MonoEventCoordinator eventCoordinator) : base(eventCoordinator)
             {
-                Dispatcher = dispatcher;
+                EventCoordinator = eventCoordinator;
             }
-            public EventDispatcher Dispatcher { get; }
+            public MonoEventCoordinator EventCoordinator { get; }
             public sealed override void SendEvent(EventBase e)
             {
                 e.Target = this;
-                Dispatcher.Dispatch(e, this, DispatchMode.Queued);
+                EventCoordinator.Dispatcher.Dispatch(e, EventCoordinator, DispatchMode.Default);
+                EventCoordinator.Refresh();
             }
+
             public sealed override void SendEvent(EventBase e, DispatchMode dispatchMode)
             {
                 e.Target = this;
-                Dispatcher.Dispatch(e, this, dispatchMode);
+                EventCoordinator.Dispatcher.Dispatch(e, EventCoordinator, dispatchMode);
+                EventCoordinator.Refresh();
             }
         }
         private static EventSystem instance;
         public static EventSystem Instance => instance != null ? instance : GetInstance();
         private EventDispatcher dispatcher;
+        public sealed override EventDispatcher Dispatcher { get => dispatcher; }
         public CallbackEventHandler EventHandler { get; private set; }
         private static EventSystem GetInstance()
         {
@@ -48,7 +52,7 @@ namespace Kurisu.Framework.Events
         private void Awake()
         {
             dispatcher = EventDispatcher.CreateDefault();
-            EventHandler = new GlobalCallbackEventHandler(dispatcher);
+            EventHandler = new GlobalCallbackEventHandler(this);
         }
         private void Update()
         {

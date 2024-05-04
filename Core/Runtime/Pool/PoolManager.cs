@@ -20,7 +20,7 @@ namespace Kurisu.Framework
         }
         private static PoolManager instance;
         private readonly Dictionary<string, GameObjectPool> gameObjectPoolDic = new();
-        private readonly Dictionary<string, ObjectPool> objectPoolDic = new();
+        private readonly Dictionary<string, StoreOnlyObjectPool> storeDic = new();
         private void OnDestroy()
         {
             if (instance == this) instance = null;
@@ -58,7 +58,7 @@ namespace Kurisu.Framework
             if (CheckObjectCache<T>())
             {
                 string name = typeof(T).FullName;
-                obj = (T)objectPoolDic[name].Get();
+                obj = (T)storeDic[name].Get();
                 return obj;
             }
             else
@@ -71,7 +71,7 @@ namespace Kurisu.Framework
             T obj;
             if (CheckObjectCache(objectName))
             {
-                obj = (T)objectPoolDic[objectName].Get();
+                obj = (T)storeDic[objectName].Get();
                 return obj;
             }
             else
@@ -80,27 +80,27 @@ namespace Kurisu.Framework
             }
         }
 
-        public void ReleaseObject(object obj)
+        public void ReleaseObject(IPooled obj)
         {
             string name = obj.GetType().FullName;
-            if (objectPoolDic.ContainsKey(name))
+            if (storeDic.ContainsKey(name))
             {
-                objectPoolDic[name].Release(obj);
+                storeDic[name].Release(obj);
             }
             else
             {
-                objectPoolDic.Add(name, new ObjectPool(obj));
+                storeDic.Add(name, new StoreOnlyObjectPool(obj));
             }
         }
-        public void ReleaseObject(object obj, string overrideName)
+        public void ReleaseObject(IPooled obj, string overrideName)
         {
-            if (objectPoolDic.ContainsKey(overrideName))
+            if (storeDic.ContainsKey(overrideName))
             {
-                objectPoolDic[overrideName].Release(obj);
+                storeDic[overrideName].Release(obj);
             }
             else
             {
-                objectPoolDic.Add(overrideName, new ObjectPool(obj));
+                storeDic.Add(overrideName, new StoreOnlyObjectPool(obj));
             }
         }
 
@@ -108,11 +108,11 @@ namespace Kurisu.Framework
         private bool CheckObjectCache<T>()
         {
             string name = typeof(T).FullName;
-            return objectPoolDic.ContainsKey(name) && objectPoolDic[name].poolQueue.Count > 0;
+            return storeDic.ContainsKey(name) && storeDic[name].poolQueue.Count > 0;
         }
         private bool CheckObjectCache(string objectName)
         {
-            return objectPoolDic.ContainsKey(objectName) && objectPoolDic[objectName].poolQueue.Count > 0;
+            return storeDic.ContainsKey(objectName) && storeDic[objectName].poolQueue.Count > 0;
         }
 
         #endregion
@@ -132,7 +132,7 @@ namespace Kurisu.Framework
 
             if (clearCObject)
             {
-                objectPoolDic.Clear();
+                storeDic.Clear();
             }
         }
 
@@ -162,11 +162,11 @@ namespace Kurisu.Framework
         }
         public void ClearObject<T>()
         {
-            objectPoolDic.Remove(typeof(T).FullName);
+            storeDic.Remove(typeof(T).FullName);
         }
         public void ClearObject(Type type)
         {
-            objectPoolDic.Remove(type.FullName);
+            storeDic.Remove(type.FullName);
         }
         #endregion
 

@@ -322,7 +322,6 @@ namespace Kurisu.Framework.Events
             public int lineNumber;
         }
 
-        //TODO: Add editor debugger
         internal static readonly Dictionary<CallbackEventHandler, Dictionary<Type, List<ListenerRecord>>> s_Listeners =
             new();
 
@@ -331,7 +330,9 @@ namespace Kurisu.Framework.Events
             var listeners = s_Listeners.ToList();
             foreach (var eventRegistrationListener in listeners)
             {
-                s_Listeners.Remove(eventRegistrationListener.Key);
+                var key = eventRegistrationListener.Key as BehaviourCallbackEventHandler; // Behavior that sends events
+                if (key?.AttachedBehaviour == null)
+                    s_Listeners.Remove(eventRegistrationListener.Key);
             }
         }
 

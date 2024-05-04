@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEditor;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 namespace Kurisu.Framework.Editor
 {
     [CustomPropertyDrawer(typeof(PopupSelector), true)]
@@ -10,6 +11,26 @@ namespace Kurisu.Framework.Editor
         private static readonly GUIContent k_IsNotStringLabel = new("The property type is not string.");
         private static readonly GUIContent k_IsNotPopupSetLabel = new("The popup type is not implemented form PopupSet.");
         private static readonly Dictionary<Type, PopupSet> dataSetDict = new();
+
+        public static PopupSet GetOrCreateSettings(Type type)
+        {
+            var guids = AssetDatabase.FindAssets($"t:{type.FullName}");
+            PopupSet setting = null;
+            if (guids.Length != 0)
+            {
+                setting = guids.Select(x => AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(x), type) as PopupSet)
+                                .FirstOrDefault(x => x.GetType() == type);
+            }
+            if (setting == null)
+            {
+                setting = ScriptableObject.CreateInstance(type) as PopupSet;
+                string k_SettingsPath = $"Assets/{type.Name}.asset";
+                Debug.Log($"New {type.Name} Set Created! Saving Path:{k_SettingsPath}");
+                AssetDatabase.CreateAsset(setting, k_SettingsPath);
+                AssetDatabase.SaveAssets();
+            }
+            return setting;
+        }
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
@@ -23,7 +44,7 @@ namespace Kurisu.Framework.Editor
                     {
                         height = EditorGUIUtility.singleLineHeight
                     };
-                    if (!dataSetDict.ContainsKey(popupType)) dataSetDict[popupType] = PopupSet.GetOrCreateSettings(popupType);
+                    if (!dataSetDict.ContainsKey(popupType)) dataSetDict[popupType] = GetOrCreateSettings(popupType);
                     PopupSet popupSet = dataSetDict[popupType];
                     int index = EditorGUI.Popup(position: popupPosition, title ?? label.text, selectedIndex: popupSet.GetStateID(property.stringValue), displayedOptions: popupSet.Values);
                     if (index >= 0)

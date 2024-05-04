@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 namespace Kurisu.Framework
 {
-    public class GameObjectPool
+    internal class GameObjectPool
     {
         public GameObject fatherObj;
         public Queue<GameObject> poolQueue;

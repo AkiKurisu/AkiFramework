@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 namespace Kurisu.Framework
 {
     public interface IAkiEvent { }
@@ -91,48 +90,4 @@ namespace Kurisu.Framework
             mOnEvent?.Invoke(t, k, s);
         }
     }
-
-    public class AkiEvents
-    {
-        private readonly Dictionary<Type, IAkiEvent> mTypeEvents = new();
-
-        public void AddEvent<T>() where T : IAkiEvent, new()
-        {
-            mTypeEvents.Add(typeof(T), new T());
-        }
-        public T GetEvent<T>() where T : IAkiEvent
-        {
-
-            if (mTypeEvents.TryGetValue(typeof(T), out IAkiEvent e))
-            {
-                return (T)e;
-            }
-
-            return default;
-        }
-        public IAkiEvent GetEvent(Type type)
-        {
-
-            if (mTypeEvents.TryGetValue(type, out IAkiEvent e))
-            {
-                return e;
-            }
-
-            return null;
-        }
-
-        public T GetOrAddEvent<T>() where T : IAkiEvent, new()
-        {
-            var eType = typeof(T);
-            if (mTypeEvents.TryGetValue(eType, out var e))
-            {
-                return (T)e;
-            }
-
-            var t = new T();
-            mTypeEvents.Add(eType, t);
-            return t;
-        }
-    }
-
 }

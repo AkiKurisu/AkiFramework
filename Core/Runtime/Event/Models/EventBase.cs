@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
-using UnityEngine.Pool;
 namespace Kurisu.Framework.Events
 {
     /// <summary>
@@ -44,9 +44,10 @@ namespace Kurisu.Framework.Events
         /// <summary>
         /// Retrieves the type ID for this event instance.
         /// </summary>
+        [JsonIgnore]
         public virtual long EventTypeId => -1;
 
-        static ulong s_NextEventId = 0;
+        private static ulong s_NextEventId = 0;
 
         // Read-only state
         /// <summary>
@@ -55,7 +56,8 @@ namespace Kurisu.Framework.Events
         /// <remarks>
         /// This value is relative to the start time of the current application.
         /// </remarks>
-        public float Timestamp { get; private set; }
+        [JsonIgnore]
+        public long Timestamp { get; private set; }
         internal ulong EventId { get; private set; }
         internal ulong TriggerEventId { get; private set; }
         internal EventPropagation Propagation { get; set; }
@@ -63,10 +65,11 @@ namespace Kurisu.Framework.Events
         {
             TriggerEventId = id;
         }
-        LifeCycleStatus Status { get; set; }
+        private LifeCycleStatus Status { get; set; }
         /// <summary>
         /// The current propagation phase for this event. 
         /// </summary>
+        [JsonIgnore]
         public PropagationPhase PropagationPhase { get; internal set; }
 
         /// <summary>
@@ -91,6 +94,7 @@ namespace Kurisu.Framework.Events
         /// The target handler that received this event. 
         /// Unlike currentTarget, this target does not change when the event is sent to other elements along the propagation path.
         /// </summary>
+        [JsonIgnore]
         public IEventHandler Target
         {
             get { return m_Target; }
@@ -124,6 +128,7 @@ namespace Kurisu.Framework.Events
         /// <summary>
         /// Whether StopPropagation() was called for this event.
         /// </summary>
+        [JsonIgnore]
         public bool IsPropagationStopped
         {
             get { return (Status & LifeCycleStatus.PropagationStopped) != LifeCycleStatus.None; }
@@ -160,6 +165,7 @@ namespace Kurisu.Framework.Events
         /// <summary>
         /// Indicates whether StopImmediatePropagation() was called for this event.
         /// </summary>
+        [JsonIgnore]
         public bool IsImmediatePropagationStopped
         {
             get { return (Status & LifeCycleStatus.ImmediatePropagationStopped) != LifeCycleStatus.None; }
@@ -188,6 +194,7 @@ namespace Kurisu.Framework.Events
         /// <summary>
         /// Returns true if the default actions should not be executed for this event.
         /// </summary>
+        [JsonIgnore]
         public bool IsDefaultPrevented
         {
             get { return (Status & LifeCycleStatus.DefaultPrevented) != LifeCycleStatus.None; }
@@ -204,12 +211,13 @@ namespace Kurisu.Framework.Events
             }
         }
 
-        IEventHandler m_CurrentTarget;
+        private IEventHandler m_CurrentTarget;
 
         /// <summary>
         /// The current target of the event. 
         /// This is the eventHandler, in the propagation path, for which event handlers are currently being executed.
         /// </summary>
+        [JsonIgnore]
         public virtual IEventHandler CurrentTarget
         {
             get { return m_CurrentTarget; }
@@ -223,6 +231,7 @@ namespace Kurisu.Framework.Events
         /// Indicates whether the event is being dispatched to a eventHandler. 
         /// An event cannot be re-dispatched while it being dispatched. If you need to recursively dispatch an event, it is recommended that you use a copy of the event.
         /// </summary>
+        [JsonIgnore]
         public bool Dispatch
         {
             get { return (Status & LifeCycleStatus.Dispatching) != LifeCycleStatus.None; }
@@ -295,6 +304,11 @@ namespace Kurisu.Framework.Events
             }
         }
 
+#if UNITY_EDITOR
+        internal EventDebugger EventLogger { get; set; }
+
+        internal bool Log => EventLogger != null;
+#endif
 
 
         /// <summary>
@@ -307,7 +321,7 @@ namespace Kurisu.Framework.Events
 
         private void LocalInit()
         {
-            Timestamp = Time.realtimeSinceStartup;
+            Timestamp = TimeSinceStartupMs();
 
             TriggerEventId = 0;
             EventId = s_NextEventId++;
@@ -330,9 +344,14 @@ namespace Kurisu.Framework.Events
             Dispatched = false;
             Processed = false;
             Pooled = false;
-
+#if UNITY_EDITOR
+            EventLogger = null;
+#endif
         }
-
+        public static long TimeSinceStartupMs()
+        {
+            return (long)(Time.realtimeSinceStartup * 1000.0f);
+        }
         /// <summary>
         /// Constructor. Avoid creating new event instances. Instead, use GetPooled() to get an instance from a pool of reusable event instances.
         /// </summary>
@@ -375,6 +394,10 @@ namespace Kurisu.Framework.Events
         private static readonly long s_TypeId = RegisterEventType();
         private static readonly ObjectPool<T> s_Pool = new(() => new T());
 
+        internal static void SetCreateFunction(Func<T> createMethod)
+        {
+            s_Pool.CreateFunc = createMethod;
+        }
         private int m_RefCount;
 
         protected EventBase() : base()
@@ -465,6 +488,7 @@ namespace Kurisu.Framework.Events
         /// <summary>
         /// Retrieves the type ID for this event instance.
         /// </summary>
+        [JsonIgnore]
         public override long EventTypeId => s_TypeId;
     }
 }
