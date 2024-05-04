@@ -109,7 +109,8 @@ namespace Kurisu.Framework.Resource
         {
             versionMap.Where(p => p.Value == version).Select(p => p.Key).ToList().ForEach(ads =>
             {
-                ResourceSystem.ReleaseAsset(internalHandles[ads]);
+                if (internalHandles.TryGetValue(ads, out var handle))
+                    ResourceSystem.ReleaseAsset(handle);
                 cacheMap.Remove(ads);
                 internalHandles.Remove(ads);
                 versionMap.Remove(ads);

@@ -61,6 +61,9 @@ namespace Kurisu.Framework.Events
             return !left.Equals(right);
         }
     }
+    /// <summary>
+    /// MonoBehaviour based EventCoordinator that can be tracked by debugger
+    /// </summary>
     public abstract class MonoEventCoordinator : MonoBehaviour, IEventCoordinator
     {
         public abstract EventDispatcher Dispatcher { get; }

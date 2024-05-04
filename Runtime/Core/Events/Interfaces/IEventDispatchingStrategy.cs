@@ -1,4 +1,3 @@
-using System.Diagnostics;
 namespace Kurisu.Framework.Events
 {
     // Simplified from UIElement

@@ -17,7 +17,7 @@ namespace Kurisu.Framework
         }
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            writer.WriteValue(((BindableProperty<T>)value).Value);
+            serializer.Serialize(writer, ((BindableProperty<T>)value).Value);
         }
     }
 }

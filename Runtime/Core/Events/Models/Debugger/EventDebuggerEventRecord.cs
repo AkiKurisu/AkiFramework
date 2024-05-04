@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Kurisu.Framework.React;
 using Newtonsoft.Json;
 using UnityEngine;
 namespace Kurisu.Framework.Events
@@ -9,7 +10,17 @@ namespace Kurisu.Framework.Events
     {
         public List<EventDebuggerEventRecord> eventList;
     }
-
+    /// <summary>
+    /// Control jsonConverter used in debugger
+    /// </summary>
+    public static class DebuggerConverterSettings
+    {
+        static DebuggerConverterSettings()
+        {
+            Converters = new JsonConverter[] { new VectorConverter() };
+        }
+        public static JsonConverter[] Converters { get; set; }
+    }
     [Serializable]
     internal class EventDebuggerEventRecord
     {
@@ -33,7 +44,7 @@ namespace Kurisu.Framework.Events
             Timestamp = evt.Timestamp;
             Target = evt.Target;
             PropagationPhase = evt.PropagationPhase;
-            JsonData = JsonConvert.SerializeObject(evt);
+            JsonData = JsonConvert.SerializeObject(evt, DebuggerConverterSettings.Converters);
         }
 
         public EventDebuggerEventRecord(EventBase evt)
