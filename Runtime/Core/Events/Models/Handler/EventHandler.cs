@@ -45,7 +45,7 @@ namespace Kurisu.Framework.Events
         /// </summary>
         /// <param name="callback">The event handler to add.</param>
         /// <param name="userArgs">Data to pass to the callback.</param>
-        internal void RegisterCallback<TEventType, TUserArgsType>(EventCallback<TEventType, TUserArgsType> callback, TUserArgsType userArgs) where TEventType : EventBase<TEventType>, new()
+        public void RegisterCallback<TEventType, TUserArgsType>(EventCallback<TEventType, TUserArgsType> callback, TUserArgsType userArgs) where TEventType : EventBase<TEventType>, new()
         {
             m_CallbackRegistry ??= new EventCallbackRegistry();
 
@@ -56,7 +56,7 @@ namespace Kurisu.Framework.Events
             AddEventCategories<TEventType>();
         }
 
-        internal void RegisterCallback<TEventType>(EventCallback<TEventType> callback, InvokePolicy invokePolicy) where TEventType : EventBase<TEventType>, new()
+        public void RegisterCallback<TEventType>(EventCallback<TEventType> callback, InvokePolicy invokePolicy) where TEventType : EventBase<TEventType>, new()
         {
             m_CallbackRegistry ??= new EventCallbackRegistry();
 
@@ -83,7 +83,7 @@ namespace Kurisu.Framework.Events
         /// Remove callback from the instance.
         /// </summary>
         /// <param name="callback">The callback to remove. If this callback was never registered, nothing happens.</param>
-        internal void UnregisterCallback<TEventType, TUserArgsType>(EventCallback<TEventType, TUserArgsType> callback) where TEventType : EventBase<TEventType>, new()
+        public void UnregisterCallback<TEventType, TUserArgsType>(EventCallback<TEventType, TUserArgsType> callback) where TEventType : EventBase<TEventType>, new()
         {
             m_CallbackRegistry?.UnregisterCallback(callback);
 #if UNITY_EDITOR
@@ -91,7 +91,7 @@ namespace Kurisu.Framework.Events
 #endif
         }
 
-        internal bool TryGetUserArgs<TEventType, TCallbackArgs>(EventCallback<TEventType, TCallbackArgs> callback, out TCallbackArgs userData) where TEventType : EventBase<TEventType>, new()
+        public bool TryGetUserArgs<TEventType, TCallbackArgs>(EventCallback<TEventType, TCallbackArgs> callback, out TCallbackArgs userData) where TEventType : EventBase<TEventType>, new()
         {
             userData = default;
 
@@ -111,7 +111,7 @@ namespace Kurisu.Framework.Events
 
         public abstract void SendEvent(EventBase e, DispatchMode dispatchMode);
 
-        internal protected void HandleEventAtTargetPhase(EventBase evt)
+        public void HandleEventAtTargetPhase(EventBase evt)
         {
             evt.CurrentTarget = evt.Target;
             evt.PropagationPhase = PropagationPhase.AtTarget;
@@ -120,14 +120,14 @@ namespace Kurisu.Framework.Events
             HandleEventAtCurrentTargetAndPhase(evt);
         }
 
-        internal protected void HandleEventAtTargetAndDefaultPhase(EventBase evt)
+        public void HandleEventAtTargetAndDefaultPhase(EventBase evt)
         {
             HandleEventAtTargetPhase(evt);
             evt.PropagationPhase = PropagationPhase.DefaultAction;
             HandleEventAtCurrentTargetAndPhase(evt);
         }
 
-        internal protected void HandleEventAtCurrentTargetAndPhase(EventBase evt)
+        public void HandleEventAtCurrentTargetAndPhase(EventBase evt)
         {
             if (evt == null)
                 return;

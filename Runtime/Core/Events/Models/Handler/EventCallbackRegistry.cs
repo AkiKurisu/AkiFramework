@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEngine;
 namespace Kurisu.Framework.Events
 {
-    internal enum InvokePolicy
+    public enum InvokePolicy
     {
         Default = default,
         IncludeDisabled
