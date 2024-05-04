@@ -1,33 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-namespace Kurisu.Framework
+namespace Kurisu.Framework.Pool
 {
-    /// <summary>
-    /// Non factory func object pool
-    /// </summary>
-    internal class StoreOnlyObjectPool
-    {
-        private const int PoolCapacity = 10;
-        public StoreOnlyObjectPool() { }
-        public StoreOnlyObjectPool(IPooled obj)
-        {
-            Release(obj);
-        }
-        internal readonly Queue<IPooled> poolQueue = new(PoolCapacity);
-        public void Release(IPooled obj)
-        {
-            poolQueue.Enqueue(obj);
-        }
-        public object Get()
-        {
-            if (poolQueue.TryDequeue(out IPooled result))
-            {
-                return result;
-            }
-            return null;
-        }
-    }
     internal class ObjectPool<T> where T : new()
     {
         private readonly Stack<T> m_Stack = new();

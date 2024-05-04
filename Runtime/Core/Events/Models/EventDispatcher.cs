@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Kurisu.Framework.Pool;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 namespace Kurisu.Framework.Events

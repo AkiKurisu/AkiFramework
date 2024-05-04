@@ -2,11 +2,37 @@ using System;
 using UnityEngine;
 namespace Kurisu.Framework.Tasks
 {
-    /// <summary>
-    /// Contains extension methods related to <see cref="Timer"/>s.
-    /// </summary>
-    public static class TaskExtensions
+    public static class Task
     {
+        /// <summary>
+        /// Schedule a callBack
+        /// </summary>
+        /// <param name="callBack"></param>
+        /// <param name="delay"></param>
+        /// <returns></returns>
+        public static TaskHandle Schedule(Action callBack, float delay)
+        {
+            var timer = Timer.Register(delay, callBack);
+            var handle = TaskManager.Instance.CreateTaskHandle(timer);
+            timer.OnComplete += () => TaskManager.Instance.ReleaseTask(handle.TaskId);
+            return handle;
+        }
+        public static TaskHandle Schedule(Action callBack, Action<float> onUpdate, float delay)
+        {
+            var timer = Timer.Register(delay, callBack, onUpdate);
+            var handle = TaskManager.Instance.CreateTaskHandle(timer);
+            timer.OnComplete += () => TaskManager.Instance.ReleaseTask(handle.TaskId);
+            return handle;
+        }
+        /// <summary>
+        /// Enable task debug mode
+        /// </summary>
+        /// <value></value>
+        public static bool DebugMode
+        {
+            get => TaskManager.Instance.DebugMode;
+            set => TaskManager.Instance.DebugMode = value;
+        }
         /// <summary>
         /// Attach a timer on to the behaviour. If the behaviour is destroyed before the timer is completed,
         /// e.g. through a scene change, the timer callback will not execute.
@@ -44,38 +70,6 @@ namespace Kurisu.Framework.Tasks
         public static void Run(this IJob job)
         {
             job.Execute();
-        }
-    }
-    public static class Task
-    {
-        /// <summary>
-        /// Schedule a callBack
-        /// </summary>
-        /// <param name="callBack"></param>
-        /// <param name="delay"></param>
-        /// <returns></returns>
-        public static TaskHandle Schedule(Action callBack, float delay)
-        {
-            var timer = Timer.Register(delay, callBack);
-            var handle = TaskManager.Instance.CreateTaskHandle(timer);
-            timer.OnComplete += () => TaskManager.Instance.ReleaseTask(handle.TaskId);
-            return handle;
-        }
-        public static TaskHandle Schedule(Action callBack, Action<float> onUpdate, float delay)
-        {
-            var timer = Timer.Register(delay, callBack, onUpdate);
-            var handle = TaskManager.Instance.CreateTaskHandle(timer);
-            timer.OnComplete += () => TaskManager.Instance.ReleaseTask(handle.TaskId);
-            return handle;
-        }
-        /// <summary>
-        /// Enable task debug mode
-        /// </summary>
-        /// <value></value>
-        public static bool DebugMode
-        {
-            get => TaskManager.Instance.DebugMode;
-            set => TaskManager.Instance.DebugMode = value;
         }
     }
 }

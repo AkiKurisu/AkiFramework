@@ -3,7 +3,7 @@
   "displayName": "AkiFramework",
   "version": "1.0.1",
   "unity": "2021.3",
-  "description": "AkiKurisu game framework.",
+  "description": "Personal game framework and code collection.",
   "keywords": [
     "Framework"
   ],
@@ -13,6 +13,6 @@
     "url": "https://github.com/AkiKurisu"
   },
   "dependencies": {
-    "com.unity.addressables": "1.19.19"
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
   }
 }
