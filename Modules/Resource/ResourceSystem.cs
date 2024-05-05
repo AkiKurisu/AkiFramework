@@ -43,6 +43,8 @@ namespace Kurisu.Framework.Resource
             /// </summary>
             Intersection
         }
+        internal const int AssetLoadOperation = 0;
+        internal const int InstantiateOperation = 1;
         #region  Asset Load
         /// <summary>
         /// Load asset
@@ -52,34 +54,12 @@ namespace Kurisu.Framework.Resource
         /// <param name="unRegisterHandle"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static ResourceHandle<T> AsyncLoadAsset<T>(string address, Action<T> action, IUnRegister unRegisterHandle)
+        public static ResourceHandle<T> AsyncLoadAsset<T>(string address, Action<T> action = null)
         {
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
             if (action != null)
                 handle.Completed += (h) => action.Invoke(h.Result);
-            var resourceHandle = CreateHandle(handle);
-            if (unRegisterHandle != null)
-                resourceHandle.GetUnRegister().AttachUnRegister(unRegisterHandle);
-            return resourceHandle;
-        }
-        /// <summary>
-        /// Load asset
-        /// </summary>
-        /// <param name="address"></param>
-        /// <param name="action"></param>
-        /// <param name="bindObject"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public static ResourceHandle<T> AsyncLoadAsset<T>(string address, Action<T> action = null, GameObject bindObject = null)
-        {
-            AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
-            if (action != null)
-                handle.Completed += (h) => action.Invoke(h.Result);
-
-            var resourceHandle = CreateHandle(handle);
-            if (bindObject != null)
-                resourceHandle.GetUnRegister().AttachUnRegister(bindObject);
-            return resourceHandle;
+            return CreateHandle(handle, AssetLoadOperation);
         }
         #endregion
         #region Instantiate
@@ -94,12 +74,10 @@ namespace Kurisu.Framework.Resource
         public static ResourceHandle<GameObject> AsyncInstantiate(string address, Transform parent, Action<GameObject> action = null, GameObject bindObject = null)
         {
             AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
-            var resourceHandle = CreateHandle(handle);
+            var resourceHandle = CreateHandle(handle, InstantiateOperation);
             handle.Completed += (h) => instanceIDMap.Add(h.Result.GetInstanceID(), resourceHandle.handleID);
             if (action != null)
                 handle.Completed += (h) => action.Invoke(h.Result);
-            if (bindObject != null)
-                new UnRegisterCallBackHandle(() => ReleaseInstance(resourceHandle.Result)).AttachUnRegister(bindObject);
             return resourceHandle;
         }
         #endregion
@@ -129,35 +107,19 @@ namespace Kurisu.Framework.Resource
         }
         #endregion
         #region  Multi Assets Load
-        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(object key, Action<IList<T>> action, GameObject bindObject = null)
+        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(object key, Action<IList<T>> action = null)
         {
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null);
             if (action != null)
                 handle.Completed += (h) => action.Invoke(h.Result);
-            var resourceHandle = CreateHandle(handle);
-            if (bindObject != null)
-                resourceHandle.GetUnRegister().AttachUnRegister(bindObject);
-            return resourceHandle;
+            return CreateHandle(handle, AssetLoadOperation);
         }
-        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(object key, Action<IList<T>> action, IUnRegister unRegisterHandle)
-        {
-            AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null);
-            if (action != null)
-                handle.Completed += (h) => action.Invoke(h.Result);
-            var resourceHandle = CreateHandle(handle);
-            if (unRegisterHandle != null)
-                resourceHandle.GetUnRegister().AttachUnRegister(unRegisterHandle);
-            return resourceHandle;
-        }
-        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(IEnumerable key, MergeMode mode, Action<IList<T>> action, IUnRegister unRegisterHandle)
+        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(IEnumerable key, MergeMode mode, Action<IList<T>> action = null)
         {
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null, (Addressables.MergeMode)mode);
             if (action != null)
                 handle.Completed += (h) => action.Invoke(h.Result);
-            var resourceHandle = CreateHandle(handle);
-            if (unRegisterHandle != null)
-                resourceHandle.GetUnRegister().AttachUnRegister(unRegisterHandle);
-            return resourceHandle;
+            return CreateHandle(handle, AssetLoadOperation);
         }
         #endregion
         /// <summary>
@@ -166,10 +128,10 @@ namespace Kurisu.Framework.Resource
         private static int handleIndex = 1;
         private static readonly Dictionary<int, int> instanceIDMap = new();
         private static readonly Dictionary<int, AsyncOperationHandle> internalHandleMap = new();
-        private static ResourceHandle<T> CreateHandle<T>(AsyncOperationHandle<T> asyncOperationHandle)
+        internal static ResourceHandle<T> CreateHandle<T>(AsyncOperationHandle<T> asyncOperationHandle, int operation)
         {
             internalHandleMap.Add(++handleIndex, asyncOperationHandle);
-            return new ResourceHandle<T>(handleIndex);
+            return new ResourceHandle<T>(handleIndex, operation);
         }
         public static AsyncOperationHandle<T> CastOperationHandle<T>(int handleID)
         {

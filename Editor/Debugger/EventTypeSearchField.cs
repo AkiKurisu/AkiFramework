@@ -117,12 +117,8 @@ namespace Kurisu.Framework.Events.Editor
             m_GroupedEvents = new Dictionary<string, List<long>>();
 
             AppDomain currentDomain = AppDomain.CurrentDomain;
-            // HashSet<string> userAssemblies = new(ScriptingRuntime.GetAllUserAssemblies());
             foreach (Assembly assembly in currentDomain.GetAssemblies())
             {
-                // if (userAssemblies.Contains(assembly.GetName().Name + ".dll"))
-                //     continue;
-
                 try
                 {
                     foreach (var type in assembly.GetTypes().Where(t => typeof(EventBase).IsAssignableFrom(t) && !t.ContainsGenericParameters))
@@ -160,14 +156,14 @@ namespace Kurisu.Framework.Events.Editor
                 }
             }
 
-            m_State.Add(0, false);
+            m_State.Add(0, true);
 
             // Add groups, with negative ids.
             var keyIndex = -1;
             foreach (var key in m_GroupedEvents.Keys.OrderBy(k => k))
             {
                 m_Choices.Add(new EventTypeChoice() { Name = key, Group = key, TypeId = keyIndex });
-                m_State.Add(keyIndex--, key.Contains("IPointerEvent"));
+                m_State.Add(keyIndex--, true);
             }
 
             m_Choices.Sort();

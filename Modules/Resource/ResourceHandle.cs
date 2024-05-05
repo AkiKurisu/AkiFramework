@@ -7,9 +7,13 @@ using System.Threading.Tasks;
 using UnityEngine.ResourceManagement.AsyncOperations;
 namespace Kurisu.Framework.Resource
 {
-    public readonly struct ResourceHandle
+    /// <summary>
+    /// A light weight replacement of <see cref="AsyncOperationHandle"/>
+    /// </summary>
+    public readonly struct ResourceHandle : IEquatable<ResourceHandle>
     {
         internal readonly int handleID;
+        internal readonly int operationType;
         internal readonly AsyncOperationHandle InternalHandle => ResourceSystem.CastOperationHandle(handleID);
         public readonly object Result => InternalHandle.Result;
 #if UNITASK_SUPPORT
@@ -17,9 +21,10 @@ namespace Kurisu.Framework.Resource
 #else
         public readonly Task Task => InternalHandle.Task;
 #endif
-        public ResourceHandle(int handleID)
+        public ResourceHandle(int handleID, int operationType)
         {
             this.handleID = handleID;
+            this.operationType = operationType;
         }
         public readonly void RegisterCallBack(Action callBack)
         {
@@ -31,12 +36,20 @@ namespace Kurisu.Framework.Resource
         }
         public ResourceHandle<T> Convert<T>()
         {
-            return new ResourceHandle<T>(handleID);
+            return new ResourceHandle<T>(handleID, operationType);
+        }
+        public bool Equals(ResourceHandle other)
+        {
+            return other.handleID == handleID && other.InternalHandle.Equals(InternalHandle);
         }
     }
-    public readonly struct ResourceHandle<T>
+    /// <summary>
+    /// A light weight replacement of <see cref="AsyncOperationHandle{T}"/>
+    /// </summary>
+    public readonly struct ResourceHandle<T> : IEquatable<ResourceHandle<T>>
     {
         internal readonly int handleID;
+        internal readonly int operationType;
         internal readonly AsyncOperationHandle<T> InternalHandle => ResourceSystem.CastOperationHandle<T>(handleID);
         public readonly T Result => InternalHandle.Result;
 #if UNITASK_SUPPORT
@@ -44,13 +57,14 @@ namespace Kurisu.Framework.Resource
 #else
         public readonly Task<T> Task => InternalHandle.Task;
 #endif
-        public ResourceHandle(int handleID)
+        public ResourceHandle(int handleID, int operationType)
         {
             this.handleID = handleID;
+            this.operationType = operationType;
         }
         public static implicit operator ResourceHandle(ResourceHandle<T> obj)
         {
-            return new ResourceHandle(obj.handleID);
+            return new ResourceHandle(obj.handleID, obj.operationType);
         }
         public readonly void RegisterCallBack(Action<T> callBack)
         {
@@ -63,6 +77,11 @@ namespace Kurisu.Framework.Resource
         public readonly T WaitForCompletion()
         {
             return InternalHandle.WaitForCompletion();
+        }
+
+        public bool Equals(ResourceHandle<T> other)
+        {
+            return other.handleID == handleID && other.InternalHandle.Equals(InternalHandle);
         }
     }
 }

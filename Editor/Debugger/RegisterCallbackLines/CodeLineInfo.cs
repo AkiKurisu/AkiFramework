@@ -14,7 +14,7 @@ namespace Kurisu.Framework.Events.Editor
 
         public CodeLineInfo(string text, CallbackEventHandler handler, string fileName, int lineNumber, int lineHashCode)
         {
-            this.Text = text;
+            Text = text;
             CallbackHandler = handler;
             FileName = fileName;
             LineNumber = lineNumber;

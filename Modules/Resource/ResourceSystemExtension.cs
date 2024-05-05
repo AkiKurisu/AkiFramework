@@ -9,13 +9,39 @@ namespace Kurisu.Framework.Resource
 {
     public static class ResourceSystemExtension
     {
-        internal static UnRegisterCallBackHandle GetUnRegister<T>(this ResourceHandle<T> handle)
+        public static UnRegisterCallBackHandle GetUnRegisterHandle<T>(this ResourceHandle<T> handle)
         {
-            return new UnRegisterCallBackHandle(() => ResourceSystem.ReleaseAsset(handle));
+            if (handle.operationType == ResourceSystem.InstantiateOperation && typeof(T) == typeof(GameObject))
+                return new UnRegisterCallBackHandle(() => ResourceSystem.ReleaseInstance(handle.Result as GameObject));
+            else
+                return new UnRegisterCallBackHandle(() => ResourceSystem.ReleaseAsset(handle));
         }
-        internal static UnRegisterCallBackHandle GetUnRegister(this ResourceHandle handle)
+        public static UnRegisterCallBackHandle GetUnRegisterHandle(this ResourceHandle handle)
         {
-            return new UnRegisterCallBackHandle(() => ResourceSystem.ReleaseAsset(handle));
+            if (handle.operationType == ResourceSystem.InstantiateOperation && handle.Result.GetType() == typeof(GameObject))
+                return new UnRegisterCallBackHandle(() => ResourceSystem.ReleaseInstance(handle.Result as GameObject));
+            else
+                return new UnRegisterCallBackHandle(() => ResourceSystem.ReleaseAsset(handle));
+        }
+        public static ResourceHandle<T> AttachUnRegister<T>(this ResourceHandle<T> handle, IUnRegister unRegister)
+        {
+            handle.GetUnRegisterHandle().AttachUnRegister(unRegister);
+            return handle;
+        }
+        public static ResourceHandle AttachUnRegister(this ResourceHandle handle, IUnRegister unRegister)
+        {
+            handle.GetUnRegisterHandle().AttachUnRegister(unRegister);
+            return handle;
+        }
+        public static ResourceHandle<T> AttachUnRegister<T>(this ResourceHandle<T> handle, GameObject unRegisterGameObject)
+        {
+            handle.GetUnRegisterHandle().AttachUnRegister(unRegisterGameObject);
+            return handle;
+        }
+        public static ResourceHandle AttachUnRegister(this ResourceHandle handle, GameObject unRegisterGameObject)
+        {
+            handle.GetUnRegisterHandle().AttachUnRegister(unRegisterGameObject);
+            return handle;
         }
 #if UNITASK_SUPPORT
         public static UniTask<T>.Awaiter GetAwaiter<T>(this ResourceHandle<T> handle)
@@ -91,15 +117,14 @@ namespace Kurisu.Framework.Resource
             return ResourceSystem.IsValid(handle.handleID) && handle.InternalHandle.IsDone;
         }
         /// <summary>
-        /// Load asset sync, should be careful if is used in Awake() or Start() when scene is also loaded by Addressables,
-        /// which may block your whole game!
+        /// Convert to <see cref="ResourceHandle{T}"/>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="assetReferenceT"></param>
         /// <returns></returns>
-        public static T GetAssetSync<T>(this AssetReferenceT<T> assetReferenceT) where T : Object
+        public static ResourceHandle<T> AsyncLoadAsset<T>(this AssetReferenceT<T> assetReferenceT) where T : Object
         {
-            return assetReferenceT.LoadAssetAsync().WaitForCompletion();
+            return ResourceSystem.CreateHandle(assetReferenceT.LoadAssetAsync(), ResourceSystem.AssetLoadOperation);
         }
     }
 }

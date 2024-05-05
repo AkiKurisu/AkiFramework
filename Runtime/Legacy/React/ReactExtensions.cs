@@ -27,6 +27,11 @@ namespace Kurisu.Framework
             unRegister.AddUnRegisterHandle(handle);
             return handle;
         }
+        /// <summary>
+        /// Get or create an UnRegister from GameObject, listening OnDestroy event
+        /// </summary>
+        /// <param name="gameObject"></param>
+        /// <returns></returns>
         public static UnRegisterOnDestroyTrigger GetUnRegister(this GameObject gameObject)
         {
             if (!gameObject.TryGetComponent<UnRegisterOnDestroyTrigger>(out var trigger))

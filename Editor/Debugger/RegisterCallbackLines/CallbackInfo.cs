@@ -8,7 +8,7 @@ namespace Kurisu.Framework.Events.Editor
 
         public CallbackInfo(string text, CallbackEventHandler handler)
         {
-            this.Text = text;
+            Text = text;
             CallbackHandler = handler;
         }
     }

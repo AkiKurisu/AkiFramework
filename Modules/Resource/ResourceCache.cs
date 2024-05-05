@@ -16,7 +16,7 @@ namespace Kurisu.Framework.Resource
         public InvalidResourceRequestException(string message) : base(message) { }
     }
     /// <summary>
-    /// Loading and cache specific asset as a group
+    /// Loading and cache specific asset as a group and release them by control version
     /// </summary>
     /// <typeparam name="TAsset"></typeparam>
     public class ResourceCache<TAsset> : IDisposable where TAsset : UnityEngine.Object
@@ -85,12 +85,18 @@ namespace Kurisu.Framework.Resource
             internalHandles.Add(address, internalHandle);
             return internalHandle;
         }
+        /// <summary>
+        /// Implementation of <see cref="IDisposable"/>, release all handles in cache.
+        /// </summary>
         public void Dispose()
         {
             foreach (var handle in internalHandles.Values)
             {
                 ResourceSystem.ReleaseAsset(handle);
             }
+            internalHandles.Clear();
+            cacheMap.Clear();
+            versionMap.Clear();
         }
         /// <summary>
         /// Get cache addresses
@@ -117,13 +123,12 @@ namespace Kurisu.Framework.Resource
             });
         }
         /// <summary>
-        /// Update version and release assets with last version
+        /// Release assets with last version and update version
         /// </summary>
-        public void UpdateVersionAndReleaseAssets()
+        public void ReleaseAssetsAndUpdateVersion()
         {
-            int version = Version;
+            ReleaseAssetsWithVersion(Version);
             UpdateVersion();
-            ReleaseAssetsWithVersion(version);
         }
     }
 }
