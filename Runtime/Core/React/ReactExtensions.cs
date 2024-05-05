@@ -1,5 +1,4 @@
 using Kurisu.Framework.Events;
-using UnityEngine;
 namespace Kurisu.Framework.React
 {
     public static class ReactExtensions
@@ -9,10 +8,10 @@ namespace Kurisu.Framework.React
             handler.RegisterCallback(callback);
             return new UnRegisterCallBackHandle(() => handler.UnregisterCallback(callback));
         }
-        public static IUnRegisterHandle RegisterCallbackWithUnRegister<T>(this IReadonlyReactiveValue<T> handler, EventCallback<ChangeEvent<T>> callback)
+        public static IUnRegisterHandle RegisterValueChangeCallbackWithUnRegister<T>(this IReadonlyReactiveValue<T> handler, EventCallback<ChangeEvent<T>> callback)
         {
-            handler.RegisterCallback(callback);
-            return new UnRegisterCallBackHandle(() => handler.UnregisterCallback(callback));
+            handler.RegisterValueChangeCallback(callback);
+            return new UnRegisterCallBackHandle(() => handler.UnregisterValueChangeCallback(callback));
         }
     }
 }

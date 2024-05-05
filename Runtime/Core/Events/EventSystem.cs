@@ -26,8 +26,6 @@ namespace Kurisu.Framework.Events
         }
         private static EventSystem instance;
         public static EventSystem Instance => instance != null ? instance : GetInstance();
-        private EventDispatcher dispatcher;
-        public sealed override EventDispatcher Dispatcher { get => dispatcher; }
         public CallbackEventHandler EventHandler { get; private set; }
         private static EventSystem GetInstance()
         {
@@ -49,15 +47,10 @@ namespace Kurisu.Framework.Events
             }
             return instance;
         }
-        private void Awake()
+        protected override void Awake()
         {
-            dispatcher = EventDispatcher.CreateDefault();
+            base.Awake();
             EventHandler = new GlobalCallbackEventHandler(this);
-        }
-        private void Update()
-        {
-            dispatcher.PushDispatcherContext();
-            dispatcher.PopDispatcherContext();
         }
     }
 }

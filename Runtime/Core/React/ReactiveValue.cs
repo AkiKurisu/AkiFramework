@@ -3,19 +3,24 @@ using Newtonsoft.Json;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using JsonConverterAttribute = Newtonsoft.Json.JsonConverterAttribute;
+using System;
 namespace Kurisu.Framework.React
 {
     public interface IReadonlyReactiveValue<T>
     {
         T Value { get; }
-        void UnregisterCallback(EventCallback<ChangeEvent<T>> onValueChanged);
-        void RegisterCallback(EventCallback<ChangeEvent<T>> onValueChanged);
+        void UnregisterValueChangeCallback(EventCallback<ChangeEvent<T>> onValueChanged);
+        void RegisterValueChangeCallback(EventCallback<ChangeEvent<T>> onValueChanged);
+    }
+    public class InvalidConstructException : Exception
+    {
+        public InvalidConstructException(string message) : base(message) { }
     }
     public abstract class ReactiveValue<T> : CallbackEventHandler, INotifyValueChanged<T>, IReadonlyReactiveValue<T>, IBehaviourScope
     {
         protected T _value;
         /// <summary>
-        /// Since event system are initialized by MonoBehaviour lifetime scope, ReactiveValue should also be constructed in Awake() or Start()
+        /// Since <see cref="MonoEventCoordinator"/> are initialized by MonoBehaviour lifetime scope, ReactiveValue should also be constructed in Awake() or Start()
         /// </summary>
         private void ConstructorSafeCheck()
         {
@@ -26,7 +31,7 @@ namespace Kurisu.Framework.React
             }
             catch
             {
-                throw;
+                throw new InvalidConstructException("ReactiveValue should be constructed in Awake() or Start()");
             }
 #endif
         }
@@ -38,7 +43,7 @@ namespace Kurisu.Framework.React
         public ReactiveValue(T initValue, Behaviour attachedBehaviour)
         {
             ConstructorSafeCheck();
-            AttachedBehaviour = attachedBehaviour;
+            AttachBehaviour(attachedBehaviour);
             _value = initValue;
         }
         /// <summary>
@@ -49,7 +54,7 @@ namespace Kurisu.Framework.React
         public ReactiveValue(T initValue)
         {
             ConstructorSafeCheck();
-            AttachedBehaviour = EventSystem.Instance;
+            AttachBehaviour(EventSystem.Instance);
             _value = initValue;
         }
         /// <summary>
@@ -58,7 +63,7 @@ namespace Kurisu.Framework.React
         public ReactiveValue()
         {
             ConstructorSafeCheck();
-            AttachedBehaviour = EventSystem.Instance;
+            AttachBehaviour(EventSystem.Instance);
             _value = default;
         }
         public virtual T Value
@@ -68,14 +73,28 @@ namespace Kurisu.Framework.React
             {
                 if (!value.Equals(_value))
                 {
-                    T previewsValue = value;
+                    T previewsValue = _value;
                     _value = value;
                     SendEvent(ChangeEvent<T>.GetPooled(previewsValue, value));
                 }
             }
         }
         [JsonIgnore]
-        public Behaviour AttachedBehaviour { get; protected set; }
+        public Behaviour AttachedBehaviour { get; private set; }
+        private MonoEventCoordinator attachedCoordinator;
+        [JsonIgnore]
+        public MonoEventCoordinator AttachedCoordinator
+        {
+            get
+            {
+                if (attachedCoordinator == null) return attachedCoordinator = EventSystem.Instance;
+                return attachedCoordinator;
+            }
+            set
+            {
+                attachedCoordinator = value;
+            }
+        }
         /// <summary>
         /// Whether to call <see cref="EventBase.StopPropagation"/> when attached behaviour is inactive or disable, default is true.
         /// </summary>
@@ -85,16 +104,14 @@ namespace Kurisu.Framework.React
         {
             e.Target = this;
             if (StopPropagationWhenDisabled && !AttachedBehaviour.isActiveAndEnabled) e.StopPropagation();
-            EventSystem.Instance.Dispatcher.Dispatch(e, EventSystem.Instance, DispatchMode.Default);
-            EventSystem.Instance.Refresh();
+            AttachedCoordinator.Dispatch(e, DispatchMode.Default);
             e.Dispose();
         }
         public override void SendEvent(EventBase e, DispatchMode dispatchMode)
         {
             e.Target = this;
             if (StopPropagationWhenDisabled && !AttachedBehaviour.isActiveAndEnabled) e.StopPropagation();
-            EventSystem.Instance.Dispatcher.Dispatch(e, EventSystem.Instance, DispatchMode.Default);
-            EventSystem.Instance.Refresh();
+            AttachedCoordinator.Dispatch(e, dispatchMode);
             e.Dispose();
         }
 
@@ -103,17 +120,22 @@ namespace Kurisu.Framework.React
             _value = newValue;
         }
 
-        public void UnregisterCallback(EventCallback<ChangeEvent<T>> onValueChanged)
+        public void UnregisterValueChangeCallback(EventCallback<ChangeEvent<T>> onValueChanged)
         {
-            base.UnregisterCallback(onValueChanged);
+            UnregisterCallback(onValueChanged);
         }
-        public void RegisterCallback(EventCallback<ChangeEvent<T>> onValueChanged)
+        public void RegisterValueChangeCallback(EventCallback<ChangeEvent<T>> onValueChanged)
         {
-            base.RegisterCallback(onValueChanged);
+            RegisterCallback(onValueChanged);
         }
+        /// <summary>
+        /// Attach this reactive value to a behaviour
+        /// </summary>
+        /// <param name="behaviour"></param>
         public void AttachBehaviour(Behaviour behaviour)
         {
             AttachedBehaviour = behaviour != null ? behaviour : EventSystem.Instance;
+            AttachedCoordinator = behaviour as MonoEventCoordinator;
         }
     }
     public class ReactiveBool : ReactiveValue<bool>
@@ -252,6 +274,12 @@ namespace Kurisu.Framework.React
     }
     public class ReactiveColor32 : ReactiveValue<Color32>
     {
+        [JsonConverter(typeof(Color32Converter))]
+        public override Color32 Value
+        {
+            get => base.Value;
+            set => base.Value = value;
+        }
         public ReactiveColor32() : base() { }
         public ReactiveColor32(Color32 initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
         {
@@ -262,6 +290,12 @@ namespace Kurisu.Framework.React
     }
     public class ReactiveObject : ReactiveValue<Object>
     {
+        [JsonIgnore]
+        public override Object Value
+        {
+            get => base.Value;
+            set => base.Value = value;
+        }
         public ReactiveObject() : base() { }
         public ReactiveObject(Object initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
         {

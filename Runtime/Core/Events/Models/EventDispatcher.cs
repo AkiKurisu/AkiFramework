@@ -62,12 +62,30 @@ namespace Kurisu.Framework.Events
         }
     }
     /// <summary>
-    /// MonoBehaviour based EventCoordinator that can be tracked by debugger
+    /// MonoBehaviour based EventCoordinator that can be enabled and disabled, and can be tracked by the debugger
     /// </summary>
     public abstract class MonoEventCoordinator : MonoBehaviour, IEventCoordinator
     {
-        public abstract EventDispatcher Dispatcher { get; }
+        public virtual EventDispatcher Dispatcher { get; protected set; }
         private readonly HashSet<ICoordinatorDebugger> m_Debuggers = new();
+        protected virtual void Awake()
+        {
+            Dispatcher = EventDispatcher.CreateDefault();
+        }
+        protected virtual void Update()
+        {
+            Dispatcher.PushDispatcherContext();
+            Dispatcher.PopDispatcherContext();
+        }
+        protected virtual void OnDestroy()
+        {
+            DetachAllDebuggers();
+        }
+        public void Dispatch(EventBase evt, DispatchMode dispatchMode)
+        {
+            Dispatcher.Dispatch(evt, this, dispatchMode);
+            Refresh();
+        }
         internal void AttachDebugger(ICoordinatorDebugger debugger)
         {
             if (debugger != null && m_Debuggers.Add(debugger))
