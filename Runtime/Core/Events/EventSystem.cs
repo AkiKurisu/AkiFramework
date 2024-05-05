@@ -13,15 +13,13 @@ namespace Kurisu.Framework.Events
             public sealed override void SendEvent(EventBase e)
             {
                 e.Target = this;
-                EventCoordinator.Dispatcher.Dispatch(e, EventCoordinator, DispatchMode.Default);
-                EventCoordinator.Refresh();
+                EventCoordinator.Dispatch(e, DispatchMode.Default);
             }
 
             public sealed override void SendEvent(EventBase e, DispatchMode dispatchMode)
             {
                 e.Target = this;
-                EventCoordinator.Dispatcher.Dispatch(e, EventCoordinator, dispatchMode);
-                EventCoordinator.Refresh();
+                EventCoordinator.Dispatch(e, dispatchMode);
             }
         }
         private static EventSystem instance;
