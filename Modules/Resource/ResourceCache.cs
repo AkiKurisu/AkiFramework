@@ -12,8 +12,9 @@ namespace Kurisu.Framework.Resource
 {
     public class InvalidResourceRequestException : Exception
     {
+        public string InvalidAddress { get; }
         public InvalidResourceRequestException() : base() { }
-        public InvalidResourceRequestException(string message) : base(message) { }
+        public InvalidResourceRequestException(string address, string message) : base(message) { InvalidAddress = address; }
     }
     /// <summary>
     /// Loading and cache specific asset as a group and release them by control version
@@ -30,6 +31,11 @@ namespace Kurisu.Framework.Resource
         /// <value></value>
         public bool SafeAddressCheck { get; set; } = false;
         public int Version { get; private set; } = 0;
+        /// <summary>
+        /// Load and cache asset async
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
 #if UNITASK_SUPPORT
         public async UniTask<TAsset> LoadAssetAsync(string address)
 #else
@@ -39,18 +45,55 @@ namespace Kurisu.Framework.Resource
             versionMap[address] = Version;
             if (!cacheMap.TryGetValue(address, out TAsset asset))
             {
+                if (SafeAddressCheck)
+                    await SafeCheckAsync(address);
                 asset = await LoadNewAssetAsync(address);
             }
             return asset;
         }
+        /// <summary>
+        /// Load and cache asset in sync way which will block game, not recommend
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
         public TAsset LoadAsset(string address)
         {
             versionMap[address] = Version;
             if (!cacheMap.TryGetValue(address, out TAsset asset))
             {
+                if (SafeAddressCheck)
+                    SafeCheck(address);
                 asset = LoadNewAssetAsync(address).WaitForCompletion();
             }
             return asset;
+        }
+        private async UniTask SafeCheckAsync(string address)
+        {
+            //No need when global safe check is on
+#if !AF_RESOURCES_SAFE_CHECK
+            var location = Addressables.LoadResourceLocationsAsync(address, typeof(TAsset));
+#if UNITASK_SUPPORT
+            await location.ToUniTask();
+#else
+            await location.Task;
+#endif
+            if (location.Status != AsyncOperationStatus.Succeeded || location.Result.Count == 0)
+            {
+                throw new InvalidResourceRequestException(address, $"Address {address} not valid for loading {typeof(TAsset)} asset");
+            }
+#endif
+        }
+        private void SafeCheck(string address)
+        {
+            //No need when global safe check is on
+#if !AF_RESOURCES_SAFE_CHECK
+            var location = Addressables.LoadResourceLocationsAsync(address, typeof(TAsset));
+            location.WaitForCompletion();
+            if (location.Status != AsyncOperationStatus.Succeeded || location.Result.Count == 0)
+            {
+                throw new InvalidResourceRequestException(address, $"Address {address} not valid for loading {typeof(TAsset)} asset");
+            }
+#endif
         }
         private ResourceHandle<TAsset> LoadNewAssetAsync(string address, Action<TAsset> callBack = null)
         {
@@ -66,15 +109,6 @@ namespace Kurisu.Framework.Resource
                     internalHandle.RegisterCallBack(callBack);
                 }
                 return internalHandle;
-            }
-            if (SafeAddressCheck)
-            {
-                var location = Addressables.LoadResourceLocationsAsync(address, typeof(TAsset));
-                location.WaitForCompletion();
-                if (location.Status != AsyncOperationStatus.Succeeded || location.Result.Count == 0)
-                {
-                    throw new InvalidResourceRequestException($"Address {address} not valid for loading {typeof(TAsset)} asset");
-                }
             }
             //Create a new resource load call, also track it's handle
             internalHandle = ResourceSystem.AsyncLoadAsset<TAsset>(address, (asset) =>

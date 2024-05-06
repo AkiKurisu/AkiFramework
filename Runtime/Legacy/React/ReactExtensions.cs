@@ -32,11 +32,11 @@ namespace Kurisu.Framework
         /// </summary>
         /// <param name="gameObject"></param>
         /// <returns></returns>
-        public static UnRegisterOnDestroyTrigger GetUnRegister(this GameObject gameObject)
+        public static GameObjectOnDestroyUnRegister GetUnRegister(this GameObject gameObject)
         {
-            if (!gameObject.TryGetComponent<UnRegisterOnDestroyTrigger>(out var trigger))
+            if (!gameObject.TryGetComponent<GameObjectOnDestroyUnRegister>(out var trigger))
             {
-                trigger = gameObject.AddComponent<UnRegisterOnDestroyTrigger>();
+                trigger = gameObject.AddComponent<GameObjectOnDestroyUnRegister>();
             }
             return trigger;
         }

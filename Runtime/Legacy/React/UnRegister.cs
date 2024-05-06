@@ -48,7 +48,10 @@ namespace Kurisu.Framework
             mUnRegisters.Clear();
         }
     }
-    public class UnRegisterOnDestroyTrigger : MonoBehaviour, IUnRegister
+    /// <summary>
+    /// UnRegister called on GameObject Destroy
+    /// </summary>
+    public class GameObjectOnDestroyUnRegister : MonoBehaviour, IUnRegister
     {
         private readonly HashSet<IUnRegisterHandle> handles = new();
 
