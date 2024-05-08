@@ -90,37 +90,8 @@ namespace Kurisu.Framework.Tasks
         /// <returns></returns>
         public static Timer Schedule(Action onComplete)
         {
+            //TODO: Implement frame schedular to support wait next frame
             return Register(0.001f, onComplete);
-        }
-
-        /// <summary>
-        /// Cancels a timer. The main benefit of this over the method on the instance is that you will not get
-        /// a <see cref="NullReferenceException"/> if the timer is null.
-        /// </summary>
-        /// <param name="timer">The timer to cancel.</param>
-        public static void Cancel(Timer timer)
-        {
-            timer?.Cancel();
-        }
-
-        /// <summary>
-        /// Pause a timer. The main benefit of this over the method on the instance is that you will not get
-        /// a <see cref="NullReferenceException"/> if the timer is null.
-        /// </summary>
-        /// <param name="timer">The timer to pause.</param>
-        public static void Pause(Timer timer)
-        {
-            timer?.Pause();
-        }
-
-        /// <summary>
-        /// Resume a timer. The main benefit of this over the method on the instance is that you will not get
-        /// a <see cref="NullReferenceException"/> if the timer is null.
-        /// </summary>
-        /// <param name="timer">The timer to resume.</param>
-        public static void Resume(Timer timer)
-        {
-            timer?.Resume();
         }
 
         #endregion

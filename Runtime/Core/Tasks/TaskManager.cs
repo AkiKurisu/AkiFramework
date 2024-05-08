@@ -53,7 +53,7 @@ namespace Kurisu.Framework.Tasks
             _tasksToAdd.Add(task);
             if (debugMode)
             {
-                Debug.Log("Task started, task hash : " + task.GetHashCode());
+                Debug.Log($"Task {task.GetHashCode():x8} started");
             }
         }
 
@@ -64,7 +64,7 @@ namespace Kurisu.Framework.Tasks
                 task.Cancel();
                 if (debugMode)
                 {
-                    Debug.Log("Tasked cancel, task hash : " + task.GetHashCode());
+                    Debug.Log($"Tasked {task.GetHashCode():x8} cancel");
                 }
             }
             _tasks = new List<ITask>();
@@ -78,7 +78,7 @@ namespace Kurisu.Framework.Tasks
                 task.Pause();
                 if (debugMode)
                 {
-                    Debug.Log("Tasked pause, task hash : " + task.GetHashCode());
+                    Debug.Log($"Tasked {task.GetHashCode():x8} pause");
                 }
             }
         }
@@ -90,7 +90,7 @@ namespace Kurisu.Framework.Tasks
                 task.Resume();
                 if (debugMode)
                 {
-                    Debug.Log("Task resume, task hash : " + task.GetHashCode());
+                    Debug.Log($"Task {task.GetHashCode():x8} resume");
                 }
             }
         }
@@ -98,31 +98,29 @@ namespace Kurisu.Framework.Tasks
         private void Update()
         {
             UpdateAllTasks();
-            ReleaseAndRecycleTask();
         }
 
         private void UpdateAllTasks()
         {
+            // Add
             if (_tasksToAdd.Count > 0)
             {
                 _tasks.AddRange(_tasksToAdd);
                 _tasksToAdd.Clear();
             }
-
+            // Update
             foreach (ITask task in _tasks)
             {
                 task.Update();
             }
-        }
-        private void ReleaseAndRecycleTask()
-        {
+            // Release
             for (int i = _tasks.Count - 1; i >= 0; i--)
             {
                 if (!_tasks[i].IsDone) continue;
                 _tasks[i].Dispose();
                 if (debugMode)
                 {
-                    Debug.Log("Task ended, task hash : " + _tasks[i].GetHashCode());
+                    Debug.Log($"Task {_tasks[i].GetHashCode():x8} ended");
                 }
                 _tasks.Remove(_tasks[i]);
             }
@@ -132,7 +130,7 @@ namespace Kurisu.Framework.Tasks
             int id = taskId++;
             if (debugMode)
             {
-                Debug.Log("Task created, task hash : " + task.GetHashCode());
+                Debug.Log($"Task {task.GetHashCode():x8} created");
             }
             var handle = new TaskHandle(id);
             managedTaskIds.Add(id);
@@ -167,7 +165,7 @@ namespace Kurisu.Framework.Tasks
             var task = managedTasks[taskId];
             if (debugMode)
             {
-                Debug.Log("Task canceled, task hash : " + task.GetHashCode());
+                Debug.Log($"Task {task.GetHashCode():x8} canceled");
             }
             task.Cancel();
             managedTasks.Remove(taskId);

@@ -1,7 +1,7 @@
 namespace Kurisu.Framework.Tasks
 {
     /// <summary>
-    /// Handle give you access to target task
+    /// Handle give you access to track target task
     /// </summary>
     public readonly struct TaskHandle
     {

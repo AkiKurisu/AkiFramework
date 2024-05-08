@@ -41,6 +41,7 @@ namespace Kurisu.Framework.Editor
                 EditorGUILayout.HelpBox("Enter play mode to track jobs and tasks", MessageType.Info);
                 return;
             }
+            GUILayout.BeginVertical(GUI.skin.box);
             GUILayout.Label($"Current task Id : {CurrentTaskId}");
             GUILayout.Label($"Managed task count : {ManagedTaskCount}");
             GUILayout.Label($"Unmanaged task count : {UnManagedTaskCount}");
@@ -50,6 +51,7 @@ namespace Kurisu.Framework.Editor
                 EditorGUILayout.HelpBox($"Task leaking, {count} tasks can not be pooled", MessageType.Warning);
             }
             GUILayout.Label($"Updating task count : {UpdatingTaskCount}");
+            GUILayout.EndVertical();
         }
     }
 }

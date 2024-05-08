@@ -28,7 +28,7 @@ namespace Kurisu.Framework.Tasks
         /// Enable task debug mode
         /// </summary>
         /// <value></value>
-        public static bool DebugMode
+        public static bool Debug
         {
             get => TaskManager.Instance.DebugMode;
             set => TaskManager.Instance.DebugMode = value;
