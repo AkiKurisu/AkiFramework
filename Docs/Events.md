@@ -47,16 +47,16 @@ public class EventSystemExample : MonoBehaviour
 {
     private void Awake()
     {
-        EventSystem.Instance.EventHandler.RegisterCallbackWithUnRegister<MyCustomEvent>((e) =>
+        EventSystem.Instance.EventHandler.Subscribe<MyCustomEvent>((e) =>
         {
             Debug.Log(e.Message);
             using var ce2 = MyCustom2Event.GetPooled("World");
             EventSystem.Instance.EventHandler.SendEvent(ce2);
-        }).AttachUnRegister(gameObject);
-        EventSystem.Instance.EventHandler.RegisterCallbackWithUnRegister<MyCustom2Event>((e) =>
+        }).Add(gameObject);
+        EventSystem.Instance.EventHandler.Subscribe<MyCustom2Event>((e) =>
         {
             Debug.Log(e.Message);
-        }).AttachUnRegister(gameObject);
+        }).Add(gameObject);
     }
     private void Start()
     {
@@ -83,16 +83,14 @@ Recommend to install `jillejr.newtonsoft.json-for-unity.converters` to solve ser
 ```C#
 public class ReactiveValueExample : MonoBehaviour
 {
-    private ReactiveVector3 reactiveVector;
-    private ReactiveBool reactiveBool;
+    private readonly ReactiveVector3 reactiveVector = new(default);
+    private readonly ReactiveBool reactiveBoo = new(default);
     private void Awake()
     {
-        reactiveVector = new(default);
-        reactiveBool = new(default);
-        reactiveVector.RegisterValueChangeCallbackWithUnRegister(e => Debug.Log($"Vector: {e.PreviousValue} => {e.NewValue}", gameObject))
-                    .AttachUnRegister(gameObject);
-        reactiveBool.RegisterValueChangeCallbackWithUnRegister(e => Debug.Log($"Bool: {e.PreviousValue} => {e.NewValue}", gameObject))
-                    .AttachUnRegister(gameObject);
+        reactiveVector.SubscribeValueChange(e => Debug.Log($"Vector: {e.PreviousValue} => {e.NewValue}", gameObject))
+                    .Add(gameObject);
+        reactiveBool.SubscribeValueChange(e => Debug.Log($"Bool: {e.PreviousValue} => {e.NewValue}", gameObject))
+                    .Add(gameObject);
     }
     private void Start()
     {        

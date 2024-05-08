@@ -11,9 +11,9 @@ namespace Kurisu.Framework
         /// <param name="handle"></param>
         /// <param name="gameObject"></param>
         /// <returns></returns>
-        public static IUnRegisterHandle AttachUnRegister(this IUnRegisterHandle handle, GameObject gameObject)
+        public static IDisposable Add(this IDisposable handle, GameObject gameObject)
         {
-            gameObject.GetUnRegister().AddUnRegisterHandle(handle);
+            gameObject.GetUnRegister().AddDisposable(handle);
             return handle;
         }
         /// <summary>
@@ -22,9 +22,9 @@ namespace Kurisu.Framework
         /// <param name="handle"></param>
         /// <param name="gameObject"></param>
         /// <returns></returns>
-        public static IUnRegisterHandle AttachUnRegister(this IUnRegisterHandle handle, IUnRegister unRegister)
+        public static IDisposable Add(this IDisposable handle, IUnRegister unRegister)
         {
-            unRegister.AddUnRegisterHandle(handle);
+            unRegister.AddDisposable(handle);
             return handle;
         }
         /// <summary>
@@ -40,22 +40,22 @@ namespace Kurisu.Framework
             }
             return trigger;
         }
-        public static void RegisterOnce(this IAkiEvent<Action> akiEvent, Action action)
+        public static void SubscribeOnce(this IAkiEvent<Action> akiEvent, Action action)
         {
             action += () => akiEvent.UnRegister(action);
             akiEvent.Register(action);
         }
-        public static void RegisterOnce<T>(this IAkiEvent<Action<T>> akiEvent, Action<T> action)
+        public static void SubscribeOnce<T>(this IAkiEvent<Action<T>> akiEvent, Action<T> action)
         {
             action += (a) => akiEvent.UnRegister(action);
             akiEvent.Register(action);
         }
-        public static void RegisterOnce<T, K>(this IAkiEvent<Action<T, K>> akiEvent, Action<T, K> action)
+        public static void SubscribeOnce<T, K>(this IAkiEvent<Action<T, K>> akiEvent, Action<T, K> action)
         {
             action += (a, b) => akiEvent.UnRegister(action);
             akiEvent.Register(action);
         }
-        public static void RegisterOnce<T, K, F>(this IAkiEvent<Action<T, K, F>> akiEvent, Action<T, K, F> action)
+        public static void SubscribeOnce<T, K, F>(this IAkiEvent<Action<T, K, F>> akiEvent, Action<T, K, F> action)
         {
             action += (a, b, c) => akiEvent.UnRegister(action);
             akiEvent.Register(action);
@@ -71,25 +71,31 @@ namespace Kurisu.Framework
             action += () => unityEvent.RemoveListener(action);
             unityEvent.AddListener(action);
         }
-        public static void Subscribe(this UnityEvent unityEvent, UnityAction action, IUnRegister unRegister)
+        public static IDisposable Subscribe(this UnityEvent unityEvent, UnityAction action)
         {
             unityEvent.AddListener(action);
-            unRegister.AddUnRegisterHandle(new UnRegisterCallBackHandle(() => unityEvent.RemoveListener(action)));
+            return new CallBackDisposableHandle(() => unityEvent.RemoveListener(action));
         }
-        public static void Subscribe(this UnityEvent unityEvent, UnityAction action, GameObject gameObject)
+        public static IDisposable Subscribe<T>(this UnityEvent<T> unityEvent, UnityAction<T> action)
         {
             unityEvent.AddListener(action);
-            gameObject.GetUnRegister().AddUnRegisterHandle(new UnRegisterCallBackHandle(() => unityEvent.RemoveListener(action)));
+            return new CallBackDisposableHandle(() => unityEvent.RemoveListener(action));
         }
-        public static void Subscribe<T>(this UnityEvent<T> unityEvent, UnityAction<T> action, IUnRegister unRegister)
+        public static void SubscribeWithUnRegister(this UnityEvent unityEvent, UnityAction action, IUnRegister unRegister)
         {
-            unityEvent.AddListener(action);
-            unRegister.AddUnRegisterHandle(new UnRegisterCallBackHandle(() => unityEvent.RemoveListener(action)));
+            unityEvent.Subscribe(action).Add(unRegister);
         }
-        public static void Subscribe<T>(this UnityEvent<T> unityEvent, UnityAction<T> action, GameObject gameObject)
+        public static void SubscribeWithUnRegister(this UnityEvent unityEvent, UnityAction action, GameObject gameObject)
         {
-            unityEvent.AddListener(action);
-            gameObject.GetUnRegister().AddUnRegisterHandle(new UnRegisterCallBackHandle(() => unityEvent.RemoveListener(action)));
+            unityEvent.Subscribe(action).Add(gameObject);
+        }
+        public static void SubscribeWithUnRegister<T>(this UnityEvent<T> unityEvent, UnityAction<T> action, IUnRegister unRegister)
+        {
+            unityEvent.Subscribe(action).Add(unRegister);
+        }
+        public static void SubscribeWithUnRegister<T>(this UnityEvent<T> unityEvent, UnityAction<T> action, GameObject gameObject)
+        {
+            unityEvent.Subscribe(action).Add(gameObject);
         }
         #endregion
     }

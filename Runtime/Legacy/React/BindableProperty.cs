@@ -10,9 +10,9 @@ namespace Kurisu.Framework
     public interface IReadonlyBindableProperty<T>
     {
         T Value { get; }
-        IUnRegisterHandle RegisterWithInitValue(Action<T> action);
+        IDisposable RegisterWithInitValue(Action<T> action);
         void UnRegister(Action<T> onValueChanged);
-        IUnRegisterHandle Register(Action<T> onValueChanged);
+        IDisposable Register(Action<T> onValueChanged);
     }
 
     public class BindableProperty<T> : IBindableProperty<T>
@@ -60,13 +60,13 @@ namespace Kurisu.Framework
             mValue = default;
             mOnValueChanged = null;
         }
-        public IUnRegisterHandle Register(Action<T> onValueChanged)
+        public IDisposable Register(Action<T> onValueChanged)
         {
             mOnValueChanged += onValueChanged;
-            return new UnRegisterCallBackHandle(() => { UnRegister(onValueChanged); });
+            return new CallBackDisposableHandle(() => { UnRegister(onValueChanged); });
         }
 
-        public IUnRegisterHandle RegisterWithInitValue(Action<T> onValueChanged)
+        public IDisposable RegisterWithInitValue(Action<T> onValueChanged)
         {
             onValueChanged(mValue);
             return Register(onValueChanged);

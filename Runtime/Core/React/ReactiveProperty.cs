@@ -2,46 +2,24 @@ using Kurisu.Framework.Events;
 using Newtonsoft.Json;
 using UnityEngine;
 using Object = UnityEngine.Object;
-using System;
 namespace Kurisu.Framework.React
 {
-    public interface IReadonlyReactiveValue<T>
+    public interface IReadonlyReactiveProperty<T>
     {
         T Value { get; }
         void UnregisterValueChangeCallback(EventCallback<ChangeEvent<T>> onValueChanged);
         void RegisterValueChangeCallback(EventCallback<ChangeEvent<T>> onValueChanged);
     }
-    public class InvalidConstructException : Exception
-    {
-        public InvalidConstructException(string message) : base(message) { }
-    }
-    public abstract class ReactiveValue<T> : CallbackEventHandler, INotifyValueChanged<T>, IReadonlyReactiveValue<T>, IBehaviourScope
+    public abstract class ReactiveProperty<T> : CallbackEventHandler, INotifyValueChanged<T>, IReadonlyReactiveProperty<T>, IBehaviourScope
     {
         protected T _value;
-        /// <summary>
-        /// Since <see cref="MonoEventCoordinator"/> are initialized by MonoBehaviour lifetime scope, ReactiveValue should also be constructed in Awake() or Start()
-        /// </summary>
-        private void ConstructorSafeCheck()
-        {
-#if !REACT_DISABLE_SAFE_CHECK
-            try
-            {
-                bool constructValid = Application.isPlaying;
-            }
-            catch
-            {
-                throw new InvalidConstructException("ReactiveValue should be constructed in Awake() or Start()");
-            }
-#endif
-        }
         /// <summary>
         /// Constructor with defining its owner behaviour
         /// </summary>
         /// <param name="initValue"></param>
         /// <param name="attachedBehaviour"></param>
-        public ReactiveValue(T initValue, Behaviour attachedBehaviour)
+        public ReactiveProperty(T initValue, Behaviour attachedBehaviour)
         {
-            ConstructorSafeCheck();
             AttachBehaviour(attachedBehaviour);
             _value = initValue;
         }
@@ -50,19 +28,15 @@ namespace Kurisu.Framework.React
         /// </summary>
         /// <param name="initValue"></param>
         /// <param name="attachedBehaviour"></param>
-        public ReactiveValue(T initValue)
+        public ReactiveProperty(T initValue)
         {
-            ConstructorSafeCheck();
-            AttachBehaviour(EventSystem.Instance);
             _value = initValue;
         }
         /// <summary>
         /// Constructor with anonymous owner and default value
         /// </summary>
-        public ReactiveValue()
+        public ReactiveProperty()
         {
-            ConstructorSafeCheck();
-            AttachBehaviour(EventSystem.Instance);
             _value = default;
         }
         public virtual T Value
@@ -78,8 +52,20 @@ namespace Kurisu.Framework.React
                 }
             }
         }
+        private Behaviour attachedBehaviour;
         [JsonIgnore]
-        public Behaviour AttachedBehaviour { get; private set; }
+        public Behaviour AttachedBehaviour
+        {
+            get
+            {
+                if (attachedBehaviour == null) return attachedBehaviour = EventSystem.Instance;
+                return attachedBehaviour;
+            }
+            set
+            {
+                attachedBehaviour = value;
+            }
+        }
         private MonoEventCoordinator attachedCoordinator;
         [JsonIgnore]
         public MonoEventCoordinator AttachedCoordinator
@@ -137,7 +123,7 @@ namespace Kurisu.Framework.React
             AttachedCoordinator = behaviour as MonoEventCoordinator;
         }
     }
-    public class ReactiveBool : ReactiveValue<bool>
+    public class ReactiveBool : ReactiveProperty<bool>
     {
         public ReactiveBool() : base() { }
         public ReactiveBool(bool initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
@@ -147,7 +133,7 @@ namespace Kurisu.Framework.React
         {
         }
     }
-    public class ReactiveInt : ReactiveValue<int>
+    public class ReactiveInt : ReactiveProperty<int>
     {
         public ReactiveInt() : base() { }
         public ReactiveInt(int initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
@@ -157,7 +143,7 @@ namespace Kurisu.Framework.React
         {
         }
     }
-    public class ReactiveUint : ReactiveValue<uint>
+    public class ReactiveUint : ReactiveProperty<uint>
     {
         public ReactiveUint() : base() { }
         public ReactiveUint(uint initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
@@ -167,7 +153,7 @@ namespace Kurisu.Framework.React
         {
         }
     }
-    public class ReactiveDouble : ReactiveValue<double>
+    public class ReactiveDouble : ReactiveProperty<double>
     {
         public ReactiveDouble() : base() { }
         public ReactiveDouble(double initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
@@ -177,7 +163,7 @@ namespace Kurisu.Framework.React
         {
         }
     }
-    public class ReactiveLong : ReactiveValue<long>
+    public class ReactiveLong : ReactiveProperty<long>
     {
         public ReactiveLong() : base() { }
         public ReactiveLong(long initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
@@ -187,7 +173,7 @@ namespace Kurisu.Framework.React
         {
         }
     }
-    public class ReactiveFloat : ReactiveValue<float>
+    public class ReactiveFloat : ReactiveProperty<float>
     {
         public ReactiveFloat() : base() { }
         public ReactiveFloat(float initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
@@ -197,7 +183,7 @@ namespace Kurisu.Framework.React
         {
         }
     }
-    public class ReactiveString : ReactiveValue<string>
+    public class ReactiveString : ReactiveProperty<string>
     {
         public ReactiveString() : base() { }
         public ReactiveString(string initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
@@ -207,7 +193,7 @@ namespace Kurisu.Framework.React
         {
         }
     }
-    public class ReactiveVector2 : ReactiveValue<Vector2>
+    public class ReactiveVector2 : ReactiveProperty<Vector2>
     {
         public ReactiveVector2() : base() { }
         public ReactiveVector2(Vector2 initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
@@ -217,7 +203,7 @@ namespace Kurisu.Framework.React
         {
         }
     }
-    public class ReactiveVector3 : ReactiveValue<Vector3>
+    public class ReactiveVector3 : ReactiveProperty<Vector3>
     {
         public ReactiveVector3() : base() { }
         public ReactiveVector3(Vector3 initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
@@ -227,7 +213,7 @@ namespace Kurisu.Framework.React
         {
         }
     }
-    public class ReactiveVector2Int : ReactiveValue<Vector2Int>
+    public class ReactiveVector2Int : ReactiveProperty<Vector2Int>
     {
         public ReactiveVector2Int() : base() { }
         public ReactiveVector2Int(Vector2Int initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
@@ -237,7 +223,7 @@ namespace Kurisu.Framework.React
         {
         }
     }
-    public class ReactiveVector3Int : ReactiveValue<Vector3Int>
+    public class ReactiveVector3Int : ReactiveProperty<Vector3Int>
     {
         public ReactiveVector3Int() : base() { }
         public ReactiveVector3Int(Vector3Int initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
@@ -247,7 +233,7 @@ namespace Kurisu.Framework.React
         {
         }
     }
-    public class ReactiveColor32 : ReactiveValue<Color32>
+    public class ReactiveColor32 : ReactiveProperty<Color32>
     {
         public ReactiveColor32() : base() { }
         public ReactiveColor32(Color32 initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
@@ -257,7 +243,7 @@ namespace Kurisu.Framework.React
         {
         }
     }
-    public class ReactiveObject : ReactiveValue<Object>
+    public class ReactiveObject : ReactiveProperty<Object>
     {
         public ReactiveObject() : base() { }
         public ReactiveObject(Object initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)

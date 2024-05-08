@@ -3,49 +3,45 @@ using UnityEngine;
 using System;
 namespace Kurisu.Framework
 {
-    public interface IUnRegisterHandle
-    {
-        void UnRegister();
-    }
     public interface IUnRegister
     {
-        void AddUnRegisterHandle(IUnRegisterHandle handle);
-        void RemoveUnRegisterHandle(IUnRegisterHandle handle);
+        void AddDisposable(IDisposable disposable);
+        void RemoveDisposable(IDisposable disposable);
     }
-    public struct UnRegisterCallBackHandle : IUnRegisterHandle
+    public struct CallBackDisposableHandle : IDisposable
     {
-        private Action OnUnRegister { get; set; }
-        public UnRegisterCallBackHandle(Action onUnRegister)
+        private Action OnDisposable { get; set; }
+        public CallBackDisposableHandle(Action onUnRegister)
         {
-            OnUnRegister = onUnRegister;
+            OnDisposable = onUnRegister;
         }
-        public void UnRegister()
+        public void Dispose()
         {
-            OnUnRegister.Invoke();
-            OnUnRegister = null;
+            OnDisposable.Invoke();
+            OnDisposable = null;
         }
     }
-    public class UnRegister : IUnRegister, IDisposable
+    public class ComposableUnRegister : IUnRegister, IDisposable
     {
-        private readonly HashSet<IUnRegisterHandle> mUnRegisters = new();
+        private readonly HashSet<IDisposable> disposables = new();
 
-        public void AddUnRegisterHandle(IUnRegisterHandle unRegister)
+        public void AddDisposable(IDisposable disposable)
         {
-            mUnRegisters.Add(unRegister);
+            disposables.Add(disposable);
         }
 
-        public void RemoveUnRegisterHandle(IUnRegisterHandle unRegister)
+        public void RemoveDisposable(IDisposable disposable)
         {
-            mUnRegisters.Remove(unRegister);
+            disposables.Remove(disposable);
         }
 
         public void Dispose()
         {
-            foreach (var unRegister in mUnRegisters)
+            foreach (var disposable in disposables)
             {
-                unRegister.UnRegister();
+                disposable.Dispose();
             }
-            mUnRegisters.Clear();
+            disposables.Clear();
         }
     }
     /// <summary>
@@ -53,25 +49,25 @@ namespace Kurisu.Framework
     /// </summary>
     public class GameObjectOnDestroyUnRegister : MonoBehaviour, IUnRegister
     {
-        private readonly HashSet<IUnRegisterHandle> handles = new();
+        private readonly HashSet<IDisposable> disposables = new();
 
-        public void AddUnRegisterHandle(IUnRegisterHandle unRegister)
+        public void AddDisposable(IDisposable disposable)
         {
-            handles.Add(unRegister);
+            disposables.Add(disposable);
         }
 
-        public void RemoveUnRegisterHandle(IUnRegisterHandle unRegister)
+        public void RemoveDisposable(IDisposable disposable)
         {
-            handles.Remove(unRegister);
+            disposables.Remove(disposable);
         }
 
         private void OnDestroy()
         {
-            foreach (var unRegister in handles)
+            foreach (var disposable in disposables)
             {
-                unRegister.UnRegister();
+                disposable.Dispose();
             }
-            handles.Clear();
+            disposables.Clear();
         }
     }
 }

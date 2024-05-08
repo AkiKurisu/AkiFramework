@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 namespace Kurisu.Framework.Tasks
@@ -54,7 +53,7 @@ namespace Kurisu.Framework.Tasks
             _tasksToAdd.Add(task);
             if (debugMode)
             {
-                Debug.Log("Task start, task hash : " + task.GetHashCode());
+                Debug.Log("Task started, task hash : " + task.GetHashCode());
             }
         }
 
@@ -65,7 +64,7 @@ namespace Kurisu.Framework.Tasks
                 task.Cancel();
                 if (debugMode)
                 {
-                    Debug.Log("Task cancel, task hash : " + task.GetHashCode());
+                    Debug.Log("Tasked cancel, task hash : " + task.GetHashCode());
                 }
             }
             _tasks = new List<ITask>();
@@ -79,7 +78,7 @@ namespace Kurisu.Framework.Tasks
                 task.Pause();
                 if (debugMode)
                 {
-                    Debug.Log("Task pause, task hash : " + task.GetHashCode());
+                    Debug.Log("Tasked pause, task hash : " + task.GetHashCode());
                 }
             }
         }
@@ -123,7 +122,7 @@ namespace Kurisu.Framework.Tasks
                 _tasks[i].Dispose();
                 if (debugMode)
                 {
-                    Debug.Log("Task end, task hash : " + _tasks[i].GetHashCode());
+                    Debug.Log("Task ended, task hash : " + _tasks[i].GetHashCode());
                 }
                 _tasks.Remove(_tasks[i]);
             }
@@ -133,7 +132,7 @@ namespace Kurisu.Framework.Tasks
             int id = taskId++;
             if (debugMode)
             {
-                Debug.Log("Task create, task hash : " + task.GetHashCode());
+                Debug.Log("Task created, task hash : " + task.GetHashCode());
             }
             var handle = new TaskHandle(id);
             managedTaskIds.Add(id);
@@ -168,7 +167,7 @@ namespace Kurisu.Framework.Tasks
             var task = managedTasks[taskId];
             if (debugMode)
             {
-                Debug.Log("Job cancel, task hash : " + task.GetHashCode());
+                Debug.Log("Task canceled, task hash : " + task.GetHashCode());
             }
             task.Cancel();
             managedTasks.Remove(taskId);

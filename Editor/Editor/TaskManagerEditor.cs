@@ -47,7 +47,7 @@ namespace Kurisu.Framework.Editor
             int count;
             if ((count = UnManagedTaskCount - ManagedTaskCount) > 0)
             {
-                EditorGUILayout.HelpBox($"Task leak, {count} tasks can not be recycled", MessageType.Warning);
+                EditorGUILayout.HelpBox($"Task leaking, {count} tasks can not be pooled", MessageType.Warning);
             }
             GUILayout.Label($"Updating task count : {UpdatingTaskCount}");
         }

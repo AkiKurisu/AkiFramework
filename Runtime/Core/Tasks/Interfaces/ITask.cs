@@ -1,9 +1,10 @@
+using System;
 namespace Kurisu.Framework.Tasks
 {
     /// <summary>
     /// Task scheduled by task manager
     /// </summary>
-    public interface ITask
+    public interface ITask : IDisposable
     {
         /// <summary>
         /// Get whether or not the task has finished running for any reason.
@@ -25,9 +26,5 @@ namespace Kurisu.Framework.Tasks
         /// Continue a paused task. Does nothing if the task has not been paused.
         /// </summary>
         void Resume();
-        /// <summary>
-        /// Release task
-        /// </summary>
-        void Dispose();
     }
 }
