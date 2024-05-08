@@ -4,7 +4,7 @@ namespace Kurisu.Framework
     public interface IAkiEvent { }
     public interface IAkiEvent<T> : IAkiEvent where T : Delegate
     {
-        IDisposable Register(T onEvent);
+        void Register(T onEvent);
         void UnRegister(T onEvent);
     }
 
@@ -12,10 +12,9 @@ namespace Kurisu.Framework
     {
         private Action mOnEvent = () => { };
 
-        public IDisposable Register(Action onEvent)
+        public void Register(Action onEvent)
         {
             mOnEvent += onEvent;
-            return new CallBackDisposableHandle(() => { UnRegister(onEvent); });
         }
 
         public void UnRegister(Action onEvent)
@@ -32,10 +31,9 @@ namespace Kurisu.Framework
     {
         private Action<T> mOnEvent = e => { };
 
-        public IDisposable Register(Action<T> onEvent)
+        public void Register(Action<T> onEvent)
         {
             mOnEvent += onEvent;
-            return new CallBackDisposableHandle(() => { UnRegister(onEvent); });
         }
 
         public void UnRegister(Action<T> onEvent)
@@ -53,10 +51,9 @@ namespace Kurisu.Framework
     {
         private Action<T, K> mOnEvent = (t, k) => { };
 
-        public IDisposable Register(Action<T, K> onEvent)
+        public void Register(Action<T, K> onEvent)
         {
             mOnEvent += onEvent;
-            return new CallBackDisposableHandle(() => { UnRegister(onEvent); });
         }
 
         public void UnRegister(Action<T, K> onEvent)
@@ -74,10 +71,9 @@ namespace Kurisu.Framework
     {
         private Action<T, K, S> mOnEvent = (t, k, s) => { };
 
-        public IDisposable Register(Action<T, K, S> onEvent)
+        public void Register(Action<T, K, S> onEvent)
         {
             mOnEvent += onEvent;
-            return new CallBackDisposableHandle(() => { UnRegister(onEvent); });
         }
 
         public void UnRegister(Action<T, K, S> onEvent)

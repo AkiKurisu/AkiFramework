@@ -7,12 +7,10 @@ namespace Kurisu.Framework
         void SetValueWithoutNotify(T newValue);
     }
 
-    public interface IReadonlyBindableProperty<T>
+    public interface IReadonlyBindableProperty<T> : IAkiEvent<Action<T>>
     {
         T Value { get; }
-        IDisposable RegisterWithInitValue(Action<T> action);
-        void UnRegister(Action<T> onValueChanged);
-        IDisposable Register(Action<T> onValueChanged);
+        void RegisterWithInitValue(Action<T> action);
     }
 
     public class BindableProperty<T> : IBindableProperty<T>
@@ -60,16 +58,14 @@ namespace Kurisu.Framework
             mValue = default;
             mOnValueChanged = null;
         }
-        public IDisposable Register(Action<T> onValueChanged)
+        public void Register(Action<T> onValueChanged)
         {
             mOnValueChanged += onValueChanged;
-            return new CallBackDisposableHandle(() => { UnRegister(onValueChanged); });
         }
 
-        public IDisposable RegisterWithInitValue(Action<T> onValueChanged)
+        public void RegisterWithInitValue(Action<T> onValueChanged)
         {
             onValueChanged(mValue);
-            return Register(onValueChanged);
         }
 
         public static implicit operator T(BindableProperty<T> property)

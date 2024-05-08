@@ -40,6 +40,26 @@ namespace Kurisu.Framework
             }
             return trigger;
         }
+        public static IDisposable Subscribe(this IAkiEvent<Action> akiEvent, Action action)
+        {
+            akiEvent.Register(action);
+            return new CallBackDisposableHandle(() => akiEvent.UnRegister(action));
+        }
+        public static IDisposable Subscribe<T>(this IAkiEvent<Action<T>> akiEvent, Action<T> action)
+        {
+            akiEvent.Register(action);
+            return new CallBackDisposableHandle(() => akiEvent.UnRegister(action));
+        }
+        public static IDisposable Subscribe<T, K>(this IAkiEvent<Action<T, K>> akiEvent, Action<T, K> action)
+        {
+            akiEvent.Register(action);
+            return new CallBackDisposableHandle(() => akiEvent.UnRegister(action));
+        }
+        public static IDisposable Subscribe<T, K, F>(this IAkiEvent<Action<T, K, F>> akiEvent, Action<T, K, F> action)
+        {
+            akiEvent.Register(action);
+            return new CallBackDisposableHandle(() => akiEvent.UnRegister(action));
+        }
         public static void SubscribeOnce(this IAkiEvent<Action> akiEvent, Action action)
         {
             action += () => akiEvent.UnRegister(action);
