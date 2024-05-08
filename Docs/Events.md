@@ -52,11 +52,11 @@ public class EventSystemExample : MonoBehaviour
             Debug.Log(e.Message);
             using var ce2 = MyCustom2Event.GetPooled("World");
             EventSystem.Instance.EventHandler.SendEvent(ce2);
-        }).Add(gameObject);
+        }).AddTo(gameObject);
         EventSystem.Instance.EventHandler.Subscribe<MyCustom2Event>((e) =>
         {
             Debug.Log(e.Message);
-        }).Add(gameObject);
+        }).AddTo(gameObject);
     }
     private void Start()
     {
@@ -84,13 +84,13 @@ Recommend to install `jillejr.newtonsoft.json-for-unity.converters` to solve ser
 public class ReactiveValueExample : MonoBehaviour
 {
     private readonly ReactiveVector3 reactiveVector = new(default);
-    private readonly ReactiveBool reactiveBoo = new(default);
+    private readonly ReactiveBool reactiveBool = new(default);
     private void Awake()
     {
         reactiveVector.SubscribeValueChange(e => Debug.Log($"Vector: {e.PreviousValue} => {e.NewValue}", gameObject))
-                    .Add(gameObject);
+                    .AddTo(gameObject);
         reactiveBool.SubscribeValueChange(e => Debug.Log($"Bool: {e.PreviousValue} => {e.NewValue}", gameObject))
-                    .Add(gameObject);
+                    .AddTo(gameObject);
     }
     private void Start()
     {        
