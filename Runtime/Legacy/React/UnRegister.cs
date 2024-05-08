@@ -3,15 +3,21 @@ using UnityEngine;
 using System;
 namespace Kurisu.Framework
 {
+    /// <summary>
+    /// Class to manage <see cref="IDisposable"/>
+    /// </summary>
     public interface IUnRegister
     {
         void AddDisposable(IDisposable disposable);
         void RemoveDisposable(IDisposable disposable);
     }
-    public struct CallBackDisposableHandle : IDisposable
+    /// <summary>
+    /// CallBack implement of <see cref="IDisposable"/>, will invoke callback on dispose
+    /// </summary>
+    public struct CallBackDisposable : IDisposable
     {
         private Action OnDisposable { get; set; }
-        public CallBackDisposableHandle(Action onUnRegister)
+        public CallBackDisposable(Action onUnRegister)
         {
             OnDisposable = onUnRegister;
         }
@@ -21,7 +27,10 @@ namespace Kurisu.Framework
             OnDisposable = null;
         }
     }
-    public class ComposableUnRegister : IUnRegister, IDisposable
+    /// <summary>
+    /// Composite implement of <see cref="IDisposable"/> and <see cref="IUnRegister"/>, will dispose inner disposable children on dispose
+    /// </summary>
+    public class CompositeDisposable : IUnRegister, IDisposable
     {
         private readonly HashSet<IDisposable> disposables = new();
 
@@ -50,9 +59,14 @@ namespace Kurisu.Framework
     public class GameObjectOnDestroyUnRegister : MonoBehaviour, IUnRegister
     {
         private readonly HashSet<IDisposable> disposables = new();
-
+        private bool isDestroyed = false;
         public void AddDisposable(IDisposable disposable)
         {
+            if (isDestroyed)
+            {
+                disposable.Dispose();
+                return;
+            }
             disposables.Add(disposable);
         }
 
@@ -63,6 +77,7 @@ namespace Kurisu.Framework
 
         private void OnDestroy()
         {
+            isDestroyed = true;
             foreach (var disposable in disposables)
             {
                 disposable.Dispose();

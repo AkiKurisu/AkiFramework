@@ -1,24 +1,24 @@
 using System;
 using UnityEngine;
 using System.Collections.Generic;
-namespace Kurisu.Framework
+namespace Kurisu.Framework.IOC
 {
     /// <summary>
-    /// Scene scope IOC container, also init all children implement <see cref="IInitialize"/>
+    /// Scene lifetime scope IOC container, also init all children implement <see cref="IInitialize"/>
     /// </summary>
-    public class GameRoot : MonoBehaviour
+    public class SceneScopeContainer : MonoBehaviour
     {
-        private static GameRoot instance;
-        private static GameRoot Instance => instance != null ? instance : GetInstance();
+        private static SceneScopeContainer instance;
+        private static SceneScopeContainer Instance => instance != null ? instance : GetInstance();
         private IOCContainer container;
         private readonly Dictionary<Type, Action<object>> typeCallBackMap = new();
-        private static GameRoot GetInstance()
+        private static SceneScopeContainer GetInstance()
         {
-            instance = FindObjectOfType<GameRoot>();
+            instance = FindObjectOfType<SceneScopeContainer>();
             if (instance == null)
             {
-                GameObject managerObject = new() { name = nameof(GameRoot) };
-                instance = managerObject.AddComponent<GameRoot>();
+                GameObject managerObject = new() { name = nameof(SceneScopeContainer) };
+                instance = managerObject.AddComponent<SceneScopeContainer>();
             }
             return instance;
         }

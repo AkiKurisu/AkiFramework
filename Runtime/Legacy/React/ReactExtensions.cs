@@ -5,24 +5,36 @@ namespace Kurisu.Framework
 {
     public static class ReactExtensions
     {
+        #region IDisposable
         /// <summary>
-        /// Release unRegister handle when GameObject destroy
+        /// Dispose when GameObject destroy
         /// </summary>
         /// <param name="handle"></param>
         /// <param name="gameObject"></param>
         /// <returns></returns>
-        public static IDisposable Add(this IDisposable handle, GameObject gameObject)
+        public static T AddTo<T>(this T handle, GameObject gameObject) where T : IDisposable
         {
             gameObject.GetUnRegister().AddDisposable(handle);
             return handle;
         }
         /// <summary>
-        /// Release unRegister handle managed by a unRegister
+        /// Dispose when GameObject destroy
         /// </summary>
         /// <param name="handle"></param>
         /// <param name="gameObject"></param>
         /// <returns></returns>
-        public static IDisposable Add(this IDisposable handle, IUnRegister unRegister)
+        public static T AddTo<T>(this T handle, Component component) where T : IDisposable
+        {
+            component.gameObject.GetUnRegister().AddDisposable(handle);
+            return handle;
+        }
+        /// <summary>
+        /// Dispose managed by a unRegister
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <param name="gameObject"></param>
+        /// <returns></returns>
+        public static T AddTo<T>(this T handle, IUnRegister unRegister) where T : IDisposable
         {
             unRegister.AddDisposable(handle);
             return handle;
@@ -32,7 +44,7 @@ namespace Kurisu.Framework
         /// </summary>
         /// <param name="gameObject"></param>
         /// <returns></returns>
-        public static GameObjectOnDestroyUnRegister GetUnRegister(this GameObject gameObject)
+        public static IUnRegister GetUnRegister(this GameObject gameObject)
         {
             if (!gameObject.TryGetComponent<GameObjectOnDestroyUnRegister>(out var trigger))
             {
@@ -40,82 +52,78 @@ namespace Kurisu.Framework
             }
             return trigger;
         }
-        public static IDisposable Subscribe(this IAkiEvent<Action> akiEvent, Action action)
+        #endregion
+        #region IObservable
+        public static IDisposable Subscribe<T>(this IObservable<T> observable, T action) where T : Delegate
         {
-            akiEvent.Register(action);
-            return new CallBackDisposableHandle(() => akiEvent.UnRegister(action));
+            observable.Register(action);
+            return new CallBackDisposable(() => observable.Unregister(action));
         }
-        public static IDisposable Subscribe<T>(this IAkiEvent<Action<T>> akiEvent, Action<T> action)
+        public static IObservable<T> SubscribeOnce<T>(this IObservable<T> observable, T action) where T : Delegate
         {
-            akiEvent.Register(action);
-            return new CallBackDisposableHandle(() => akiEvent.UnRegister(action));
+            T combinedAction = (T)Delegate.Combine(action, (Action)(() => observable.Unregister(action)));
+            observable.Register(combinedAction);
+            return observable;
         }
-        public static IDisposable Subscribe<T, K>(this IAkiEvent<Action<T, K>> akiEvent, Action<T, K> action)
+        public static void SubscribeWithUnRegister<T>(this IObservable<T> observable, T action, IUnRegister unRegister) where T : Delegate
         {
-            akiEvent.Register(action);
-            return new CallBackDisposableHandle(() => akiEvent.UnRegister(action));
+            observable.Subscribe(action).AddTo(unRegister);
         }
-        public static IDisposable Subscribe<T, K, F>(this IAkiEvent<Action<T, K, F>> akiEvent, Action<T, K, F> action)
+        public static void SubscribeWithUnRegister<T>(this IObservable<T> observable, T action, GameObject gameObject) where T : Delegate
         {
-            akiEvent.Register(action);
-            return new CallBackDisposableHandle(() => akiEvent.UnRegister(action));
+            observable.Subscribe(action).AddTo(gameObject);
         }
-        public static void SubscribeOnce(this IAkiEvent<Action> akiEvent, Action action)
+        public static void SubscribeWithUnRegister<T>(this IObservable<T> observable, T action, Component component) where T : Delegate
         {
-            action += () => akiEvent.UnRegister(action);
-            akiEvent.Register(action);
+            observable.Subscribe(action).AddTo(component);
         }
-        public static void SubscribeOnce<T>(this IAkiEvent<Action<T>> akiEvent, Action<T> action)
-        {
-            action += (a) => akiEvent.UnRegister(action);
-            akiEvent.Register(action);
-        }
-        public static void SubscribeOnce<T, K>(this IAkiEvent<Action<T, K>> akiEvent, Action<T, K> action)
-        {
-            action += (a, b) => akiEvent.UnRegister(action);
-            akiEvent.Register(action);
-        }
-        public static void SubscribeOnce<T, K, F>(this IAkiEvent<Action<T, K, F>> akiEvent, Action<T, K, F> action)
-        {
-            action += (a, b, c) => akiEvent.UnRegister(action);
-            akiEvent.Register(action);
-        }
+        #endregion
         #region UnityEvents
-        public static void SubscribeOnce<T>(this UnityEvent<T> unityEvent, UnityAction<T> action)
+        public static UnityEvent<T> SubscribeOnce<T>(this UnityEvent<T> unityEvent, UnityAction<T> action)
         {
             action += (a) => unityEvent.RemoveListener(action);
             unityEvent.AddListener(action);
+            return unityEvent;
         }
-        public static void SubscribeOnce(this UnityEvent unityEvent, UnityAction action)
+        public static UnityEvent SubscribeOnce(this UnityEvent unityEvent, UnityAction action)
         {
             action += () => unityEvent.RemoveListener(action);
             unityEvent.AddListener(action);
+            return unityEvent;
         }
         public static IDisposable Subscribe(this UnityEvent unityEvent, UnityAction action)
         {
             unityEvent.AddListener(action);
-            return new CallBackDisposableHandle(() => unityEvent.RemoveListener(action));
+            return new CallBackDisposable(() => unityEvent.RemoveListener(action));
         }
         public static IDisposable Subscribe<T>(this UnityEvent<T> unityEvent, UnityAction<T> action)
         {
             unityEvent.AddListener(action);
-            return new CallBackDisposableHandle(() => unityEvent.RemoveListener(action));
+            return new CallBackDisposable(() => unityEvent.RemoveListener(action));
         }
         public static void SubscribeWithUnRegister(this UnityEvent unityEvent, UnityAction action, IUnRegister unRegister)
         {
-            unityEvent.Subscribe(action).Add(unRegister);
+            unityEvent.Subscribe(action).AddTo(unRegister);
         }
         public static void SubscribeWithUnRegister(this UnityEvent unityEvent, UnityAction action, GameObject gameObject)
         {
-            unityEvent.Subscribe(action).Add(gameObject);
+            unityEvent.Subscribe(action).AddTo(gameObject);
+        }
+        public static void SubscribeWithUnRegister(this UnityEvent unityEvent, UnityAction action, Component component)
+        {
+            unityEvent.Subscribe(action).AddTo(component);
         }
         public static void SubscribeWithUnRegister<T>(this UnityEvent<T> unityEvent, UnityAction<T> action, IUnRegister unRegister)
         {
-            unityEvent.Subscribe(action).Add(unRegister);
+            unityEvent.Subscribe(action).AddTo(unRegister);
         }
         public static void SubscribeWithUnRegister<T>(this UnityEvent<T> unityEvent, UnityAction<T> action, GameObject gameObject)
         {
-            unityEvent.Subscribe(action).Add(gameObject);
+            unityEvent.Subscribe(action).AddTo(gameObject);
+        }
+        public static void SubscribeWithUnRegister<T>(this UnityEvent<T> unityEvent, UnityAction<T> action, Component component)
+        {
+            unityEvent.Subscribe(action).AddTo(component);
         }
         #endregion
     }

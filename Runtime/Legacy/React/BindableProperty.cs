@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 namespace Kurisu.Framework
 {
     public interface IBindableProperty<T> : IReadonlyBindableProperty<T>
@@ -7,10 +8,9 @@ namespace Kurisu.Framework
         void SetValueWithoutNotify(T newValue);
     }
 
-    public interface IReadonlyBindableProperty<T> : IAkiEvent<Action<T>>
+    public interface IReadonlyBindableProperty<T> : IObservable<Action<T>>
     {
         T Value { get; }
-        void RegisterWithInitValue(Action<T> action);
     }
 
     public class BindableProperty<T> : IBindableProperty<T>
@@ -19,31 +19,21 @@ namespace Kurisu.Framework
         {
             mValue = defaultValue;
         }
-
+        [SerializeField]
         protected T mValue;
         private Action<T> mOnValueChanged = (v) => { };
         public T Value
         {
-            get => GetValue();
+            get => mValue;
             set
             {
                 if (value == null && mValue == null) return;
-                // if (value != null && value.Equals(mValue)) return;
-
-                SetValue(value);
+                mValue = value;
+                OnValueChanged(value);
                 mOnValueChanged?.Invoke(value);
             }
         }
-
-        protected virtual void SetValue(T newValue)
-        {
-            mValue = newValue;
-        }
-
-        protected virtual T GetValue()
-        {
-            return mValue;
-        }
+        protected virtual void OnValueChanged(T newValue) { }
 
         public void SetValueWithoutNotify(T newValue)
         {
@@ -63,11 +53,6 @@ namespace Kurisu.Framework
             mOnValueChanged += onValueChanged;
         }
 
-        public void RegisterWithInitValue(Action<T> onValueChanged)
-        {
-            onValueChanged(mValue);
-        }
-
         public static implicit operator T(BindableProperty<T> property)
         {
             return property.Value;
@@ -78,7 +63,7 @@ namespace Kurisu.Framework
             return Value.ToString();
         }
 
-        public void UnRegister(Action<T> onValueChanged)
+        public void Unregister(Action<T> onValueChanged)
         {
             mOnValueChanged -= onValueChanged;
         }
