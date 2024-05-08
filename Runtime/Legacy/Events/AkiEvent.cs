@@ -1,14 +1,15 @@
 ﻿using System;
 namespace Kurisu.Framework
 {
-    public interface IAkiEvent { }
-    public interface IAkiEvent<T> : IAkiEvent where T : Delegate
+    public interface IObservable<T> where T : Delegate
     {
         void Register(T onEvent);
-        void UnRegister(T onEvent);
+        void Unregister(T onEvent);
     }
-
-    public class AkiEvent : IAkiEvent<Action>
+    /// <summary>
+    /// A light-weight replacement of C# event
+    /// </summary>
+    public class AkiEvent : IObservable<Action>
     {
         private Action mOnEvent = () => { };
 
@@ -17,7 +18,7 @@ namespace Kurisu.Framework
             mOnEvent += onEvent;
         }
 
-        public void UnRegister(Action onEvent)
+        public void Unregister(Action onEvent)
         {
             mOnEvent -= onEvent;
         }
@@ -27,7 +28,10 @@ namespace Kurisu.Framework
             mOnEvent?.Invoke();
         }
     }
-    public class AkiEvent<T> : IAkiEvent<Action<T>>
+    /// <summary>
+    /// A light-weight replacement of C# event
+    /// </summary>
+    public class AkiEvent<T> : IObservable<Action<T>>
     {
         private Action<T> mOnEvent = e => { };
 
@@ -36,7 +40,7 @@ namespace Kurisu.Framework
             mOnEvent += onEvent;
         }
 
-        public void UnRegister(Action<T> onEvent)
+        public void Unregister(Action<T> onEvent)
         {
             mOnEvent -= onEvent;
         }
@@ -46,8 +50,10 @@ namespace Kurisu.Framework
             mOnEvent?.Invoke(t);
         }
     }
-
-    public class AkiEvent<T, K> : IAkiEvent<Action<T, K>>
+    /// <summary>
+    /// A light-weight replacement of C# event
+    /// </summary>
+    public class AkiEvent<T, K> : IObservable<Action<T, K>>
     {
         private Action<T, K> mOnEvent = (t, k) => { };
 
@@ -56,7 +62,7 @@ namespace Kurisu.Framework
             mOnEvent += onEvent;
         }
 
-        public void UnRegister(Action<T, K> onEvent)
+        public void Unregister(Action<T, K> onEvent)
         {
             mOnEvent -= onEvent;
         }
@@ -66,8 +72,10 @@ namespace Kurisu.Framework
             mOnEvent?.Invoke(t, k);
         }
     }
-
-    public class AkiEvent<T, K, S> : IAkiEvent<Action<T, K, S>>
+    /// <summary>
+    /// A light-weight replacement of C# event
+    /// </summary>
+    public class AkiEvent<T, K, S> : IObservable<Action<T, K, S>>
     {
         private Action<T, K, S> mOnEvent = (t, k, s) => { };
 
@@ -76,7 +84,7 @@ namespace Kurisu.Framework
             mOnEvent += onEvent;
         }
 
-        public void UnRegister(Action<T, K, S> onEvent)
+        public void Unregister(Action<T, K, S> onEvent)
         {
             mOnEvent -= onEvent;
         }
