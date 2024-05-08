@@ -43,7 +43,7 @@ namespace Kurisu.Framework
         /// </summary>
         /// <param name="gameObject"></param>
         /// <returns></returns>
-        public static GameObjectOnDestroyUnRegister GetUnRegister(this GameObject gameObject)
+        public static IUnRegister GetUnRegister(this GameObject gameObject)
         {
             if (!gameObject.TryGetComponent<GameObjectOnDestroyUnRegister>(out var trigger))
             {

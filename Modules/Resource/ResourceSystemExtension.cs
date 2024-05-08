@@ -28,6 +28,11 @@ namespace Kurisu.Framework.Resource
             handle.ToDisposable().AddTo(unRegister);
             return handle;
         }
+        public static ResourceHandle<T> Add<T>(this ResourceHandle<T> handle, IUnRegister unRegister)
+        {
+            handle.ToDisposable().AddTo(unRegister);
+            return handle;
+        }
         public static ResourceHandle AddTo(this ResourceHandle handle, IUnRegister unRegister)
         {
             handle.ToDisposable().AddTo(unRegister);
