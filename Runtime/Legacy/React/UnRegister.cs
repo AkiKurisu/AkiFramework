@@ -4,7 +4,7 @@ using System;
 namespace Kurisu.Framework
 {
     /// <summary>
-    /// Class to manage disposable
+    /// Class to manage <see cref="IDisposable"/>
     /// </summary>
     public interface IUnRegister
     {
@@ -28,7 +28,7 @@ namespace Kurisu.Framework
         }
     }
     /// <summary>
-    /// Composite implement of <see cref="IDisposable"/>, will dispose inner disposable children on dispose
+    /// Composite implement of <see cref="IDisposable"/> and <see cref="IUnRegister"/>, will dispose inner disposable children on dispose
     /// </summary>
     public class CompositeDisposable : IUnRegister, IDisposable
     {
