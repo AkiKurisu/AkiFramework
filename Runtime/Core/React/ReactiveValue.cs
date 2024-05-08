@@ -2,7 +2,6 @@ using Kurisu.Framework.Events;
 using Newtonsoft.Json;
 using UnityEngine;
 using Object = UnityEngine.Object;
-using JsonConverterAttribute = Newtonsoft.Json.JsonConverterAttribute;
 using System;
 namespace Kurisu.Framework.React
 {
@@ -210,12 +209,6 @@ namespace Kurisu.Framework.React
     }
     public class ReactiveVector2 : ReactiveValue<Vector2>
     {
-        [JsonConverter(typeof(VectorConverter))]
-        public override Vector2 Value
-        {
-            get => base.Value;
-            set => base.Value = value;
-        }
         public ReactiveVector2() : base() { }
         public ReactiveVector2(Vector2 initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
         {
@@ -226,12 +219,6 @@ namespace Kurisu.Framework.React
     }
     public class ReactiveVector3 : ReactiveValue<Vector3>
     {
-        [JsonConverter(typeof(VectorConverter))]
-        public override Vector3 Value
-        {
-            get => base.Value;
-            set => base.Value = value;
-        }
         public ReactiveVector3() : base() { }
         public ReactiveVector3(Vector3 initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
         {
@@ -242,12 +229,6 @@ namespace Kurisu.Framework.React
     }
     public class ReactiveVector2Int : ReactiveValue<Vector2Int>
     {
-        [JsonConverter(typeof(VectorConverter))]
-        public override Vector2Int Value
-        {
-            get => base.Value;
-            set => base.Value = value;
-        }
         public ReactiveVector2Int() : base() { }
         public ReactiveVector2Int(Vector2Int initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
         {
@@ -258,12 +239,6 @@ namespace Kurisu.Framework.React
     }
     public class ReactiveVector3Int : ReactiveValue<Vector3Int>
     {
-        [JsonConverter(typeof(VectorConverter))]
-        public override Vector3Int Value
-        {
-            get => base.Value;
-            set => base.Value = value;
-        }
         public ReactiveVector3Int() : base() { }
         public ReactiveVector3Int(Vector3Int initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
         {
@@ -274,12 +249,6 @@ namespace Kurisu.Framework.React
     }
     public class ReactiveColor32 : ReactiveValue<Color32>
     {
-        [JsonConverter(typeof(Color32Converter))]
-        public override Color32 Value
-        {
-            get => base.Value;
-            set => base.Value = value;
-        }
         public ReactiveColor32() : base() { }
         public ReactiveColor32(Color32 initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
         {
@@ -290,12 +259,6 @@ namespace Kurisu.Framework.React
     }
     public class ReactiveObject : ReactiveValue<Object>
     {
-        [JsonIgnore]
-        public override Object Value
-        {
-            get => base.Value;
-            set => base.Value = value;
-        }
         public ReactiveObject() : base() { }
         public ReactiveObject(Object initValue, Behaviour attachedBehaviour) : base(initValue, attachedBehaviour)
         {

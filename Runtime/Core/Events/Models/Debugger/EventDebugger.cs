@@ -3,7 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using Newtonsoft.Json;
 using UnityEngine;
+using UnityEngine.Assertions;
 namespace Kurisu.Framework.Events
 {
     internal readonly struct EventDebuggerLogCall : IDisposable
@@ -350,16 +353,34 @@ namespace Kurisu.Framework.Events
 
                 var eventBase = sortedEvents[i];
                 EventBase newEvent = null;
-                bool skipped = true;
-                //TODO: Add factory to customize recording
-                if (skipped)
+                try
+                {
+                    Type eventType = Type.GetType(eventBase.EventType);
+                    var getPooledMethod = Utils.GetStaticMethodWithNoParametersInBase(eventType, "GetPooled");
+                    Assert.IsTrue(getPooledMethod != null);
+                    newEvent = (EventBase)getPooledMethod.Invoke(null, null);
+#if JSON_CONVERTERS_FOR_UNITY_INSTALL
+                    JsonConvert.PopulateObject(eventBase.JsonData, newEvent);
+#else
+                    JsonConvert.PopulateObject(eventBase.JsonData, newEvent, new JsonSerializerSettings
+                    {
+                        Converters = DebuggerConverterSettings.Converters
+                    });
+#endif
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError(ex);
+                }
+                if (newEvent == null)
                 {
                     Debug.Log("Skipped event (" + eventBase.EventBaseName + "): " + eventBase);
                     var awaitSkipped = AwaitForNextEvent(i);
                     while (awaitSkipped.MoveNext()) yield return null;
                     continue;
                 }
-
+                eventBase.Target.SendEvent(newEvent);
+                newEvent.Dispose();
                 refreshList?.Invoke(i, sortedEventsCount);
                 Debug.Log($"Replayed event {eventBase.EventId} ({eventBase.EventBaseName}): {newEvent}");
                 var await = AwaitForNextEvent(i);

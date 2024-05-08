@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Kurisu.Framework.React;
 using Newtonsoft.Json;
 using UnityEngine;
 namespace Kurisu.Framework.Events
@@ -11,14 +10,11 @@ namespace Kurisu.Framework.Events
         public List<EventDebuggerEventRecord> eventList;
     }
     /// <summary>
-    /// Control jsonConverter used in debugger
+    /// Control <see cref="JsonConverter"/> used in debugger, used when json convertors for unity not installed.
+    /// Recommend to use https://github.com/applejag/Newtonsoft.Json-for-Unity.Converters
     /// </summary>
     public static class DebuggerConverterSettings
     {
-        static DebuggerConverterSettings()
-        {
-            Converters = new JsonConverter[] { new VectorConverter() };
-        }
         public static JsonConverter[] Converters { get; set; }
     }
     [Serializable]
@@ -28,6 +24,8 @@ namespace Kurisu.Framework.Events
         public string EventBaseName { get; private set; }
         [field: SerializeField]
         public long EventTypeId { get; private set; }
+        [field: SerializeField]
+        public string EventType { get; private set; }
         [field: SerializeField]
         public ulong EventId { get; private set; }
         [field: SerializeField]
@@ -39,12 +37,17 @@ namespace Kurisu.Framework.Events
         {
             var type = evt.GetType();
             EventBaseName = EventDebugger.GetTypeDisplayName(type);
+            EventType = type.AssemblyQualifiedName;
             EventTypeId = evt.EventTypeId;
             EventId = evt.EventId;
             Timestamp = evt.Timestamp;
             Target = evt.Target;
             PropagationPhase = evt.PropagationPhase;
+#if JSON_CONVERTERS_FOR_UNITY_INSTALL
+            JsonData = JsonConvert.SerializeObject(evt);
+#else
             JsonData = JsonConvert.SerializeObject(evt, DebuggerConverterSettings.Converters);
+#endif
         }
 
         public EventDebuggerEventRecord(EventBase evt)

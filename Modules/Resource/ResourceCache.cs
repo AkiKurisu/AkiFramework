@@ -67,7 +67,11 @@ namespace Kurisu.Framework.Resource
             }
             return asset;
         }
+#if UNITASK_SUPPORT
         private async UniTask SafeCheckAsync(string address)
+#else
+        private async Task SafeCheckAsync(string address)
+#endif
         {
             //No need when global safe check is on
 #if !AF_RESOURCES_SAFE_CHECK

@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 namespace Kurisu.Framework.Events
 {
     /// <summary>
@@ -19,10 +20,12 @@ namespace Kurisu.Framework.Events
         /// <summary>
         /// The value before the change occured.
         /// </summary>
+        [JsonProperty]
         public T PreviousValue { get; protected set; }
         /// <summary>
         /// The new value.
         /// </summary>
+        [JsonProperty]
         public T NewValue { get; protected set; }
 
         /// <summary>

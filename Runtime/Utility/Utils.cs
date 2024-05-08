@@ -1,3 +1,5 @@
+using System;
+using System.Reflection;
 using UnityEngine;
 namespace Kurisu.Framework
 {
@@ -30,6 +32,20 @@ namespace Kurisu.Framework
             float tt = t * t;
             float uu = u * u;
             return (uu * p0) + (2 * u * t * p1) + (tt * p2);
+        }
+        internal static MethodInfo GetStaticMethodWithNoParametersInBase(Type type, string methodName)
+        {
+            MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+
+            foreach (var method in methods)
+            {
+                if (method.Name == methodName && method.GetParameters().Length == 0)
+                {
+                    return method;
+                }
+            }
+
+            return null;
         }
     }
 }

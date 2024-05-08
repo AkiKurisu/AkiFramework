@@ -72,6 +72,12 @@ Events can be tracked in a debugger `Windows/AkiFramework/Event Debugger`.
 ![Debugger](./Images/debugger.png)
 
 
+### Record
+
+Record events state and resend to target event handler.
+
+Recommend to install `jillejr.newtonsoft.json-for-unity.converters` to solve serialization problem with `Newtonsoft.Json`.
+
 ### React
 
 ```C#
