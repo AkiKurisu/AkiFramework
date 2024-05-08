@@ -9,38 +9,38 @@ namespace Kurisu.Framework.Resource
 {
     public static class ResourceSystemExtension
     {
-        public static CallBackDisposableHandle GetUnRegisterHandle<T>(this ResourceHandle<T> handle)
+        public static CallBackDisposableHandle ToDisposable<T>(this ResourceHandle<T> handle)
         {
             if (handle.operationType == ResourceSystem.InstantiateOperation && typeof(T) == typeof(GameObject))
                 return new CallBackDisposableHandle(() => ResourceSystem.ReleaseInstance(handle.Result as GameObject));
             else
                 return new CallBackDisposableHandle(() => ResourceSystem.ReleaseAsset(handle));
         }
-        public static CallBackDisposableHandle GetUnRegisterHandle(this ResourceHandle handle)
+        public static CallBackDisposableHandle ToDisposable(this ResourceHandle handle)
         {
             if (handle.operationType == ResourceSystem.InstantiateOperation && handle.Result.GetType() == typeof(GameObject))
                 return new CallBackDisposableHandle(() => ResourceSystem.ReleaseInstance(handle.Result as GameObject));
             else
                 return new CallBackDisposableHandle(() => ResourceSystem.ReleaseAsset(handle));
         }
-        public static ResourceHandle<T> AttachUnRegister<T>(this ResourceHandle<T> handle, IUnRegister unRegister)
+        public static ResourceHandle<T> Add<T>(this ResourceHandle<T> handle, IUnRegister unRegister)
         {
-            handle.GetUnRegisterHandle().Add(unRegister);
+            handle.ToDisposable().Add(unRegister);
             return handle;
         }
-        public static ResourceHandle AttachUnRegister(this ResourceHandle handle, IUnRegister unRegister)
+        public static ResourceHandle Add(this ResourceHandle handle, IUnRegister unRegister)
         {
-            handle.GetUnRegisterHandle().Add(unRegister);
+            handle.ToDisposable().Add(unRegister);
             return handle;
         }
-        public static ResourceHandle<T> AttachUnRegister<T>(this ResourceHandle<T> handle, GameObject unRegisterGameObject)
+        public static ResourceHandle<T> Add<T>(this ResourceHandle<T> handle, GameObject unRegisterGameObject)
         {
-            handle.GetUnRegisterHandle().Add(unRegisterGameObject);
+            handle.ToDisposable().Add(unRegisterGameObject);
             return handle;
         }
-        public static ResourceHandle AttachUnRegister(this ResourceHandle handle, GameObject unRegisterGameObject)
+        public static ResourceHandle Add(this ResourceHandle handle, GameObject unRegisterGameObject)
         {
-            handle.GetUnRegisterHandle().Add(unRegisterGameObject);
+            handle.ToDisposable().Add(unRegisterGameObject);
             return handle;
         }
 #if UNITASK_SUPPORT
