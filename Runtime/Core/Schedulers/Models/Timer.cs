@@ -1,7 +1,7 @@
 using UnityEngine;
 using System;
 using UnityEngine.Pool;
-namespace Kurisu.Framework.Tasks
+namespace Kurisu.Framework.Schedulers
 {
     /// <summary>
     /// Allows you to run events on a delay without the use of <see cref="Coroutine"/>s
@@ -9,7 +9,7 @@ namespace Kurisu.Framework.Tasks
     ///
     /// To create and start a Timer, use the <see cref="Register"/> method.
     /// </summary>
-    public class Timer : ITask
+    public class Timer : IScheduler
     {
         private static readonly ObjectPool<Timer> pool = new(() => new());
         #region Public Properties/Fields
@@ -52,7 +52,7 @@ namespace Kurisu.Framework.Tasks
 
         public bool IsDone
         {
-            get { return IsCompleted || IsCancelled || IsOwnerDestroyed; }
+            get { return IsCompleted || IsCancelled; }
         }
 
         #endregion
@@ -70,30 +70,15 @@ namespace Kurisu.Framework.Tasks
         /// <param name="isLooped">Whether the timer should repeat after executing.</param>
         /// <param name="useRealTime">Whether the timer uses real-time(i.e. not affected by pauses,
         /// slow/fast motion) or game-time(will be affected by pauses and slow/fast-motion).</param>
-        /// <param name="autoDestroyOwner">An object to attach this timer to. After the object is destroyed,
-        /// the timer will expire and not execute. This allows you to avoid annoying <see cref="NullReferenceException"/>s
-        /// by preventing the timer from running and accessessing its parents' components
-        /// after the parent has been destroyed.</param>
         /// <returns>A timer object that allows you to examine stats and stop/resume progress.</returns>
         public static Timer Register(float duration, Action onComplete, Action<float> onUpdate = null,
-            bool isLooped = false, bool useRealTime = false, MonoBehaviour autoDestroyOwner = null)
+            bool isLooped = false, bool useRealTime = false)
         {
             Timer timer = pool.Get();
-            timer.Init(duration, onComplete, onUpdate, isLooped, useRealTime, autoDestroyOwner);
-            TaskManager.Instance.RegisterTask(timer);
+            timer.Init(duration, onComplete, onUpdate, isLooped, useRealTime);
+            SchedulerRunner.Instance.RegisterTask(timer);
             return timer;
         }
-        /// <summary>
-        /// Register a schedule action tick on next update
-        /// </summary>
-        /// <param name="onComplete"></param>
-        /// <returns></returns>
-        public static Timer Schedule(Action onComplete)
-        {
-            //TODO: Implement frame schedular to support wait next frame
-            return Register(0.001f, onComplete);
-        }
-
         #endregion
         #region Public Methods
         /// <summary>
@@ -188,11 +173,6 @@ namespace Kurisu.Framework.Tasks
 
         #endregion
         #region Private Properties/Fields
-        private bool IsOwnerDestroyed
-        {
-            get { return _hasAutoDestroyOwner && _autoDestroyOwner == null; }
-        }
-
         public event Action OnComplete;
         private Action<float> _onUpdate;
         private float _startTime;
@@ -205,17 +185,11 @@ namespace Kurisu.Framework.Tasks
         private float? _timeElapsedBeforeCancel;
         private float? _timeElapsedBeforePause;
 
-        // after the auto destroy owner is destroyed, the timer will expire
-        // this way you don't run into any annoying bugs with timers running and accessing objects
-        // after they have been destroyed
-        private MonoBehaviour _autoDestroyOwner;
-        private bool _hasAutoDestroyOwner;
-
         #endregion
         #region Private Constructor (use static Register method to create new timer)
 
         private void Init(float duration, Action onComplete, Action<float> onUpdate,
-            bool isLooped, bool usesRealTime, MonoBehaviour autoDestroyOwner)
+            bool isLooped, bool usesRealTime)
         {
             Duration = duration;
             OnComplete = onComplete;
@@ -223,8 +197,6 @@ namespace Kurisu.Framework.Tasks
 
             IsLooped = isLooped;
             UsesRealTime = usesRealTime;
-            _autoDestroyOwner = autoDestroyOwner;
-            _hasAutoDestroyOwner = autoDestroyOwner != null;
 
             _startTime = GetWorldTime();
             _lastUpdateTime = _startTime;
