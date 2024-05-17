@@ -18,7 +18,7 @@ namespace Kurisu.Framework.Schedulers
         public bool IsLooped { get; set; }
 
         /// <summary>
-        /// Whether or not the counter completed running. This is false if the timer was cancelled.
+        /// Whether or not the counter completed running. This is false if the counter was cancelled.
         /// </summary>
         public bool IsCompleted { get; private set; }
 
@@ -48,15 +48,7 @@ namespace Kurisu.Framework.Schedulers
         /// <summary>
         /// Register a new counter that should fire an event after a certain amount of frame
         /// has elapsed.
-        ///
-        /// Registered timers are destroyed when the scene changes.
         /// </summary>
-        /// <param name="duration">The time to wait before the timer should fire, in seconds.</param>
-        /// <param name="onComplete">An action to fire when the timer completes.</param>
-        /// <param name="onUpdate">An action that should fire each time the timer is updated. Takes the amount
-        /// of time passed in seconds since the start of the timer's current loop.</param>
-        /// <param name="isLooped">Whether the timer should repeat after executing.</param>
-        /// <returns>A timer object that allows you to examine stats and stop/resume progress.</returns>
         public static FrameCounter Register(int frame, Action onComplete, Action<int> onUpdate = null,
             bool isLooped = false)
         {
@@ -68,7 +60,7 @@ namespace Kurisu.Framework.Schedulers
         #endregion
         #region Public Methods
         /// <summary>
-        /// Stop a timer that is in-progress or paused. The timer's on completion callback will not be called.
+        /// Stop a counter that is in-progress or paused. The counter's on completion callback will not be called.
         /// </summary>
         public void Cancel()
         {
@@ -81,7 +73,7 @@ namespace Kurisu.Framework.Schedulers
             pool.Release(this);
         }
         /// <summary>
-        /// Pause a running timer. A paused timer can be resumed from the same point it was paused.
+        /// Pause a running counter. A paused counter can be resumed from the same point it was paused.
         /// </summary>
         public void Pause()
         {
@@ -94,7 +86,7 @@ namespace Kurisu.Framework.Schedulers
         }
 
         /// <summary>
-        /// Continue a paused timer. Does nothing if the timer has not been paused.
+        /// Continue a paused counter. Does nothing if the counter has not been paused.
         /// </summary>
         public void Resume()
         {
