@@ -7,6 +7,7 @@ namespace Kurisu.Framework.Schedulers
     /// This will be instantiated the first time you create a task.
     /// You do not need to add it into the scene manually.
     /// </summary>
+    [DefaultExecutionOrder(-100)]
     internal class SchedulerRunner : MonoBehaviour
     {
         [SerializeField]
