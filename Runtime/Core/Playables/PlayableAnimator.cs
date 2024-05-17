@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Kurisu.Framework.Tasks;
+using Kurisu.Framework.Schedulers;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
@@ -34,12 +34,12 @@ namespace Kurisu.Framework.Playables
         /// <summary>
         /// Handle for root blending task
         /// </summary>
-        private TaskHandle rootHandle;
+        private SchedulerHandle rootHandle;
         /// <summary>
         /// Handle for subTree blending task
         /// </summary>
         /// <returns></returns>
-        private readonly Dictionary<RuntimeAnimatorController, TaskHandle> subHandleMap = new();
+        private readonly Dictionary<RuntimeAnimatorController, SchedulerHandle> subHandleMap = new();
         private bool isFadeOut;
         public PlayableAnimator(Animator animator)
         {
@@ -88,7 +88,7 @@ namespace Kurisu.Framework.Playables
             rootMixer.SetInputWeight(1, 0);
             rootHandle.Cancel();
             if (fadeInTime > 0)
-                rootHandle = Task.Schedule(SetInGraph, x => FadeIn(rootMixer, x / fadeInTime), fadeInTime);
+                rootHandle = Scheduler.Delay(SetInGraph, x => FadeIn(rootMixer, x / fadeInTime), fadeInTime);
             else
                 SetInGraph();
             if (!IsPlaying) playableGraph.Play();
@@ -146,7 +146,7 @@ namespace Kurisu.Framework.Playables
                 handle.Cancel();
             }
             if (fadeInTime > 0)
-                subHandleMap[animatorController] = Task.Schedule(() => FadeIn(mixerPointer, 1), x => FadeIn(mixerPointer, x / fadeInTime), fadeInTime);
+                subHandleMap[animatorController] = Scheduler.Delay(() => FadeIn(mixerPointer, 1), x => FadeIn(mixerPointer, x / fadeInTime), fadeInTime);
             else
                 FadeIn(mixerPointer, 1);
         }
@@ -171,7 +171,7 @@ namespace Kurisu.Framework.Playables
                 return;
             }
             isFadeOut = true;
-            rootHandle = Task.Schedule(SetOutGraph, x => FadeIn(rootMixer, 1 - x / fadeOutTime), fadeOutTime);
+            rootHandle = Scheduler.Delay(SetOutGraph, x => FadeIn(rootMixer, 1 - x / fadeOutTime), fadeOutTime);
         }
         private void SetOutGraph()
         {
