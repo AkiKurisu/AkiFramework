@@ -11,6 +11,12 @@ namespace Kurisu.Framework
     public interface IReadonlyBindableProperty<T> : IObservable<Action<T>>
     {
         T Value { get; }
+        /// <summary>
+        /// Subscribe value change event and immediately notify observer
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
+        IDisposable SubscribeWithInitValue(Action<T> action);
     }
 
     public class BindableProperty<T> : IBindableProperty<T>
@@ -66,6 +72,13 @@ namespace Kurisu.Framework
         public void Unregister(Action<T> onValueChanged)
         {
             mOnValueChanged -= onValueChanged;
+        }
+
+        public IDisposable SubscribeWithInitValue(Action<T> action)
+        {
+            var disposable = this.Subscribe(action);
+            action?.Invoke(mValue);
+            return disposable;
         }
     }
 }
