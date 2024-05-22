@@ -11,17 +11,11 @@ namespace Kurisu.Framework.Resource
     {
         public static CallBackDisposable ToDisposable<T>(this ResourceHandle<T> handle)
         {
-            if (handle.operationType == ResourceSystem.InstantiateOperation && typeof(T) == typeof(GameObject))
-                return new CallBackDisposable(() => ResourceSystem.ReleaseInstance(handle.Result as GameObject));
-            else
-                return new CallBackDisposable(() => ResourceSystem.ReleaseAsset(handle));
+            return new CallBackDisposable(() => ResourceSystem.Release(handle));
         }
         public static CallBackDisposable ToDisposable(this ResourceHandle handle)
         {
-            if (handle.operationType == ResourceSystem.InstantiateOperation && handle.Result.GetType() == typeof(GameObject))
-                return new CallBackDisposable(() => ResourceSystem.ReleaseInstance(handle.Result as GameObject));
-            else
-                return new CallBackDisposable(() => ResourceSystem.ReleaseAsset(handle));
+            return new CallBackDisposable(() => ResourceSystem.Release(handle));
         }
         public static ResourceHandle<T> AddTo<T>(this ResourceHandle<T> handle, IUnRegister unRegister)
         {

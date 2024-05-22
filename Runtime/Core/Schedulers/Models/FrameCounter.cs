@@ -54,7 +54,7 @@ namespace Kurisu.Framework.Schedulers
         {
             FrameCounter timer = pool.Get();
             timer.Init(frame, onComplete, onUpdate, isLooped);
-            SchedulerRunner.Instance.RegisterTask(timer);
+            SchedulerRunner.Instance.RegisterScheduler(timer);
             return timer;
         }
         #endregion
@@ -150,7 +150,7 @@ namespace Kurisu.Framework.Schedulers
 
             if (count >= Frame)
             {
-
+                SchedulerRunner.Instance.UnregisterScheduler(this);
                 OnComplete?.Invoke();
 
                 if (IsLooped)

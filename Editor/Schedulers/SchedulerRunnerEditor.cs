@@ -6,7 +6,7 @@ namespace Kurisu.Framework.Schedulers.Editor
     public class SchedulerRunnerEditor : UnityEditor.Editor
     {
         private SchedulerRunner Manager => target as SchedulerRunner;
-        private int ManagedIdsCount => Manager.managedIds.Count;
+        private int ManagedSchedulersCount => Manager.managedSchedulers.Count;
         private void OnEnable()
         {
             if (!Application.isPlaying) return;
@@ -31,7 +31,7 @@ namespace Kurisu.Framework.Schedulers.Editor
                 return;
             }
             GUILayout.BeginVertical(GUI.skin.box);
-            GUILayout.Label($"Managed scheduler count: {ManagedIdsCount}");
+            GUILayout.Label($"Managed scheduler count: {ManagedSchedulersCount}");
             GUILayout.EndVertical();
         }
     }

@@ -1,6 +1,9 @@
 ﻿using System;
 namespace Kurisu.Framework
 {
+    /// <summary>
+    /// Interface for AkiFramework's light-weight react solution
+    /// </summary>
     public interface IObservable<T> where T : Delegate
     {
         void Register(T onEvent);

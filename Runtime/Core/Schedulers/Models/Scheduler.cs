@@ -15,9 +15,7 @@ namespace Kurisu.Framework.Schedulers
         public static SchedulerHandle Delay(Action callBack, float delay)
         {
             var timer = Timer.Register(delay, callBack);
-            var handle = SchedulerRunner.Instance.CreateHandle(timer);
-            timer.OnComplete += () => SchedulerRunner.Instance.ReleaseScheduler(handle.TaskId);
-            return handle;
+            return SchedulerRunner.Instance.CreateHandle(timer);
         }
         /// <summary>
         /// Delay some time and invoke callBack
@@ -29,9 +27,7 @@ namespace Kurisu.Framework.Schedulers
         public static SchedulerHandle Delay(Action callBack, Action<float> onUpdate, float delay)
         {
             var timer = Timer.Register(delay, callBack, onUpdate);
-            var handle = SchedulerRunner.Instance.CreateHandle(timer);
-            timer.OnComplete += () => SchedulerRunner.Instance.ReleaseScheduler(handle.TaskId);
-            return handle;
+            return SchedulerRunner.Instance.CreateHandle(timer);
         }
         /// <summary>
         /// Wait some frames and invoke callBack
@@ -42,9 +38,7 @@ namespace Kurisu.Framework.Schedulers
         public static SchedulerHandle WaitFrame(Action callBack, int frame)
         {
             var counter = FrameCounter.Register(frame, callBack);
-            var handle = SchedulerRunner.Instance.CreateHandle(counter);
-            counter.OnComplete += () => SchedulerRunner.Instance.ReleaseScheduler(handle.TaskId);
-            return handle;
+            return SchedulerRunner.Instance.CreateHandle(counter);
         }
         /// <summary>
         /// Wait some frames and invoke callBack
@@ -56,9 +50,7 @@ namespace Kurisu.Framework.Schedulers
         public static SchedulerHandle WaitFrame(Action callBack, Action<int> onUpdate, int frame)
         {
             var counter = FrameCounter.Register(frame, callBack, onUpdate);
-            var handle = SchedulerRunner.Instance.CreateHandle(counter);
-            counter.OnComplete += () => SchedulerRunner.Instance.ReleaseScheduler(handle.TaskId);
-            return handle;
+            return SchedulerRunner.Instance.CreateHandle(counter);
         }
         /// <summary>
         /// Enable schedular debug mode

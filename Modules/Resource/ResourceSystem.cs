@@ -7,7 +7,7 @@ using System.Collections;
 namespace Kurisu.Framework.Resource
 {
     /// <summary>
-    /// Simple system to load resource from address and label using addressable
+    /// Simple system to load resource from address and label using Addressables
     /// </summary>
     public class ResourceSystem
     {
@@ -43,8 +43,8 @@ namespace Kurisu.Framework.Resource
             /// </summary>
             Intersection
         }
-        internal const int AssetLoadOperation = 0;
-        internal const int InstantiateOperation = 1;
+        internal const byte AssetLoadOperation = 0;
+        internal const byte InstantiateOperation = 1;
         #region  Asset Load
         /// <summary>
         /// Check location whether valid and throw exception earlier
@@ -73,12 +73,12 @@ namespace Kurisu.Framework.Resource
         /// <param name="unRegisterHandle"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static ResourceHandle<T> AsyncLoadAsset<T>(string address, Action<T> action = null)
+        public static ResourceHandle<T> AsyncLoadAsset<T>(string address, Action<T> callBack = null)
         {
             SafeCheck<T>(address);
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
-            if (action != null)
-                handle.Completed += (h) => action.Invoke(h.Result);
+            if (callBack != null)
+                handle.Completed += (h) => callBack.Invoke(h.Result);
             return CreateHandle(handle, AssetLoadOperation);
         }
         #endregion
@@ -91,20 +91,43 @@ namespace Kurisu.Framework.Resource
         /// <param name="action"></param>
         /// <param name="bindObject"></param>
         /// <returns></returns>
-        public static ResourceHandle<GameObject> AsyncInstantiate(string address, Transform parent, Action<GameObject> action = null, GameObject bindObject = null)
+        public static ResourceHandle<GameObject> AsyncInstantiate(string address, Transform parent, Action<GameObject> callBack = null, GameObject bindObject = null)
         {
             SafeCheck<GameObject>(address);
             AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
             var resourceHandle = CreateHandle(handle, InstantiateOperation);
             handle.Completed += (h) => instanceIDMap.Add(h.Result.GetInstanceID(), resourceHandle.handleID);
-            if (action != null)
-                handle.Completed += (h) => action.Invoke(h.Result);
+            if (callBack != null)
+                handle.Completed += (h) => callBack.Invoke(h.Result);
             return resourceHandle;
         }
         #endregion
         #region Release
         /// <summary>
-        /// Release resource handle, should align with <see cref="AsyncLoadAsset"/>
+        /// Release resource
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <typeparam name="T"></typeparam>
+        public static void Release<T>(ResourceHandle<T> handle)
+        {
+            if (handle.operationType == InstantiateOperation && typeof(T) == typeof(GameObject))
+                ReleaseInstance(handle.Result as GameObject);
+            else
+                ReleaseAsset(handle);
+        }
+        /// <summary>
+        /// Release resource
+        /// </summary>
+        /// <param name="handle"></param>
+        public static void Release(ResourceHandle handle)
+        {
+            if (handle.operationType == InstantiateOperation && handle.Result.GetType() == typeof(GameObject))
+                ReleaseInstance(handle.Result as GameObject);
+            else
+                ReleaseAsset(handle);
+        }
+        /// <summary>
+        /// Release Asset, should align with <see cref="AsyncLoadAsset"/>
         /// </summary>
         /// <param name="handle"></param>
         public static void ReleaseAsset(ResourceHandle handle)
@@ -119,7 +142,7 @@ namespace Kurisu.Framework.Resource
         /// <param name="obj"></param>
         public static void ReleaseInstance(GameObject obj)
         {
-            if (instanceIDMap.TryGetValue(obj.GetInstanceID(), out int handleID))
+            if (instanceIDMap.TryGetValue(obj.GetInstanceID(), out uint handleID))
             {
                 internalHandleMap.Remove(handleID);
             }
@@ -128,35 +151,35 @@ namespace Kurisu.Framework.Resource
         }
         #endregion
         #region  Multi Assets Load
-        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(object key, Action<IList<T>> action = null)
+        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(object key, Action<IList<T>> callBack = null)
         {
             SafeCheck<T>(key);
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null);
-            if (action != null)
-                handle.Completed += (h) => action.Invoke(h.Result);
+            if (callBack != null)
+                handle.Completed += (h) => callBack.Invoke(h.Result);
             return CreateHandle(handle, AssetLoadOperation);
         }
-        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(IEnumerable key, MergeMode mode, Action<IList<T>> action = null)
+        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(IEnumerable key, MergeMode mode, Action<IList<T>> callBack = null)
         {
             SafeCheck<T>(key);
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null, (Addressables.MergeMode)mode);
-            if (action != null)
-                handle.Completed += (h) => action.Invoke(h.Result);
+            if (callBack != null)
+                handle.Completed += (h) => callBack.Invoke(h.Result);
             return CreateHandle(handle, AssetLoadOperation);
         }
         #endregion
         /// <summary>
         /// Start from 1 since 0 is always invalid handle
         /// </summary>
-        private static int handleIndex = 1;
-        private static readonly Dictionary<int, int> instanceIDMap = new();
-        private static readonly Dictionary<int, AsyncOperationHandle> internalHandleMap = new();
-        internal static ResourceHandle<T> CreateHandle<T>(AsyncOperationHandle<T> asyncOperationHandle, int operation)
+        private static uint handleIndex = 1;
+        private static readonly Dictionary<int, uint> instanceIDMap = new();
+        private static readonly Dictionary<uint, AsyncOperationHandle> internalHandleMap = new();
+        internal static ResourceHandle<T> CreateHandle<T>(AsyncOperationHandle<T> asyncOperationHandle, byte operation)
         {
             internalHandleMap.Add(++handleIndex, asyncOperationHandle);
             return new ResourceHandle<T>(handleIndex, operation);
         }
-        internal static AsyncOperationHandle<T> CastOperationHandle<T>(int handleID)
+        internal static AsyncOperationHandle<T> CastOperationHandle<T>(uint handleID)
         {
             if (internalHandleMap.TryGetValue(handleID, out var handle))
             {
@@ -167,7 +190,7 @@ namespace Kurisu.Framework.Resource
                 return default;
             }
         }
-        internal static AsyncOperationHandle CastOperationHandle(int handleID)
+        internal static AsyncOperationHandle CastOperationHandle(uint handleID)
         {
             if (internalHandleMap.TryGetValue(handleID, out var handle))
             {
@@ -178,7 +201,7 @@ namespace Kurisu.Framework.Resource
                 return default;
             }
         }
-        public static bool IsValid(int handleID)
+        public static bool IsValid(uint handleID)
         {
             return internalHandleMap.TryGetValue(handleID, out _);
         }
