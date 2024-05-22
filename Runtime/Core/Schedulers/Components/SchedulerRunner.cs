@@ -19,13 +19,13 @@ namespace Kurisu.Framework.Schedulers
         }
         private const int ManagedCapacity = 200;
         private const int RunningCapacity = 100;
-        internal readonly HashSet<int> managedIds = new(ManagedCapacity);
+        private readonly Dictionary<IScheduler, int> scheduler2Id = new(ManagedCapacity);
         internal readonly Dictionary<int, IScheduler> managedSchedulers = new(ManagedCapacity);
         internal List<IScheduler> _scheduler = new(RunningCapacity);
         //Start from id=1, should not be 0 since it roles as default/invalid job symbol
-        internal int taskId = 1;
+        internal int schedulerId = 1;
         // buffer adding timers so we don't edit a collection during iteration
-        private List<IScheduler> _schedulerToAdd = new(RunningCapacity);
+        private readonly List<IScheduler> _schedulerToAdd = new(RunningCapacity);
         public static SchedulerRunner Instance => instance != null ? instance : GetInstance();
         public static bool IsInitialized => instance != null;
         private static SchedulerRunner instance;
@@ -49,12 +49,27 @@ namespace Kurisu.Framework.Schedulers
             }
             return instance;
         }
-        public void RegisterTask(IScheduler task)
+        /// <summary>
+        /// Register scheduler to managed
+        /// </summary>
+        /// <param name="scheduler"></param>
+        public void RegisterScheduler(IScheduler scheduler)
         {
-            _schedulerToAdd.Add(task);
+            _schedulerToAdd.Add(scheduler);
             if (debugMode)
             {
-                Debug.Log($"Scheduler {task.GetHashCode():x4} started");
+                Debug.Log($"Scheduler {scheduler.GetHashCode():x4} started");
+            }
+        }
+        /// <summary>
+        ///  Unregister scheduler from managed
+        /// </summary>
+        /// <param name="scheduler"></param>
+        public void UnregisterScheduler(IScheduler scheduler)
+        {
+            if (scheduler2Id.TryGetValue(scheduler, out int id))
+            {
+                managedSchedulers.Remove(id);
             }
         }
         public void CancelAllSchedulers()
@@ -67,8 +82,8 @@ namespace Kurisu.Framework.Schedulers
                     Debug.Log($"Scheduler {scheduler.GetHashCode():x4} canceled");
                 }
             }
-            _scheduler = new List<IScheduler>();
-            _schedulerToAdd = new List<IScheduler>();
+            _scheduler.Clear();
+            _schedulerToAdd.Clear();
         }
 
         public void PauseAllSchedulers()
@@ -127,9 +142,8 @@ namespace Kurisu.Framework.Schedulers
         }
         public SchedulerHandle CreateHandle(IScheduler task)
         {
-            int id = taskId++;
+            int id = schedulerId++;
             var handle = new SchedulerHandle(id);
-            managedIds.Add(id);
             managedSchedulers.Add(id, task);
             return handle;
         }
@@ -140,7 +154,7 @@ namespace Kurisu.Framework.Schedulers
         /// <returns></returns>
         public bool IsValid(int schedulerId)
         {
-            return managedIds.Contains(schedulerId);
+            return managedSchedulers.ContainsKey(schedulerId);
         }
         /// <summary>
         /// Find internal scheduler if schedulerId is valid
@@ -165,16 +179,6 @@ namespace Kurisu.Framework.Schedulers
             }
             scheduler.Cancel();
             managedSchedulers.Remove(schedulerId);
-            managedIds.Remove(schedulerId);
-        }
-        /// <summary>
-        /// Remove scheduler from managed
-        /// </summary>
-        /// <param name="schedulerId"></param>
-        public void ReleaseScheduler(int schedulerId)
-        {
-            managedSchedulers.Remove(schedulerId);
-            managedIds.Remove(schedulerId);
         }
     }
 }

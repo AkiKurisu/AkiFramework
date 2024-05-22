@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using System.Collections;
+
 #if UNITASK_SUPPORT
 using Cysharp.Threading.Tasks;
 #else
@@ -20,7 +22,7 @@ namespace Kurisu.Framework.Resource
     /// Loading and cache specific asset as a group and release them by control version
     /// </summary>
     /// <typeparam name="TAsset"></typeparam>
-    public class ResourceCache<TAsset> : IDisposable where TAsset : UnityEngine.Object
+    public class ResourceCache<TAsset> : IDisposable, IReadOnlyDictionary<string, TAsset> where TAsset : UnityEngine.Object
     {
         private readonly Dictionary<string, ResourceHandle<TAsset>> internalHandles = new();
         private readonly Dictionary<string, TAsset> cacheMap = new();
@@ -31,6 +33,11 @@ namespace Kurisu.Framework.Resource
         /// <value></value>
         public bool SafeAddressCheck { get; set; } = false;
         public int Version { get; private set; } = 0;
+        public IEnumerable<string> Keys => cacheMap.Keys;
+        public IEnumerable<TAsset> Values => cacheMap.Values;
+        public int Count => cacheMap.Count;
+        public TAsset this[string key] => cacheMap[key];
+
         /// <summary>
         /// Load and cache asset async
         /// </summary>
@@ -167,6 +174,22 @@ namespace Kurisu.Framework.Resource
         {
             ReleaseAssetsWithVersion(Version);
             UpdateVersion();
+        }
+        public bool ContainsKey(string key)
+        {
+            return cacheMap.ContainsKey(key);
+        }
+        public bool TryGetValue(string key, out TAsset value)
+        {
+            return cacheMap.TryGetValue(key, out value);
+        }
+        public IEnumerator<KeyValuePair<string, TAsset>> GetEnumerator()
+        {
+            return cacheMap.GetEnumerator();
+        }
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return cacheMap.GetEnumerator();
         }
     }
 }

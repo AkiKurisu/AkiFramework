@@ -76,7 +76,7 @@ namespace Kurisu.Framework.Schedulers
         {
             Timer timer = pool.Get();
             timer.Init(duration, onComplete, onUpdate, isLooped, useRealTime);
-            SchedulerRunner.Instance.RegisterTask(timer);
+            SchedulerRunner.Instance.RegisterScheduler(timer);
             return timer;
         }
         #endregion
@@ -243,7 +243,7 @@ namespace Kurisu.Framework.Schedulers
 
             if (GetWorldTime() >= GetFireTime())
             {
-
+                SchedulerRunner.Instance.UnregisterScheduler(this);
                 OnComplete?.Invoke();
 
                 if (IsLooped)

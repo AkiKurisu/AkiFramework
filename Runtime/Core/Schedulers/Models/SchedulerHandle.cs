@@ -1,23 +1,26 @@
+using System;
 namespace Kurisu.Framework.Schedulers
 {
     /// <summary>
-    /// Handle give you access to track scheduled task
+    /// Handle give you access to track scheduler
     /// </summary>
-    public readonly struct SchedulerHandle
+    public readonly struct SchedulerHandle : IDisposable
     {
-        public int TaskId { get; }
+        public int Id { get; }
         public readonly bool IsValid
         {
             get
             {
-                return SchedulerRunner.Instance.IsValid(TaskId);
+                if (!SchedulerRunner.IsInitialized) return false;
+                return SchedulerRunner.Instance.IsValid(Id);
             }
         }
         public readonly bool IsDone
         {
             get
             {
-                if (SchedulerRunner.Instance.TryGet(TaskId, out IScheduler task))
+                if (!SchedulerRunner.IsInitialized) return false;
+                if (SchedulerRunner.Instance.TryGet(Id, out IScheduler task))
                 {
                     return task.IsDone;
                 }
@@ -25,14 +28,15 @@ namespace Kurisu.Framework.Schedulers
             }
         }
         /// <summary>
-        /// Get task if task is valid (Not be disposed and done)
+        /// Get scheduler if scheduler is valid
         /// </summary>
         /// <value></value>
-        public readonly IScheduler Task
+        public readonly IScheduler Scheduler
         {
             get
             {
-                if (SchedulerRunner.Instance.TryGet(TaskId, out IScheduler task))
+                if (!SchedulerRunner.IsInitialized) return null;
+                if (SchedulerRunner.Instance.TryGet(Id, out IScheduler task))
                 {
                     return task;
                 }
@@ -41,18 +45,22 @@ namespace Kurisu.Framework.Schedulers
         }
         public SchedulerHandle(int taskId)
         {
-            TaskId = taskId;
+            Id = taskId;
         }
         /// <summary>
-        /// Cancel a task if task is valid (haven't been disposed or done)
+        /// Cancel a scheduler if scheduler is valid
         /// </summary>
         /// <value></value>
         public void Cancel()
         {
-            //Task manager is destroyed
             if (!SchedulerRunner.IsInitialized) return;
             if (!IsValid) return;
-            SchedulerRunner.Instance.CancelScheduler(TaskId);
+            SchedulerRunner.Instance.CancelScheduler(Id);
+        }
+
+        public void Dispose()
+        {
+            Cancel();
         }
     }
 }
