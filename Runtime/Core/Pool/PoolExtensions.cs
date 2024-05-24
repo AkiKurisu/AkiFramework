@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-namespace Kurisu.Framework
+namespace Kurisu.Framework.Pool
 {
     public static class PoolExtensions
     {

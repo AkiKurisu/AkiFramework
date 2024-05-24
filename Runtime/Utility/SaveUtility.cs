@@ -1,5 +1,7 @@
 using System.IO;
+using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
+using Newtonsoft.Json;
 using UnityEngine;
 namespace Kurisu.Framework
 {
@@ -14,12 +16,37 @@ namespace Kurisu.Framework
         /// <param name="key"></param>
         public static void Save(string key, object data)
         {
-            var jsonData = JsonUtility.ToJson(data);
+            string jsonData;
+            if (data.GetType().GetCustomAttribute<PreferJsonConvertAttribute>() == null)
+                jsonData = JsonUtility.ToJson(data);
+            else
+                jsonData = JsonConvert.SerializeObject(data);
             if (!Directory.Exists(SavePath)) Directory.CreateDirectory(SavePath);
-            FileStream file = File.Create($"{SavePath}/{key}.bin");
+            using FileStream file = File.Create($"{SavePath}/{key}.bin");
             formatter.Serialize(file, jsonData);
-            file.Close();
         }
+        /// <summary>
+        /// Save data to saving
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="data"></param>
+        /// <typeparam name="T"></typeparam>
+        public static void Save<T>(string key, T data)
+        {
+            string jsonData;
+            if (typeof(T).GetCustomAttribute<PreferJsonConvertAttribute>() == null)
+                jsonData = JsonUtility.ToJson(data);
+            else
+                jsonData = JsonConvert.SerializeObject(data);
+            if (!Directory.Exists(SavePath)) Directory.CreateDirectory(SavePath);
+            using FileStream file = File.Create($"{SavePath}/{key}.bin");
+            formatter.Serialize(file, jsonData);
+        }
+        /// <summary>
+        /// Save data to saving
+        /// </summary>
+        /// <param name="data"></param>
+        /// <typeparam name="T"></typeparam>
         public static void Save<T>(T data)
         {
             Save(typeof(T).Name, data);
@@ -65,27 +92,33 @@ namespace Kurisu.Framework
         /// Load json from saving
         /// </summary>
         /// <param name="key"></param>
-        public static bool TryLoad(string key, out string jsonData)
+        public static bool TryLoadJson(string key, out string jsonData)
         {
             string path = $"{SavePath}/{key}.bin";
             if (File.Exists(path))
             {
-                FileStream file = File.Open(path, FileMode.Open);
+                using FileStream file = File.Open(path, FileMode.Open);
                 jsonData = (string)formatter.Deserialize(file);
-                file.Close();
                 return true;
             }
             jsonData = null;
             return false;
         }
-        public static bool TryOverwrite(string key, object data)
+        /// <summary>
+        /// Load json from saving and overwrite object
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="data"></param>
+        public static bool Overwrite(string key, object data)
         {
             string path = $"{SavePath}/{key}.bin";
             if (File.Exists(path))
             {
-                FileStream file = File.Open(path, FileMode.Open);
-                JsonUtility.FromJsonOverwrite((string)formatter.Deserialize(file), data);
-                file.Close();
+                using FileStream file = File.Open(path, FileMode.Open);
+                if (data.GetType().GetCustomAttribute<PreferJsonConvertAttribute>() == null)
+                    JsonUtility.FromJsonOverwrite((string)formatter.Deserialize(file), data);
+                else
+                    JsonConvert.PopulateObject((string)formatter.Deserialize(file), data);
                 return true;
             }
             return false;
@@ -95,15 +128,31 @@ namespace Kurisu.Framework
         /// </summary>
         /// <param name="key"></param>
         /// <param name="data"></param>
-        public static void Overwrite(string key, object data)
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static bool Overwrite<T>(string key, T data)
         {
             string path = $"{SavePath}/{key}.bin";
             if (File.Exists(path))
             {
-                FileStream file = File.Open(path, FileMode.Open);
-                JsonUtility.FromJsonOverwrite((string)formatter.Deserialize(file), data);
-                file.Close();
+                using FileStream file = File.Open(path, FileMode.Open);
+                if (typeof(T).GetCustomAttribute<PreferJsonConvertAttribute>() == null)
+                    JsonUtility.FromJsonOverwrite((string)formatter.Deserialize(file), data);
+                else
+                    JsonConvert.PopulateObject((string)formatter.Deserialize(file), data);
+                return true;
             }
+            return false;
+        }
+        /// <summary>
+        /// Load json from saving and overwrite object
+        /// </summary>
+        /// <param name="data"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static bool Overwrite<T>(T data)
+        {
+            return Overwrite(typeof(T).Name, data);
         }
         /// <summary>
         /// Load json from saving and parse to <see cref="T"/> object, if has no saving allocate new one
@@ -111,19 +160,26 @@ namespace Kurisu.Framework
         /// <param name="key"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T LoadOrNew<T>(string key) where T : new()
+        public static T LoadOrNew<T>(string key) where T : class, new()
         {
+            T data = null;
             string path = $"{SavePath}/{key}.bin";
             if (File.Exists(path))
             {
-                FileStream file = File.Open(path, FileMode.Open);
-                var data = JsonUtility.FromJson<T>((string)formatter.Deserialize(file));
-                file.Close();
-                return data;
+                using FileStream file = File.Open(path, FileMode.Open);
+                if (typeof(T).GetCustomAttribute<PreferJsonConvertAttribute>() == null)
+                    data = JsonUtility.FromJson<T>((string)formatter.Deserialize(file));
+                else
+                    data = JsonConvert.DeserializeObject<T>((string)formatter.Deserialize(file));
             }
-            return new T();
+            data ??= new T();
+            return data;
         }
-        public static T LoadOrNew<T>() where T : new()
+        /// <summary>
+        /// Load json from saving and parse to <see cref="T"/> object, if has no saving allocate new one
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        public static T LoadOrNew<T>() where T : class, new()
         {
             return LoadOrNew<T>(typeof(T).Name);
         }

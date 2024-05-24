@@ -1,5 +1,5 @@
 ﻿using System.Collections.Generic;
-namespace Kurisu.Framework
+namespace Kurisu.Framework.Pool
 {
     /// <summary>
     /// Represents a simple object pool that stores objects without a factory method.

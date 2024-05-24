@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-namespace Kurisu.Framework
+namespace Kurisu.Framework.Pool
 {
     internal class GameObjectPool
     {

@@ -7,7 +7,7 @@ using UnityEngine.Playables;
 namespace Kurisu.Framework.Playables
 {
     /// <summary>
-    /// Playable animator can cross fade multi RuntimeAnimatorController
+    /// Playable animator can cross fade multi <see cref="RuntimeAnimatorController"/>
     /// </summary>
     public class PlayableAnimator : IDisposable
     {

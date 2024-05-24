@@ -33,6 +33,7 @@ namespace Kurisu.Framework
             float uu = u * u;
             return (uu * p0) + (2 * u * t * p1) + (tt * p2);
         }
+        #region Internal Utils
         internal static MethodInfo GetStaticMethodWithNoParametersInBase(Type type, string methodName)
         {
             MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
@@ -47,5 +48,11 @@ namespace Kurisu.Framework
 
             return null;
         }
+        internal static T GetOrAddComponent<T>(this GameObject gameObject) where T : Component
+        {
+            var component = gameObject.GetComponent<T>() ?? gameObject.AddComponent<T>();
+            return component;
+        }
+        #endregion
     }
 }

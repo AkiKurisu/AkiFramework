@@ -1,15 +1,20 @@
+using System;
 using Kurisu.Framework.Events;
 using Newtonsoft.Json;
 using UnityEngine;
 using Object = UnityEngine.Object;
 namespace Kurisu.Framework.React
 {
-    public interface IReadonlyReactiveProperty<T>
+    public interface IReadonlyReactiveProperty<T> : IObservable<EventCallback<ChangeEvent<T>>>
     {
         T Value { get; }
         void UnregisterValueChangeCallback(EventCallback<ChangeEvent<T>> onValueChanged);
         void RegisterValueChangeCallback(EventCallback<ChangeEvent<T>> onValueChanged);
     }
+    /// <summary>
+    /// Property broker more advanced than <see cref="BindableProperty{T}"/> using AkiFramework's Events
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public abstract class ReactiveProperty<T> : CallbackEventHandler, INotifyValueChanged<T>, IReadonlyReactiveProperty<T>, IBehaviourScope
     {
         protected T _value;
@@ -119,8 +124,19 @@ namespace Kurisu.Framework.React
         /// <param name="behaviour"></param>
         public void AttachBehaviour(Behaviour behaviour)
         {
-            AttachedBehaviour = behaviour != null ? behaviour : EventSystem.Instance;
+            AttachedBehaviour = behaviour;
             AttachedCoordinator = behaviour as MonoEventCoordinator;
+        }
+        public IDisposable Subscribe(EventCallback<ChangeEvent<T>> callback)
+        {
+            RegisterCallback(callback);
+            return Disposable.Create(() => UnregisterCallback(callback));
+        }
+        public IDisposable SubscribeOnce(EventCallback<ChangeEvent<T>> callback)
+        {
+            RegisterCallback(callback);
+            callback += (e) => UnregisterCallback(callback);
+            return Disposable.Create(() => UnregisterCallback(callback));
         }
     }
     public class ReactiveBool : ReactiveProperty<bool>

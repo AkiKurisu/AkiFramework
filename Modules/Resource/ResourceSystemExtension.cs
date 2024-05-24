@@ -1,4 +1,4 @@
-#if UNITASK_SUPPORT
+#if AF_UNITASK_INSTALL
 using Cysharp.Threading.Tasks;
 #else
 using System.Runtime.CompilerServices;
@@ -9,35 +9,7 @@ namespace Kurisu.Framework.Resource
 {
     public static class ResourceSystemExtension
     {
-        public static CallBackDisposable ToDisposable<T>(this ResourceHandle<T> handle)
-        {
-            return new CallBackDisposable(() => ResourceSystem.Release(handle));
-        }
-        public static CallBackDisposable ToDisposable(this ResourceHandle handle)
-        {
-            return new CallBackDisposable(() => ResourceSystem.Release(handle));
-        }
-        public static ResourceHandle<T> AddTo<T>(this ResourceHandle<T> handle, IUnRegister unRegister)
-        {
-            handle.ToDisposable().AddTo(unRegister);
-            return handle;
-        }
-        public static ResourceHandle AddTo(this ResourceHandle handle, IUnRegister unRegister)
-        {
-            handle.ToDisposable().AddTo(unRegister);
-            return handle;
-        }
-        public static ResourceHandle<T> AddTo<T>(this ResourceHandle<T> handle, GameObject unRegisterGameObject)
-        {
-            handle.ToDisposable().AddTo(unRegisterGameObject);
-            return handle;
-        }
-        public static ResourceHandle AddTo(this ResourceHandle handle, GameObject unRegisterGameObject)
-        {
-            handle.ToDisposable().AddTo(unRegisterGameObject);
-            return handle;
-        }
-#if UNITASK_SUPPORT
+#if AF_UNITASK_INSTALL
         public static UniTask<T>.Awaiter GetAwaiter<T>(this ResourceHandle<T> handle)
         {
             return handle.InternalHandle.GetAwaiter();

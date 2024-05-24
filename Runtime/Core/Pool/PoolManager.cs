@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-namespace Kurisu.Framework
+namespace Kurisu.Framework.Pool
 {
     public interface IPooled { }
     public class PoolManager : MonoBehaviour
