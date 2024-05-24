@@ -4,7 +4,6 @@ namespace Kurisu.Framework.React
 {
     public static class DisposableExtensions
     {
-        #region IDisposable
         /// <summary>
         /// Dispose when GameObject destroy
         /// </summary>
@@ -26,27 +25,26 @@ namespace Kurisu.Framework.React
             return gameObject.GetOrAddComponent<ObservableDestroyTrigger>();
         }
         /// <summary>
-        /// Dispose when GameObject destroy
+        /// Dispose subscription when GameObject destroy
         /// </summary>
-        /// <param name="handle"></param>
+        /// <param name="subscription"></param>
         /// <param name="gameObject"></param>
         /// <returns></returns>
-        public static T AddTo<T>(this T handle, Component component) where T : IDisposable
+        public static T AddTo<T>(this T subscription, Component component) where T : IDisposable
         {
-            component.gameObject.GetUnRegister().Add(handle);
-            return handle;
+            component.gameObject.GetUnRegister().Add(subscription);
+            return subscription;
         }
         /// <summary>
-        /// Dispose managed by a unRegister
+        /// Dispose subscription managed by a <see cref="IUnRegister"/>
         /// </summary>
-        /// <param name="handle"></param>
+        /// <param name="subscription"></param>
         /// <param name="gameObject"></param>
         /// <returns></returns>
-        public static T AddTo<T>(this T handle, IUnRegister unRegister) where T : IDisposable
+        public static T AddTo<T>(this T subscription, IUnRegister unRegister) where T : IDisposable
         {
-            unRegister.Add(handle);
-            return handle;
+            unRegister.Add(subscription);
+            return subscription;
         }
-        #endregion
     }
 }
