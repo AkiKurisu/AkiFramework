@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-namespace Kurisu.Framework
+namespace Kurisu.Framework.React
 {
     public interface IBindableProperty<T> : IReadonlyBindableProperty<T>
     {
@@ -17,9 +17,11 @@ namespace Kurisu.Framework
         /// <param name="action"></param>
         /// <returns></returns>
         IDisposable SubscribeWithInitValue(Action<T> action);
+        void Register(Action<T> onEvent);
+        void Unregister(Action<T> onEvent);
     }
 
-    public class BindableProperty<T> : IBindableProperty<T>
+    public class BindableProperty<T> : AkiEventBase<Action<T>>, IBindableProperty<T>
     {
         public BindableProperty(T defaultValue = default)
         {
@@ -54,7 +56,7 @@ namespace Kurisu.Framework
             mValue = default;
             mOnValueChanged = null;
         }
-        public void Register(Action<T> onValueChanged)
+        public override void Register(Action<T> onValueChanged)
         {
             mOnValueChanged += onValueChanged;
         }
@@ -69,14 +71,14 @@ namespace Kurisu.Framework
             return Value.ToString();
         }
 
-        public void Unregister(Action<T> onValueChanged)
+        public override void Unregister(Action<T> onValueChanged)
         {
             mOnValueChanged -= onValueChanged;
         }
 
         public IDisposable SubscribeWithInitValue(Action<T> action)
         {
-            var disposable = this.Subscribe(action);
+            var disposable = Subscribe(action);
             action?.Invoke(mValue);
             return disposable;
         }

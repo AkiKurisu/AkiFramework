@@ -4,8 +4,7 @@ using System.Linq;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using System.Collections;
-
-#if UNITASK_SUPPORT
+#if AF_UNITASK_INSTALL
 using Cysharp.Threading.Tasks;
 #else
 using System.Threading.Tasks;
@@ -43,7 +42,7 @@ namespace Kurisu.Framework.Resource
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-#if UNITASK_SUPPORT
+#if AF_UNITASK_INSTALL
         public async UniTask<TAsset> LoadAssetAsync(string address)
 #else
         public async Task<TAsset> LoadAssetAsync(string address)
@@ -74,7 +73,7 @@ namespace Kurisu.Framework.Resource
             }
             return asset;
         }
-#if UNITASK_SUPPORT
+#if AF_UNITASK_INSTALL
         private async UniTask SafeCheckAsync(string address)
 #else
         private async Task SafeCheckAsync(string address)
@@ -83,7 +82,7 @@ namespace Kurisu.Framework.Resource
             //No need when global safe check is on
 #if !AF_RESOURCES_SAFE_CHECK
             var location = Addressables.LoadResourceLocationsAsync(address, typeof(TAsset));
-#if UNITASK_SUPPORT
+#if AF_UNITASK_INSTALL
             await location.ToUniTask();
 #else
             await location.Task;

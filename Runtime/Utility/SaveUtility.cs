@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -6,11 +5,6 @@ using Newtonsoft.Json;
 using UnityEngine;
 namespace Kurisu.Framework
 {
-    /// <summary>
-    /// Prefer to use <see cref="JsonConvert"/> instead of <see cref="JsonUtility"/>
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-    public class PreferJsonConvertAttribute : Attribute { }
     public class SaveUtility
     {
         private static readonly string SavePath = Path.Combine(Application.persistentDataPath, "Saving");

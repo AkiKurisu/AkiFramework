@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-namespace Kurisu.Framework
+namespace Kurisu.Framework.React
 {
     public class BindablePropertyConverter<T> : JsonConverter
     {

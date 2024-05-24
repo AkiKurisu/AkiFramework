@@ -110,7 +110,7 @@ namespace Kurisu.Framework.Resource
         /// <typeparam name="T"></typeparam>
         public static void Release<T>(ResourceHandle<T> handle)
         {
-            if (handle.operationType == InstantiateOperation && typeof(T) == typeof(GameObject))
+            if (handle.operationType == InstantiateOperation)
                 ReleaseInstance(handle.Result as GameObject);
             else
                 ReleaseAsset(handle);
@@ -121,7 +121,7 @@ namespace Kurisu.Framework.Resource
         /// <param name="handle"></param>
         public static void Release(ResourceHandle handle)
         {
-            if (handle.operationType == InstantiateOperation && handle.Result.GetType() == typeof(GameObject))
+            if (handle.operationType == InstantiateOperation)
                 ReleaseInstance(handle.Result as GameObject);
             else
                 ReleaseAsset(handle);
@@ -132,7 +132,7 @@ namespace Kurisu.Framework.Resource
         /// <param name="handle"></param>
         public static void ReleaseAsset(ResourceHandle handle)
         {
-            if (handle.InternalHandle.Equals(null) || handle.InternalHandle.Result != null)
+            if (handle.InternalHandle.IsValid())
                 Addressables.Release(handle.InternalHandle);
             internalHandleMap.Remove(handle.handleID);
         }
@@ -146,8 +146,7 @@ namespace Kurisu.Framework.Resource
             {
                 internalHandleMap.Remove(handleID);
             }
-            if (obj != null)
-                Addressables.ReleaseInstance(obj);
+            Addressables.ReleaseInstance(obj);
         }
         #endregion
         #region  Multi Assets Load
