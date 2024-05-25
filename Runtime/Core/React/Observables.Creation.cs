@@ -23,7 +23,15 @@ namespace Kurisu.Framework.React
         {
             return new FromEventObservable(addHandler, removeHandler);
         }
+        /// <summary>
+        /// Empty Observable. 
+        /// </summary>
+        public static IObservable<T> Empty<T>()
+        {
+            return new EmptyObservable<T>();
+        }
     }
+
     internal class CreateObservable<T> : IObservable<T>
     {
         readonly Func<Action<T>, IDisposable> subscribe;

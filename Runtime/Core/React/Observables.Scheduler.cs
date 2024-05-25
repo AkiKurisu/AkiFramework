@@ -1,8 +1,4 @@
 using System;
-using System.Collections.Generic;
-using Kurisu.Framework.Events;
-using Kurisu.Framework.Schedulers;
-using UnityEngine;
 namespace Kurisu.Framework.React
 {
     public static partial class Observable
@@ -19,191 +15,20 @@ namespace Kurisu.Framework.React
         {
             return new WaitFrameObservable<T>(source, frameCount);
         }
-    }
-    internal class DelayObservable<T> : IObservable<T>
-    {
-        private readonly IObservable<T> source;
-        private readonly TimeSpan dueTime;
-        private readonly bool ignoreTimeScale;
-        public DelayObservable(IObservable<T> source, TimeSpan dueTime, bool ignoreTimeScale)
+        public static IObservable<T> Take<T>(this IObservable<T> source, int count)
         {
-            this.source = source;
-            this.dueTime = dueTime;
-            this.ignoreTimeScale = ignoreTimeScale;
-        }
-        public IDisposable Subscribe(Action<T> observer)
-        {
-            return new Delay(this, observer).Run();
-        }
-        private class Delay
-        {
-            private readonly DelayObservable<T> parent;
-            private readonly Action<T> observer;
-            private readonly Queue<Timestamped<T>> queue = new();
-            private SerialDisposable serialDisposable;
-            private bool running = false;
-            public Delay(DelayObservable<T> parent, Action<T> observer)
+            if (source == null) throw new ArgumentNullException("source");
+            if (count < 0) throw new ArgumentOutOfRangeException("count");
+
+            if (count == 0) return Empty<T>();
+
+            // optimize .Take(count).Take(count)
+            if (source is TakeObservable<T> take)
             {
-                this.parent = parent;
-                this.observer = observer;
+                return take.Combine(count);
             }
 
-            public IDisposable Run()
-            {
-                serialDisposable = new();
-                return StableCompositeDisposable.Create(parent.source.Subscribe(OnNext), serialDisposable);
-            }
-
-            private void OnNext(T value)
-            {
-                if (value is EventBase eventBase) eventBase.Acquire();
-                var dueTime = Scheduler.Now.Add(parent.dueTime);
-                queue.Enqueue(new Timestamped<T>(value, dueTime));
-                if (!running)
-                {
-                    serialDisposable.Disposable = Scheduler.Delay(parent.dueTime, DrainQueue, parent.ignoreTimeScale);
-                    running = true;
-                }
-            }
-
-            private void DrainQueue(Action<TimeSpan> recurse)
-            {
-                var shouldYield = false;
-                while (true)
-                {
-                    var hasValue = false;
-                    var value = default(T);
-                    var shouldRecurse = false;
-                    var recurseDueTime = default(TimeSpan);
-                    if (queue.Count > 0)
-                    {
-                        var nextDue = queue.Peek().Timestamp;
-
-                        if (nextDue.CompareTo(Scheduler.Now) <= 0 && !shouldYield)
-                        {
-                            value = queue.Dequeue().Value;
-                            hasValue = true;
-                        }
-                        else
-                        {
-                            shouldRecurse = true;
-                            recurseDueTime = Scheduler.Normalize(nextDue.Subtract(Scheduler.Now));
-                            running = false;
-                        }
-                    }
-                    else
-                    {
-                        running = false;
-                    }
-                    if (hasValue)
-                    {
-                        observer(value);
-                        if (value is EventBase eventBase) eventBase.Dispose();
-                        shouldYield = true;
-                    }
-                    else
-                    {
-                        if (shouldRecurse)
-                        {
-                            recurse(recurseDueTime);
-                        }
-                        return;
-                    }
-                }
-            }
-        }
-    }
-    internal class WaitFrameObservable<T> : IObservable<T>
-    {
-        private readonly IObservable<T> source;
-        private readonly int frameCount;
-        public WaitFrameObservable(IObservable<T> source, int frameCount)
-        {
-            this.source = source;
-            this.frameCount = frameCount;
-        }
-
-        public IDisposable Subscribe(Action<T> observer)
-        {
-            return new WaitFrame(this, observer).Run();
-        }
-
-        private class WaitFrame
-        {
-            private readonly WaitFrameObservable<T> parent;
-            private readonly Action<T> observer;
-            private readonly Queue<FrameInterval<T>> queue = new();
-            private SerialDisposable serialDisposable;
-            private bool running = false;
-            public WaitFrame(WaitFrameObservable<T> parent, Action<T> observer)
-            {
-                this.parent = parent;
-                this.observer = observer;
-            }
-
-            public IDisposable Run()
-            {
-                serialDisposable = new();
-                return StableCompositeDisposable.Create(parent.source.Subscribe(OnNext), serialDisposable);
-            }
-
-            private void OnNext(T value)
-            {
-                var dueTime = Time.frameCount + parent.frameCount;
-                if (value is EventBase eventBase) eventBase.Acquire();
-                queue.Enqueue(new FrameInterval<T>(value, dueTime));
-                if (!running)
-                {
-                    serialDisposable.Disposable = Scheduler.WaitFrame(parent.frameCount, DrainQueue);
-                    running = true;
-                }
-            }
-
-            private void DrainQueue(Action<int> recurse)
-            {
-                var shouldYield = false;
-                while (true)
-                {
-                    var hasValue = false;
-                    var value = default(T);
-                    var shouldRecurse = false;
-                    var recurseDueTime = default(int);
-                    if (queue.Count > 0)
-                    {
-                        var nextDue = queue.Peek().Interval;
-
-                        if (nextDue.CompareTo(Time.frameCount) <= 0 && !shouldYield)
-                        {
-                            value = queue.Dequeue().Value;
-                            hasValue = true;
-                        }
-                        else
-                        {
-                            shouldRecurse = true;
-                            recurseDueTime = nextDue - Time.frameCount;
-                            running = false;
-                        }
-                    }
-                    else
-                    {
-                        running = false;
-                    }
-                    if (hasValue)
-                    {
-                        observer(value);
-                        if (value is EventBase eventBase) eventBase.Dispose();
-                        shouldYield = true;
-                    }
-                    else
-                    {
-                        if (shouldRecurse)
-                        {
-                            recurse(recurseDueTime);
-                        }
-                        return;
-                    }
-                }
-            }
+            return new TakeObservable<T>(source, count);
         }
     }
 }

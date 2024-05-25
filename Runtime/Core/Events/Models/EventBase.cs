@@ -382,7 +382,7 @@ namespace Kurisu.Framework.Events
 
         internal abstract void Acquire();
         /// <summary>
-        /// Implementation of IDisposable.
+        /// Implementation of <see cref="IDisposable"/>.
         /// </summary>
         public abstract void Dispose();
     }
@@ -424,7 +424,7 @@ namespace Kurisu.Framework.Events
 
             if (m_RefCount != 0)
             {
-                Debug.Log("Event improperly released.");
+                Debug.LogWarning($"Event improperly released, reference count {m_RefCount}.");
                 m_RefCount = 0;
             }
         }
