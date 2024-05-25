@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Kurisu.Framework.Pool;
-using UnityEngine;
 using Debug = UnityEngine.Debug;
 namespace Kurisu.Framework.Events
 {
@@ -12,7 +11,6 @@ namespace Kurisu.Framework.Events
         Queued = 1,
         Immediate = 2,
     }
-
     /// <summary>
     /// Gates control when the dispatcher processes events.
     /// </summary>
@@ -59,83 +57,6 @@ namespace Kurisu.Framework.Events
         public static bool operator !=(EventDispatcherGate left, EventDispatcherGate right)
         {
             return !left.Equals(right);
-        }
-    }
-    /// <summary>
-    /// MonoBehaviour based EventCoordinator that can be enabled and disabled, and can be tracked by the debugger
-    /// </summary>
-    public abstract class MonoEventCoordinator : MonoBehaviour, IEventCoordinator
-    {
-        public virtual EventDispatcher Dispatcher { get; protected set; }
-        private readonly HashSet<ICoordinatorDebugger> m_Debuggers = new();
-        protected virtual void Awake()
-        {
-            Dispatcher = EventDispatcher.CreateDefault();
-        }
-        protected virtual void Update()
-        {
-            Dispatcher.PushDispatcherContext();
-            Dispatcher.PopDispatcherContext();
-        }
-        protected virtual void OnDestroy()
-        {
-            DetachAllDebuggers();
-        }
-        public void Dispatch(EventBase evt, DispatchMode dispatchMode)
-        {
-            Dispatcher.Dispatch(evt, this, dispatchMode);
-            Refresh();
-        }
-        internal void AttachDebugger(ICoordinatorDebugger debugger)
-        {
-            if (debugger != null && m_Debuggers.Add(debugger))
-            {
-                debugger.CoordinatorDebug = this;
-            }
-        }
-        internal void DetachDebugger(ICoordinatorDebugger debugger)
-        {
-            if (debugger != null)
-            {
-                debugger.CoordinatorDebug = null;
-                m_Debuggers.Remove(debugger);
-            }
-        }
-        internal void DetachAllDebuggers()
-        {
-            foreach (var debugger in m_Debuggers)
-            {
-                debugger.CoordinatorDebug = null;
-                debugger.Disconnect();
-            }
-        }
-        internal IEnumerable<ICoordinatorDebugger> GetAttachedDebuggers()
-        {
-            return m_Debuggers;
-        }
-        public void Refresh()
-        {
-            foreach (var debugger in m_Debuggers)
-            {
-                debugger.Refresh();
-            }
-        }
-        public bool InterceptEvent(EventBase ev)
-        {
-            bool intercepted = false;
-            foreach (var debugger in m_Debuggers)
-            {
-                intercepted |= debugger.InterceptEvent(ev);
-            }
-            return intercepted;
-        }
-
-        public void PostProcessEvent(EventBase ev)
-        {
-            foreach (var debugger in m_Debuggers)
-            {
-                debugger.PostProcessEvent(ev);
-            }
         }
     }
     /// <summary>

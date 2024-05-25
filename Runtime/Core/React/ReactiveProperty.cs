@@ -5,7 +5,7 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 namespace Kurisu.Framework.React
 {
-    public interface IReadonlyReactiveProperty<T> : IObservable<EventCallback<ChangeEvent<T>>>
+    public interface IReadonlyReactiveProperty<T> : IObservable<ChangeEvent<T>>
     {
         T Value { get; }
         void UnregisterValueChangeCallback(EventCallback<ChangeEvent<T>> onValueChanged);
@@ -127,16 +127,11 @@ namespace Kurisu.Framework.React
             AttachedBehaviour = behaviour;
             AttachedCoordinator = behaviour as MonoEventCoordinator;
         }
-        public IDisposable Subscribe(EventCallback<ChangeEvent<T>> callback)
+        public IDisposable Subscribe(Action<ChangeEvent<T>> callback)
         {
-            RegisterCallback(callback);
-            return Disposable.Create(() => UnregisterCallback(callback));
-        }
-        public IDisposable SubscribeOnce(EventCallback<ChangeEvent<T>> callback)
-        {
-            RegisterCallback(callback);
-            callback += (e) => UnregisterCallback(callback);
-            return Disposable.Create(() => UnregisterCallback(callback));
+            EventCallback<ChangeEvent<T>> eventCallback = new(callback);
+            RegisterCallback(eventCallback);
+            return Disposable.Create(() => UnregisterCallback(eventCallback));
         }
     }
     public class ReactiveBool : ReactiveProperty<bool>

@@ -9,4 +9,8 @@ namespace Kurisu.Framework.React
         void Add(IDisposable disposable);
         void Remove(IDisposable disposable);
     }
+    public interface ICancelable : IDisposable
+    {
+        bool IsDisposed { get; }
+    }
 }

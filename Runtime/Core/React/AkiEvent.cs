@@ -1,96 +1,117 @@
 ﻿using System;
 namespace Kurisu.Framework.React
 {
-    public abstract class AkiEventBase<T> : IObservable<T> where T : Delegate
+    /// <summary>
+    /// Event for AkiFramework's react
+    /// </summary>
+    public class AkiEvent<T> : IObservable<T>
     {
-        public abstract void Register(T onEvent);
-        public abstract void Unregister(T onEvent);
-        public IDisposable Subscribe(T observer)
+        protected Action<T> mEvent = (e) => { };
+        public void Register(Action<T> observer)
+        {
+            mEvent += observer;
+        }
+        public void Unregister(Action<T> observer)
+        {
+            mEvent -= observer;
+        }
+        public IDisposable Subscribe(Action<T> observer)
         {
             Register(observer);
             return Disposable.Create(() => Unregister(observer));
         }
-        public IDisposable SubscribeOnce(T observer)
-        {
-            T combinedAction = (T)Delegate.Combine(observer, (Action)(() => Unregister(observer)));
-            Register(combinedAction);
-            return Disposable.Create(() => Unregister(combinedAction));
-        }
-    }
-    public class AkiEvent : AkiEventBase<Action>
-    {
-        private Action mOnEvent = () => { };
-
-        public override void Register(Action onEvent)
-        {
-            mOnEvent += onEvent;
-        }
-
-        public override void Unregister(Action onEvent)
-        {
-            mOnEvent -= onEvent;
-        }
-
-        public void Trigger()
-        {
-            mOnEvent?.Invoke();
-        }
-    }
-    public class AkiEvent<T> : AkiEventBase<Action<T>>
-    {
-        private Action<T> mOnEvent = e => { };
-
-        public override void Register(Action<T> onEvent)
-        {
-            mOnEvent += onEvent;
-        }
-
-        public override void Unregister(Action<T> onEvent)
-        {
-            mOnEvent -= onEvent;
-        }
-
         public void Trigger(T t)
         {
-            mOnEvent?.Invoke(t);
+            mEvent?.Invoke(t);
         }
     }
-    public class AkiEvent<T, K> : AkiEventBase<Action<T, K>>
+    /// <summary>
+    /// Event for AkiFramework's react
+    /// </summary>
+    public class AkiEvent : AkiEvent<Unit>
     {
-        private Action<T, K> mOnEvent = (t, k) => { };
-
-        public override void Register(Action<T, K> onEvent)
+        public IDisposable Subscribe(Action observer)
         {
-            mOnEvent += onEvent;
+            Action<Unit> conversation = new((e) => observer());
+            Register(conversation);
+            return Disposable.Create(() => Unregister(conversation));
         }
-
-        public override void Unregister(Action<T, K> onEvent)
+        public void Trigger()
         {
-            mOnEvent -= onEvent;
+            mEvent?.Invoke(Unit.Default);
         }
-
+    }
+    /// <summary>
+    /// Event for AkiFramework's react
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="K"></typeparam>
+    public class AkiEvent<T, K> : IObservable<Tuple<T, K>>
+    {
+        protected Action<Tuple<T, K>> mEvent = (e) => { };
+        public IDisposable Subscribe(Action<Tuple<T, K>> observer)
+        {
+            Register(observer);
+            return Disposable.Create(() => Unregister(observer));
+        }
+        public IDisposable Subscribe(Action<T, K> observer)
+        {
+            Action<Tuple<T, K>> conversation = new(t => observer(t.Item1, t.Item2));
+            Register(conversation);
+            return Disposable.Create(() => Unregister(conversation));
+        }
+        public void Register(Action<Tuple<T, K>> observer)
+        {
+            mEvent += observer;
+        }
+        public void Unregister(Action<Tuple<T, K>> observer)
+        {
+            mEvent -= observer;
+        }
         public void Trigger(T t, K k)
         {
-            mOnEvent?.Invoke(t, k);
+            mEvent?.Invoke(new(t, k));
+        }
+        public void Trigger(Tuple<T, K> item)
+        {
+            mEvent?.Invoke(item);
         }
     }
-    public class AkiEvent<T, K, S> : AkiEventBase<Action<T, K, S>>
+    /// <summary>
+    /// Event for AkiFramework's react
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="K"></typeparam>
+    /// <typeparam name="S"></typeparam>
+    public class AkiEvent<T, K, S> : IObservable<Tuple<T, K, S>>
     {
-        private Action<T, K, S> mOnEvent = (t, k, s) => { };
-
-        public override void Register(Action<T, K, S> onEvent)
+        protected Action<Tuple<T, K, S>> mEvent = (e) => { };
+        public IDisposable Subscribe(Action<Tuple<T, K, S>> observer)
         {
-            mOnEvent += onEvent;
+            Register(observer);
+            return Disposable.Create(() => Unregister(observer));
         }
-
-        public override void Unregister(Action<T, K, S> onEvent)
+        public IDisposable Subscribe(Action<T, K, S> observer)
         {
-            mOnEvent -= onEvent;
+            Action<Tuple<T, K, S>> conversation = new(t => observer(t.Item1, t.Item2, t.Item3));
+            Register(conversation);
+            return Disposable.Create(() => Unregister(conversation));
         }
-
+        public void Register(Action<Tuple<T, K, S>> observer)
+        {
+            mEvent += observer;
+        }
+        public void Unregister(Action<Tuple<T, K, S>> observer)
+        {
+            mEvent -= observer;
+        }
         public void Trigger(T t, K k, S s)
         {
-            mOnEvent?.Invoke(t, k, s);
+            mEvent?.Invoke(new(t, k, s));
+        }
+        public void Trigger(Tuple<T, K, S> item)
+        {
+            mEvent?.Invoke(item);
         }
     }
 }

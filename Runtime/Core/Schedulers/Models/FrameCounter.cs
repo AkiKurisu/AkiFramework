@@ -3,7 +3,7 @@ using System;
 using UnityEngine.Pool;
 namespace Kurisu.Framework.Schedulers
 {
-    public class FrameCounter : IScheduler
+    public class FrameCounter : IScheduled
     {
         private static readonly ObjectPool<FrameCounter> pool = new(() => new());
         #region Public Properties/Fields
@@ -54,7 +54,7 @@ namespace Kurisu.Framework.Schedulers
         {
             FrameCounter timer = pool.Get();
             timer.Init(frame, onComplete, onUpdate, isLooped);
-            SchedulerRunner.Instance.RegisterScheduler(timer);
+            SchedulerRunner.Instance.Register(timer);
             return timer;
         }
         #endregion
@@ -109,7 +109,7 @@ namespace Kurisu.Framework.Schedulers
 
         #endregion
         #region Private Properties/Fields
-        public event Action OnComplete;
+        private Action OnComplete;
         private Action<int> _onUpdate;
         private float? _timeElapsedBeforeCancel;
         private float? _timeElapsedBeforePause;
@@ -150,7 +150,7 @@ namespace Kurisu.Framework.Schedulers
 
             if (count >= Frame)
             {
-                SchedulerRunner.Instance.UnregisterScheduler(this);
+                SchedulerRunner.Instance.Unregister(this);
                 OnComplete?.Invoke();
 
                 if (IsLooped)

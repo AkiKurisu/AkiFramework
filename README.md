@@ -7,7 +7,10 @@ I supposed these code are useful but also not-must-be-included, which is my pers
 ## Features
 
 [Events](./Docs/Events.md) ⚡
-> Dynamic and contextual event handling
+> Dynamic and contextual event handling based on UIElements.Events
+
+[React](./Docs/React.md) 🔗
+> A simpler rx solution based on UniRx
 
 ## Reference
 
