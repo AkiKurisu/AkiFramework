@@ -89,6 +89,30 @@ Record events state and resend to target event handler.
 
 Recommend to install `jillejr.newtonsoft.json-for-unity.converters` to solve serialization problem with `Newtonsoft.Json`.
 
+### Dispatch Events On Specified Frame
+
+Dispatching events on specified frames is a simple and effective scheduling strategy.
+
+If you need longer scheduling, you can use `Scheduler`.
+
+```C#
+public class MonoDispatchExample : MonoBehaviour
+{
+    private void Start()
+    {
+        EventSystem.EventHandler.RegisterCallback<MyCustomEvent>()(e =>
+        {
+            Debug.Log(e.Message);
+        });
+        using var ce1 = MyCustomEvent.GetPooled("Hello");
+        EventSystem.LateUpdateHandler.SendEvent(ce1);
+        using var ce2 = MyCustomEvent.GetPooled("World");
+        EventSystem.UpdateHandler.SendEvent(ce2);
+    }
+    // Will receive `World` first, then `Hello`
+}
+```
+
 ### ReactiveProperty
 
 ```C#
