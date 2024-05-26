@@ -80,18 +80,34 @@ namespace Kurisu.Framework.React
             }, h => unityEvent.AddListener(h), h => unityEvent.RemoveListener(h));
         }
         #endregion
-        #region Events
+        #region AF Events
         /// <summary>
-        ///  Create Observable for <see cref="CallbackEventHandler"/>
+        /// Create Observable for <see cref="CallbackEventHandler"/>
         /// </summary>
         /// <param name="handler"></param>
+        /// <param name="trickleDown"></param>
         /// <typeparam name="TEventType"></typeparam>
         /// <returns></returns>
         public static IObservable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler, TrickleDown trickleDown = TrickleDown.NoTrickleDown)
         where TEventType : EventBase<TEventType>, new()
         {
             return FromEvent<EventCallback<TEventType>, TEventType>(h => new EventCallback<TEventType>(h),
-            h => handler.RegisterCallback(h, trickleDown), h => handler.UnregisterCallback(h, trickleDown));
+            //frame:5 => Skip this, FromEventObservable and FromEvent
+            h => handler.RegisterCallback(h, trickleDown, 5), h => handler.UnregisterCallback(h, trickleDown));
+        }
+        /// <summary>
+        /// Create Observable for <see cref="CallbackEventHandler"/>
+        /// </summary>
+        /// <param name="handler"></param>
+        /// <param name="trickleDown"></param>
+        /// <param name="skipFrame">Skip frames for debugger</param>
+        /// <typeparam name="TEventType"></typeparam>
+        /// <returns></returns>
+        public static IObservable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler, TrickleDown trickleDown = TrickleDown.NoTrickleDown, int skipFrame = 5)
+        where TEventType : EventBase<TEventType>, new()
+        {
+            return FromEvent<EventCallback<TEventType>, TEventType>(h => new EventCallback<TEventType>(h),
+            h => handler.RegisterCallback(h, trickleDown, skipFrame), h => handler.UnregisterCallback(h, trickleDown));
         }
         #endregion
     }

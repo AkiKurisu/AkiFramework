@@ -46,6 +46,16 @@ namespace Kurisu.Framework.Events
 #endif
             // AddEventCategories<TEventType>();
         }
+        internal void RegisterCallback<TEventType>(EventCallback<TEventType> callback, TrickleDown useTrickleDown = TrickleDown.NoTrickleDown, int skipFrame = 2) where TEventType : EventBase<TEventType>, new()
+        {
+            m_CallbackRegistry ??= new EventCallbackRegistry();
+
+            m_CallbackRegistry.RegisterCallback(callback, useTrickleDown, default);
+#if UNITY_EDITOR
+            GlobalCallbackRegistry.RegisterListeners<TEventType>(this, callback, useTrickleDown, skipFrame);
+#endif
+            // AddEventCategories<TEventType>();
+        }
 
         //TODO: Encode event categories
         // private void AddEventCategories<TEventType>() where TEventType : EventBase<TEventType>, new()
