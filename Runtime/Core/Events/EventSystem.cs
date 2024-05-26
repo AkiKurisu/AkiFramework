@@ -1,49 +1,79 @@
 using System.Collections.Generic;
 using UnityEngine;
+using static Kurisu.Framework.Events.EventBase;
 namespace Kurisu.Framework.Events
 {
     public class EventSystem : MonoEventCoordinator
     {
-        private class MonoEventHandler : BehaviourCallbackEventHandler
+        private sealed class RootCallBackEventHandler : BehaviourCallbackEventHandler
         {
-            private readonly MonoDispatchType monoDispatchType;
-            public MonoEventHandler(MonoEventCoordinator eventCoordinator, MonoDispatchType monoDispatchType) : base(eventCoordinator)
+            public sealed override bool IsCompositeRoot => true;
+            private readonly EventSystem eventCoordinator;
+            public sealed override IEventCoordinator Root => eventCoordinator;
+            public RootCallBackEventHandler(EventSystem eventCoordinator) : base(eventCoordinator)
+            {
+                this.eventCoordinator = eventCoordinator;
+            }
+            public override void SendEvent(EventBase e)
+            {
+                e.Target = this;
+                eventCoordinator.Dispatch(e, DispatchMode.Default, MonoDispatchType.Update);
+            }
+            public override void SendEvent(EventBase e, DispatchMode dispatchMode)
+            {
+                e.Target = this;
+                eventCoordinator.Dispatch(e, dispatchMode, MonoDispatchType.Update);
+            }
+        }
+        private class MonoCallBackEventHandler : BehaviourCallbackEventHandler
+        {
+            public sealed override bool IsCompositeRoot => false;
+            protected readonly MonoDispatchType monoDispatchType;
+            protected readonly MonoEventCoordinator eventCoordinator;
+            public sealed override IEventCoordinator Root => eventCoordinator;
+            public MonoCallBackEventHandler(MonoEventCoordinator eventCoordinator, MonoDispatchType monoDispatchType, CallbackEventHandler parent) : base(eventCoordinator)
             {
                 this.monoDispatchType = monoDispatchType;
-                EventCoordinator = eventCoordinator;
+                this.eventCoordinator = eventCoordinator;
+                Parent = parent;
             }
-            public MonoEventCoordinator EventCoordinator { get; }
-            public sealed override void SendEvent(EventBase e)
+
+            public override void SendEvent(EventBase e)
             {
                 e.Target = this;
-                EventCoordinator.Dispatch(e, DispatchMode.Default, monoDispatchType);
+                e.Propagation |= EventPropagation.Bubbles;
+                eventCoordinator.Dispatch(e, DispatchMode.Default, monoDispatchType);
             }
-            public sealed override void SendEvent(EventBase e, DispatchMode dispatchMode)
+            public override void SendEvent(EventBase e, DispatchMode dispatchMode)
             {
                 e.Target = this;
-                EventCoordinator.Dispatch(e, dispatchMode, monoDispatchType);
+                e.Propagation |= EventPropagation.Bubbles;
+                eventCoordinator.Dispatch(e, dispatchMode, monoDispatchType);
             }
         }
         private static EventSystem instance;
         public static EventSystem Instance => instance != null ? instance : GetInstance();
         private readonly Dictionary<MonoDispatchType, CallbackEventHandler> eventHandlers = new();
+        public override CallbackEventHandler RootEventHandler { get; protected set; }
         /// <summary>
-        /// Default callback handler, equal to <see cref="UpdateHandler"/>
+        /// Get <see cref="CallbackEventHandler"/> for events dispatch on all frame (Update, FixedUpdate and LateUpdate), use <see cref="TrickleDown"/> to register calBack on children handlers.
         /// </summary>
-        /// <value></value>
-        public static CallbackEventHandler EventHandler => UpdateHandler;
+        /// <remarks>
+        /// Events send from this can not be received by children, to receive specified dispatch type events, sending of events should also use specified eventHandler.
+        /// </remarks>
+        public static CallbackEventHandler EventHandler => Instance.RootEventHandler;
         /// <summary>
-        /// Callback handler for events execute on update
+        /// Get <see cref="CallbackEventHandler"/> for events dispatch on update
         /// </summary>
         /// <returns></returns>
         public static CallbackEventHandler UpdateHandler => Instance.GetEventHandler(MonoDispatchType.Update);
         /// <summary>
-        /// Callback handler for events execute on fixedUpdate
+        /// Get <see cref="CallbackEventHandler"/> for events dispatch on fixedUpdate
         /// </summary>
         /// <value></value>
         public static CallbackEventHandler FixedUpdateHandler => Instance.GetEventHandler(MonoDispatchType.FixedUpdate);
         /// <summary>
-        /// Callback handler for events execute on lateUpdate
+        /// Get <see cref="CallbackEventHandler"/> for events dispatch on lateUpdate
         /// </summary>
         /// <value></value>
         public static CallbackEventHandler LateUpdateHandler => Instance.GetEventHandler(MonoDispatchType.LateUpdate);
@@ -70,9 +100,14 @@ namespace Kurisu.Framework.Events
         protected override void Awake()
         {
             base.Awake();
-            eventHandlers[MonoDispatchType.Update] = new MonoEventHandler(this, MonoDispatchType.Update);
-            eventHandlers[MonoDispatchType.FixedUpdate] = new MonoEventHandler(this, MonoDispatchType.FixedUpdate);
-            eventHandlers[MonoDispatchType.LateUpdate] = new MonoEventHandler(this, MonoDispatchType.LateUpdate);
+            var root = new RootCallBackEventHandler(this);
+            RootEventHandler = root;
+            //Set parent to bubble up
+            eventHandlers[MonoDispatchType.Update] = new MonoCallBackEventHandler(this, MonoDispatchType.Update, RootEventHandler);
+            eventHandlers[MonoDispatchType.FixedUpdate] = new MonoCallBackEventHandler(this, MonoDispatchType.FixedUpdate, RootEventHandler);
+            eventHandlers[MonoDispatchType.LateUpdate] = new MonoCallBackEventHandler(this, MonoDispatchType.LateUpdate, RootEventHandler);
+            //Set children to trickle Down
+            // root.SetChildren(eventHandlers[MonoDispatchType.Update]);
         }
         public CallbackEventHandler GetEventHandler(MonoDispatchType monoDispatchType)
         {

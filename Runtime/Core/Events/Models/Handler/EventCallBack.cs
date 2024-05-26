@@ -19,31 +19,43 @@ namespace Kurisu.Framework.Events
     public delegate void EventCallback<in TEventType, in TCallbackArgs>(TEventType evt, TCallbackArgs userArgs);
     internal abstract class EventCallbackFunctorBase
     {
+        public CallbackPhase Phase { get; }
         public InvokePolicy InvokePolicy { get; }
 
-        protected EventCallbackFunctorBase(InvokePolicy invokePolicy)
+        protected EventCallbackFunctorBase(CallbackPhase phase, InvokePolicy invokePolicy)
         {
+            Phase = phase;
             InvokePolicy = invokePolicy;
         }
 
         public abstract void Invoke(EventBase evt, PropagationPhase propagationPhase);
 
-        public abstract bool IsEquivalentTo(long eventTypeId, Delegate callback);
+        public abstract bool IsEquivalentTo(long eventTypeId, Delegate callback, CallbackPhase phase);
 
         protected bool PhaseMatches(PropagationPhase propagationPhase)
         {
-            if (propagationPhase != PropagationPhase.AtTarget)
-                return false;
+            switch (Phase)
+            {
+                case CallbackPhase.TrickleDownAndTarget:
+                    if (propagationPhase != PropagationPhase.TrickleDown && propagationPhase != PropagationPhase.AtTarget)
+                        return false;
+                    break;
+
+                case CallbackPhase.TargetAndBubbleUp:
+                    if (propagationPhase != PropagationPhase.AtTarget && propagationPhase != PropagationPhase.BubbleUp)
+                        return false;
+                    break;
+            }
+
             return true;
         }
     }
-
     internal class EventCallbackFunctor<TEventType> : EventCallbackFunctorBase where TEventType : EventBase<TEventType>, new()
     {
-        readonly EventCallback<TEventType> m_Callback;
-        readonly long m_EventTypeId;
+        private readonly EventCallback<TEventType> m_Callback;
+        private readonly long m_EventTypeId;
 
-        public EventCallbackFunctor(EventCallback<TEventType> callback, InvokePolicy invokePolicy = default) : base(invokePolicy)
+        public EventCallbackFunctor(EventCallback<TEventType> callback, CallbackPhase phase, InvokePolicy invokePolicy = default) : base(phase, invokePolicy)
         {
             m_Callback = callback;
             m_EventTypeId = EventBase<TEventType>.TypeId();
@@ -66,9 +78,9 @@ namespace Kurisu.Framework.Events
             }
         }
 
-        public override bool IsEquivalentTo(long eventTypeId, Delegate callback)
+        public override bool IsEquivalentTo(long eventTypeId, Delegate callback, CallbackPhase phase)
         {
-            return (m_EventTypeId == eventTypeId) && ((Delegate)m_Callback) == callback;
+            return (m_EventTypeId == eventTypeId) && ((Delegate)m_Callback) == callback && (this.Phase == phase);
         }
     }
 
@@ -79,7 +91,7 @@ namespace Kurisu.Framework.Events
 
         internal TCallbackArgs UserArgs { get; set; }
 
-        public EventCallbackFunctor(EventCallback<TEventType, TCallbackArgs> callback, TCallbackArgs userArgs, InvokePolicy invokePolicy) : base(invokePolicy)
+        public EventCallbackFunctor(EventCallback<TEventType, TCallbackArgs> callback, TCallbackArgs userArgs, CallbackPhase phase, InvokePolicy invokePolicy) : base(phase, invokePolicy)
         {
             UserArgs = userArgs;
             m_Callback = callback;
@@ -103,9 +115,9 @@ namespace Kurisu.Framework.Events
             }
         }
 
-        public override bool IsEquivalentTo(long eventTypeId, Delegate callback)
+        public override bool IsEquivalentTo(long eventTypeId, Delegate callback, CallbackPhase phase)
         {
-            return (m_EventTypeId == eventTypeId) && ((Delegate)m_Callback) == callback;
+            return (m_EventTypeId == eventTypeId) && ((Delegate)m_Callback) == callback && (this.Phase == phase);
         }
     }
 }

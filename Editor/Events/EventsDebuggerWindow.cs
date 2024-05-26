@@ -98,7 +98,7 @@ namespace Kurisu.Framework.Events.Editor
             "5x",
             "10x" // 10x (fastest)
         };
-
+        private Label m_EventPropagationPaths;
         private Label m_EventBaseInfo;
         private ListView m_EventsLog;
         private ListView m_EventRegistrationsListView;
@@ -459,7 +459,7 @@ namespace Kurisu.Framework.Events.Editor
             m_SettingsMenu = playbackContainer.Q<ToolbarMenu>("settings-menu");
             SetupSettingsMenu();
 
-            // m_EventPropagationPaths = (Label)rootVisualElement.MandatoryQ("eventPropagationPaths");
+            m_EventPropagationPaths = (Label)rootVisualElement.MandatoryQ("eventPropagationPaths");
             m_EventBaseInfo = (Label)rootVisualElement.MandatoryQ("eventbaseInfo");
 
             m_EventsLog = (ListView)rootVisualElement.MandatoryQ("eventsLog");
@@ -490,8 +490,8 @@ namespace Kurisu.Framework.Events.Editor
             var eventCallbacksScrollView = (ScrollView)rootVisualElement.MandatoryQ("eventCallbacksScrollView");
             eventCallbacksScrollView.StretchToParentSize();
 
-            // var eventPropagationPathsScrollView = (ScrollView)rootVisualElement.MandatoryQ("eventPropagationPathsScrollView");
-            // eventPropagationPathsScrollView.StretchToParentSize();
+            var eventPropagationPathsScrollView = (ScrollView)rootVisualElement.MandatoryQ("eventPropagationPathsScrollView");
+            eventPropagationPathsScrollView.StretchToParentSize();
 
             var eventBaseInfoScrollView = (ScrollView)rootVisualElement.MandatoryQ("eventbaseInfoScrollView");
             eventBaseInfoScrollView.StretchToParentSize();
@@ -527,7 +527,7 @@ namespace Kurisu.Framework.Events.Editor
 
             var eventsTitle = rootVisualElement.MandatoryQ("eventsTitle");
             var eventCallbacksTitle = rootVisualElement.MandatoryQ("eventCallbacksTitle");
-            // var eventPropagationPathsTitle = rootVisualElement.MandatoryQ("eventPropagationPathsTitle");
+            var eventPropagationPathsTitle = rootVisualElement.MandatoryQ("eventPropagationPathsTitle");
             var eventbaseInfoTitle = rootVisualElement.MandatoryQ("eventbaseInfoTitle");
             var eventsRegistrationTitleContainer = rootVisualElement.MandatoryQ("eventsRegistrationTitleContainer");
             var eventsRegistrationSearchContainer = rootVisualElement.MandatoryQ("eventsRegistrationSearchContainer");
@@ -535,7 +535,7 @@ namespace Kurisu.Framework.Events.Editor
 
             eventsTitle.EnableInClassList("light", !isProSkin);
             eventCallbacksTitle.EnableInClassList("light", !isProSkin);
-            // eventPropagationPathsTitle.EnableInClassList("light", !isProSkin);
+            eventPropagationPathsTitle.EnableInClassList("light", !isProSkin);
             eventbaseInfoTitle.EnableInClassList("light", !isProSkin);
             eventsRegistrationTitleContainer.EnableInClassList("light", !isProSkin);
             eventsRegistrationSearchContainer.EnableInClassList("light", !isProSkin);
@@ -831,11 +831,13 @@ namespace Kurisu.Framework.Events.Editor
             if (m_SelectedEvents.Count == 1)
             {
                 UpdateEventCallbacks(eventBase);
+                UpdateEventPropagationPaths(eventBase);
                 UpdateEventBaseInfo(eventBase);
             }
             else
             {
                 ClearEventCallbacks();
+                ClearEventPropagationPaths();
                 ClearEventBaseInfo();
             }
 
@@ -980,7 +982,78 @@ namespace Kurisu.Framework.Events.Editor
                 m_EventCallbacksScrollView.Add(container);
             }
         }
+        private void ClearEventPropagationPaths()
+        {
+            m_EventPropagationPaths.text = "";
+        }
+        private void UpdateEventPropagationPaths(EventDebuggerEventRecord eventBase)
+        {
+            ClearEventPropagationPaths();
 
+            if (eventBase == null)
+                return;
+
+            var propagationPaths = m_Debugger.GetPropagationPaths(CoordinatorDebug, eventBase);
+            if (propagationPaths == null)
+                return;
+
+            foreach (EventDebuggerPathTrace propagationPath in propagationPaths)
+            {
+                if (propagationPath?.Paths == null)
+                    continue;
+
+                m_EventPropagationPaths.text += "Trickle Down Path:\n";
+                var pathsTrickleDownPath = propagationPath.Paths?.trickleDownPath;
+                if (pathsTrickleDownPath != null && pathsTrickleDownPath.Any())
+                {
+                    foreach (var trickleDownPathElement in pathsTrickleDownPath)
+                    {
+                        // var trickleDownPathName = trickleDownPathElement.name;
+                        // if (string.IsNullOrEmpty(trickleDownPathName))
+                        var trickleDownPathName = trickleDownPathElement.GetType().Name;
+                        m_EventPropagationPaths.text += "    " + trickleDownPathName + "\n";
+                    }
+                }
+                else
+                {
+                    m_EventPropagationPaths.text += "    <empty>\n";
+                }
+
+                m_EventPropagationPaths.text += "Target list:\n";
+                var targets = propagationPath.Paths.targetElements;
+                if (targets != null && targets.Any())
+                {
+                    foreach (var t in targets)
+                    {
+                        // var targetName = t.name;
+                        // if (string.IsNullOrEmpty(targetName))
+                        var targetName = t.GetType().Name;
+                        m_EventPropagationPaths.text += "    " + targetName + "\n";
+                    }
+                }
+                else
+                {
+                    m_EventPropagationPaths.text += "    <empty>\n";
+                }
+
+                m_EventPropagationPaths.text += "Bubble Up Path:\n";
+                var pathsBubblePath = propagationPath.Paths.bubbleUpPath;
+                if (pathsBubblePath != null && pathsBubblePath.Any())
+                {
+                    foreach (var bubblePathElement in pathsBubblePath)
+                    {
+                        // var bubblePathName = bubblePathElement.name;
+                        // if (string.IsNullOrEmpty(bubblePathName))
+                        var bubblePathName = bubblePathElement.GetType().Name;
+                        m_EventPropagationPaths.text += "    " + bubblePathName + "\n";
+                    }
+                }
+                else
+                {
+                    m_EventPropagationPaths.text += "    <empty>\n";
+                }
+            }
+        }
 
         private void BuildEventsLog()
         {

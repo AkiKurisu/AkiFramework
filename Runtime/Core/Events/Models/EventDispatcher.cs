@@ -64,7 +64,7 @@ namespace Kurisu.Framework.Events
     /// </summary>
     public sealed class EventDispatcher
     {
-        struct EventRecord
+        private struct EventRecord
         {
             public EventBase m_Event;
             public IEventCoordinator m_Coordinator;
@@ -77,7 +77,7 @@ namespace Kurisu.Framework.Events
         private readonly List<IEventDispatchingStrategy> m_DispatchingStrategies;
         private static readonly ObjectPool<Queue<EventRecord>> k_EventQueuePool = new(() => new Queue<EventRecord>());
         private Queue<EventRecord> m_Queue;
-        uint m_GateCount;
+        private uint m_GateCount;
         private readonly DebuggerEventDispatchingStrategy m_DebuggerEventDispatchingStrategy;
         private struct DispatchContext
         {
@@ -98,7 +98,7 @@ namespace Kurisu.Framework.Events
         }
         private static readonly IEventDispatchingStrategy[] defaultStrategies =
         {
-            new CallBackDispatchingStrategy()
+            new DefaultDispatchingStrategy()
         };
         public static EventDispatcher CreateDefault()
         {
@@ -221,24 +221,66 @@ namespace Kurisu.Framework.Events
                 {
                     ApplyDispatchingStrategies(evt, coordinator);
                 }
+
+                // Last chance to build a path. Some dispatching strategies (e.g. PointerCaptureDispatchingStrategy)
+                // don't call PropagateEvents but still need to call ExecuteDefaultActions on composite roots.
+                var path = evt.Path;
+                if (path == null && evt.BubblesOrTricklesDown && evt.LeafTarget is CallbackEventHandler leafTarget)
+                {
+                    path = PropagationPaths.Build(leafTarget, evt);
+                    evt.Path = path;
+                    EventDebugger.LogPropagationPaths(evt, path);
+                }
+
+                if (path != null)
+                {
+                    foreach (var element in path.targetElements)
+                    {
+                        if (element.Root == coordinator)
+                        {
+                            evt.Target = element;
+                            EventDispatchUtilities.ExecuteDefaultAction(evt);
+                        }
+                    }
+
+                    // Reset target to leaf target
+                    evt.Target = evt.LeafTarget;
+                }
+                else
+                {
+                    // If no propagation path, make sure EventDispatchUtilities.ExecuteDefaultAction has a target
+                    if (evt.Target is not CallbackEventHandler target)
+                    {
+                        evt.Target = target = coordinator.RootEventHandler;
+                    }
+
+                    if (target?.Root == coordinator)
+                    {
+                        EventDispatchUtilities.ExecuteDefaultAction(evt);
+                    }
+                }
+
 #if UNITY_EDITOR
                 m_DebuggerEventDispatchingStrategy.PostDispatch(evt, coordinator);
 #endif
+
                 evt.PostDispatch(coordinator);
             }
-            void ApplyDispatchingStrategies(EventBase evt, IEventCoordinator coordinator)
-            {
-                foreach (var strategy in m_DispatchingStrategies)
-                {
-                    if (strategy.CanDispatchEvent(evt))
-                    {
-                        strategy.DispatchEvent(evt, coordinator);
+        }
 
-                        if (evt.StopDispatch || evt.IsPropagationStopped)
-                            break;
-                    }
+        private void ApplyDispatchingStrategies(EventBase evt, IEventCoordinator coordinator)
+        {
+            foreach (var strategy in m_DispatchingStrategies)
+            {
+                if (strategy.CanDispatchEvent(evt))
+                {
+                    strategy.DispatchEvent(evt, coordinator);
+
+                    if (evt.StopDispatch || evt.IsPropagationStopped)
+                        break;
                 }
             }
         }
+
     }
 }

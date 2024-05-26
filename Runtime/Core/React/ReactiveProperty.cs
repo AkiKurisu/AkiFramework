@@ -53,7 +53,8 @@ namespace Kurisu.Framework.React
                 {
                     T previewsValue = _value;
                     _value = value;
-                    SendEvent(ChangeEvent<T>.GetPooled(previewsValue, value));
+                    using var evt = ChangeEvent<T>.GetPooled(previewsValue, value);
+                    SendEvent(evt);
                 }
             }
         }
@@ -85,24 +86,33 @@ namespace Kurisu.Framework.React
                 attachedCoordinator = value;
             }
         }
+        public sealed override IEventCoordinator Root => AttachedCoordinator;
         /// <summary>
         /// Whether to call <see cref="EventBase.StopPropagation"/> when attached behaviour is inactive or disable, default is true.
         /// </summary>
         /// <value></value>
         public bool StopPropagationWhenDisabled { get; set; } = true;
+        /// <summary>
+        /// Specify during which phases the event handler is executed.
+        /// </summary>
+        /// <value></value>
+        public TrickleDown TrickleDown { get; set; } = TrickleDown.NoTrickleDown;
+        /// <summary>
+        /// When the change event is executed
+        /// </summary>
+        /// <value></value>
+        public MonoDispatchType MonoDispatchType { get; set; }
         public override void SendEvent(EventBase e)
         {
             e.Target = this;
             if (StopPropagationWhenDisabled && !AttachedBehaviour.isActiveAndEnabled) e.StopPropagation();
-            AttachedCoordinator.Dispatch(e, DispatchMode.Default);
-            e.Dispose();
+            AttachedCoordinator.Dispatch(e, DispatchMode.Default, MonoDispatchType);
         }
         public override void SendEvent(EventBase e, DispatchMode dispatchMode)
         {
             e.Target = this;
             if (StopPropagationWhenDisabled && !AttachedBehaviour.isActiveAndEnabled) e.StopPropagation();
-            AttachedCoordinator.Dispatch(e, dispatchMode);
-            e.Dispose();
+            AttachedCoordinator.Dispatch(e, dispatchMode, MonoDispatchType);
         }
 
         public void SetValueWithoutNotify(T newValue)
@@ -112,11 +122,11 @@ namespace Kurisu.Framework.React
 
         public void UnregisterValueChangeCallback(EventCallback<ChangeEvent<T>> onValueChanged)
         {
-            UnregisterCallback(onValueChanged);
+            UnregisterCallback(onValueChanged, TrickleDown);
         }
         public void RegisterValueChangeCallback(EventCallback<ChangeEvent<T>> onValueChanged)
         {
-            RegisterCallback(onValueChanged);
+            RegisterCallback(onValueChanged, TrickleDown);
         }
         /// <summary>
         /// Attach this reactive value to a behaviour
@@ -130,8 +140,8 @@ namespace Kurisu.Framework.React
         public IDisposable Subscribe(Action<ChangeEvent<T>> callback)
         {
             EventCallback<ChangeEvent<T>> eventCallback = new(callback);
-            RegisterCallback(eventCallback);
-            return Disposable.Create(() => UnregisterCallback(eventCallback));
+            RegisterCallback(eventCallback, TrickleDown);
+            return Disposable.Create(() => UnregisterCallback(eventCallback, TrickleDown));
         }
     }
     public class ReactiveBool : ReactiveProperty<bool>

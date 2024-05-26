@@ -87,11 +87,11 @@ namespace Kurisu.Framework.React
         /// <param name="handler"></param>
         /// <typeparam name="TEventType"></typeparam>
         /// <returns></returns>
-        public static IObservable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler)
+        public static IObservable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler, TrickleDown trickleDown = TrickleDown.NoTrickleDown)
         where TEventType : EventBase<TEventType>, new()
         {
             return FromEvent<EventCallback<TEventType>, TEventType>(h => new EventCallback<TEventType>(h),
-            h => handler.RegisterCallback(h), h => handler.UnregisterCallback(h));
+            h => handler.RegisterCallback(h, trickleDown), h => handler.UnregisterCallback(h, trickleDown));
         }
         #endregion
     }

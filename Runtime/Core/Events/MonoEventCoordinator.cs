@@ -15,51 +15,83 @@ namespace Kurisu.Framework.Events
     /// </summary>
     public abstract class MonoEventCoordinator : MonoBehaviour, IEventCoordinator
     {
-        //Currently use different dispatcher which means should register and unregister event callBack from specified dispatcher.
-        //TODO: Maybe only need one dispatcher and use strategy to change where event should be dispatched on
-        public virtual EventDispatcher UpdateDispatcher { get; protected set; }
-        public virtual EventDispatcher LateUpdateDispatcher { get; protected set; }
-        public virtual EventDispatcher FixedUpdateDispatcher { get; protected set; }
+        public virtual EventDispatcher EventDispatcher { get; protected set; }
+        public MonoDispatchType DispatchStatus { get; private set; }
+        public virtual CallbackEventHandler RootEventHandler { get; protected set; }
         private readonly HashSet<ICoordinatorDebugger> m_Debuggers = new();
+        private readonly Queue<EventBase> updateQueue = new();
+        private readonly Queue<EventBase> lateUpdateQueue = new();
+        private readonly Queue<EventBase> fixedUpdateQueue = new();
         protected virtual void Awake()
         {
-            UpdateDispatcher = EventDispatcher.CreateDefault();
-            LateUpdateDispatcher = EventDispatcher.CreateDefault();
-            FixedUpdateDispatcher = EventDispatcher.CreateDefault();
+            EventDispatcher = EventDispatcher.CreateDefault();
         }
         protected virtual void Update()
         {
-            UpdateDispatcher.PushDispatcherContext();
-            UpdateDispatcher.PopDispatcherContext();
+            DispatchStatus = MonoDispatchType.Update;
+            DrainQueue(DispatchStatus);
+            EventDispatcher.PushDispatcherContext();
+            EventDispatcher.PopDispatcherContext();
         }
         protected virtual void FixedUpdate()
         {
-            LateUpdateDispatcher.PushDispatcherContext();
-            LateUpdateDispatcher.PopDispatcherContext();
+            DispatchStatus = MonoDispatchType.FixedUpdate;
+            DrainQueue(DispatchStatus);
+            EventDispatcher.PushDispatcherContext();
+            EventDispatcher.PopDispatcherContext();
         }
         protected virtual void LateUpdate()
         {
-            FixedUpdateDispatcher.PushDispatcherContext();
-            FixedUpdateDispatcher.PopDispatcherContext();
+            DispatchStatus = MonoDispatchType.LateUpdate;
+            DrainQueue(DispatchStatus);
+            EventDispatcher.PushDispatcherContext();
+            EventDispatcher.PopDispatcherContext();
         }
         protected virtual void OnDestroy()
         {
             DetachAllDebuggers();
         }
-        public EventDispatcher GetDispatcher(MonoDispatchType frameDispatchType)
+        public void Dispatch(EventBase evt, DispatchMode dispatchMode, MonoDispatchType monoDispatchType)
         {
-            return frameDispatchType switch
+            if (dispatchMode == DispatchMode.Immediate || monoDispatchType == DispatchStatus)
             {
-                MonoDispatchType.Update => UpdateDispatcher,
-                MonoDispatchType.FixedUpdate => FixedUpdateDispatcher,
-                MonoDispatchType.LateUpdate => LateUpdateDispatcher,
-                _ => throw new ArgumentOutOfRangeException(nameof(frameDispatchType)),
-            };
+                EventDispatcher.Dispatch(evt, this, dispatchMode);
+                Refresh();
+            }
+            else
+            {
+                //Acquire to ensure not released
+                evt.Acquire();
+                GetDispatchQueue(monoDispatchType).Enqueue(evt);
+            }
         }
-        public void Dispatch(EventBase evt, DispatchMode dispatchMode, MonoDispatchType frameDispatchType = MonoDispatchType.Update)
+        private void DrainQueue(MonoDispatchType monoDispatchType)
         {
-            GetDispatcher(frameDispatchType).Dispatch(evt, this, dispatchMode);
+            var queue = GetDispatchQueue(monoDispatchType);
+            foreach (var evt in queue)
+            {
+                try
+                {
+                    EventDispatcher.Dispatch(evt, this, DispatchMode.Queued);
+                }
+                finally
+                {
+                    // Balance the Acquire when the event was put in queue.
+                    evt.Dispose();
+                }
+            }
+            queue.Clear();
             Refresh();
+        }
+        private Queue<EventBase> GetDispatchQueue(MonoDispatchType monoDispatchType)
+        {
+            return monoDispatchType switch
+            {
+                MonoDispatchType.Update => updateQueue,
+                MonoDispatchType.FixedUpdate => fixedUpdateQueue,
+                MonoDispatchType.LateUpdate => lateUpdateQueue,
+                _ => throw new ArgumentOutOfRangeException(nameof(monoDispatchType)),
+            };
         }
         internal void AttachDebugger(ICoordinatorDebugger debugger)
         {

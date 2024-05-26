@@ -55,7 +55,7 @@ namespace Kurisu.Framework.Events.Editor
             {
                 if (e.target == m_CoordinatorSelect)
                     RefreshCoordinatorChoices();
-            }, TrickleDown.TrickleDown);
+            }, UnityEngine.UIElements.TrickleDown.TrickleDown);
 
             m_CoordinatorChoices = new List<ICoordinatorChoice>();
             m_CoordinatorSelect = new ToolbarMenu
