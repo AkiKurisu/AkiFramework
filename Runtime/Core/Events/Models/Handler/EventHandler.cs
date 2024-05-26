@@ -18,62 +18,79 @@ namespace Kurisu.Framework.Events
     /// </summary>
     public abstract class CallbackEventHandler : IEventHandler
     {
+        public virtual bool IsCompositeRoot => false;
+        public abstract IEventCoordinator Root { get; }
+        /// <summary>
+        /// Get and set parent callBack handler
+        /// </summary>
+        /// <value></value>
+        public CallbackEventHandler Parent { get; protected set; } = null;
+        /// <summary>
+        /// Get and set children callBack handlers
+        /// </summary>
+        /// <value></value>
+        public CallbackEventHandler[] Children { get; protected set; } = null;
         private EventCallbackRegistry m_CallbackRegistry;
 
         /// <summary>
         /// Adds an event handler to the instance. If the event handler has already been registered for the same phase (either TrickleDown or BubbleUp) then this method has no effect.
         /// </summary>
         /// <param name="callback">The event handler to add.</param>
-        public void RegisterCallback<TEventType>(EventCallback<TEventType> callback) where TEventType : EventBase<TEventType>, new()
+        public void RegisterCallback<TEventType>(EventCallback<TEventType> callback, TrickleDown useTrickleDown = TrickleDown.NoTrickleDown) where TEventType : EventBase<TEventType>, new()
         {
             m_CallbackRegistry ??= new EventCallbackRegistry();
 
-            m_CallbackRegistry.RegisterCallback(callback, default);
+            m_CallbackRegistry.RegisterCallback(callback, useTrickleDown, default);
 #if UNITY_EDITOR
-            GlobalCallbackRegistry.RegisterListeners<TEventType>(this, callback);
+            GlobalCallbackRegistry.RegisterListeners<TEventType>(this, callback, useTrickleDown);
 #endif
-            AddEventCategories<TEventType>();
+            // AddEventCategories<TEventType>();
         }
 
-        private void AddEventCategories<TEventType>() where TEventType : EventBase<TEventType>, new()
-        {
-            //TODO: Encode event categories
-        }
+        //TODO: Encode event categories
+        // private void AddEventCategories<TEventType>() where TEventType : EventBase<TEventType>, new()
+        // {
+
+        // }
 
         /// <summary>
         /// Adds an event handler to the instance. If the event handler has already been registered for the same phase then this method has no effect.
         /// </summary>
         /// <param name="callback">The event handler to add.</param>
         /// <param name="userArgs">Data to pass to the callback.</param>
-        public void RegisterCallback<TEventType, TUserArgsType>(EventCallback<TEventType, TUserArgsType> callback, TUserArgsType userArgs) where TEventType : EventBase<TEventType>, new()
+        public void RegisterCallback<TEventType, TUserArgsType>(EventCallback<TEventType, TUserArgsType> callback, TUserArgsType userArgs, TrickleDown useTrickleDown = TrickleDown.NoTrickleDown) where TEventType : EventBase<TEventType>, new()
         {
             m_CallbackRegistry ??= new EventCallbackRegistry();
 
-            m_CallbackRegistry.RegisterCallback(callback, userArgs, default);
+            m_CallbackRegistry.RegisterCallback(callback, userArgs, useTrickleDown, default);
 #if UNITY_EDITOR
-            GlobalCallbackRegistry.RegisterListeners<TEventType>(this, callback);
+            GlobalCallbackRegistry.RegisterListeners<TEventType>(this, callback, useTrickleDown);
 #endif
-            AddEventCategories<TEventType>();
+            // AddEventCategories<TEventType>();
         }
 
-        public void RegisterCallback<TEventType>(EventCallback<TEventType> callback, InvokePolicy invokePolicy) where TEventType : EventBase<TEventType>, new()
+        internal void RegisterCallback<TEventType>(EventCallback<TEventType> callback, InvokePolicy invokePolicy, TrickleDown useTrickleDown = TrickleDown.NoTrickleDown) where TEventType : EventBase<TEventType>, new()
         {
             m_CallbackRegistry ??= new EventCallbackRegistry();
 
-            m_CallbackRegistry.RegisterCallback(callback, invokePolicy);
+            m_CallbackRegistry.RegisterCallback(callback, useTrickleDown, invokePolicy);
+
 #if UNITY_EDITOR
-            GlobalCallbackRegistry.RegisterListeners<TEventType>(this, callback);
+            GlobalCallbackRegistry.RegisterListeners<TEventType>(this, callback, useTrickleDown);
 #endif
-            AddEventCategories<TEventType>();
+
+            // AddEventCategories<TEventType>();
         }
 
         /// <summary>
         /// Remove callback from the instance.
         /// </summary>
         /// <param name="callback">The callback to remove. If this callback was never registered, nothing happens.</param>
-        public void UnregisterCallback<TEventType>(EventCallback<TEventType> callback) where TEventType : EventBase<TEventType>, new()
+        /// <param name="useTrickleDown">Set this parameter to true to remove the callback from the TrickleDown phase. Set this parameter to false to remove the callback from the BubbleUp phase.</param>
+        public void UnregisterCallback<TEventType>(EventCallback<TEventType> callback, TrickleDown useTrickleDown = TrickleDown.NoTrickleDown) where TEventType : EventBase<TEventType>, new()
         {
-            m_CallbackRegistry?.UnregisterCallback(callback);
+            m_CallbackRegistry?.UnregisterCallback(callback, useTrickleDown);
+
 #if UNITY_EDITOR
             GlobalCallbackRegistry.UnregisterListeners<TEventType>(this, callback);
 #endif
@@ -83,21 +100,23 @@ namespace Kurisu.Framework.Events
         /// Remove callback from the instance.
         /// </summary>
         /// <param name="callback">The callback to remove. If this callback was never registered, nothing happens.</param>
-        public void UnregisterCallback<TEventType, TUserArgsType>(EventCallback<TEventType, TUserArgsType> callback) where TEventType : EventBase<TEventType>, new()
+        /// <param name="useTrickleDown">Set this parameter to true to remove the callback from the TrickleDown phase. Set this parameter to false to remove the callback from the BubbleUp phase.</param>
+        public void UnregisterCallback<TEventType, TUserArgsType>(EventCallback<TEventType, TUserArgsType> callback, TrickleDown useTrickleDown = TrickleDown.NoTrickleDown) where TEventType : EventBase<TEventType>, new()
         {
-            m_CallbackRegistry?.UnregisterCallback(callback);
+            m_CallbackRegistry?.UnregisterCallback(callback, useTrickleDown);
+
 #if UNITY_EDITOR
             GlobalCallbackRegistry.UnregisterListeners<TEventType>(this, callback);
 #endif
         }
 
-        public bool TryGetUserArgs<TEventType, TCallbackArgs>(EventCallback<TEventType, TCallbackArgs> callback, out TCallbackArgs userData) where TEventType : EventBase<TEventType>, new()
+        internal bool TryGetUserArgs<TEventType, TCallbackArgs>(EventCallback<TEventType, TCallbackArgs> callback, TrickleDown useTrickleDown, out TCallbackArgs userData) where TEventType : EventBase<TEventType>, new()
         {
             userData = default;
 
             if (m_CallbackRegistry != null)
             {
-                return m_CallbackRegistry.TryGetUserArgs(callback, out userData);
+                return m_CallbackRegistry.TryGetUserArgs(callback, useTrickleDown, out userData);
             }
 
             return false;
@@ -134,11 +153,25 @@ namespace Kurisu.Framework.Events
 
             switch (evt.PropagationPhase)
             {
-                case PropagationPhase.AtTarget:
+                case PropagationPhase.TrickleDown:
+                case PropagationPhase.BubbleUp:
                     {
                         if (!evt.IsPropagationStopped)
                         {
-                            m_CallbackRegistry?.InvokeCallbacks(evt, PropagationPhase.AtTarget);
+                            m_CallbackRegistry?.InvokeCallbacks(evt, evt.PropagationPhase);
+                        }
+                        break;
+                    }
+                case PropagationPhase.AtTarget:
+                    {
+                        //We make sure we invoke callbacks from the TrickleDownPhase before the BubbleUp ones when we are directly at target
+                        if (!evt.IsPropagationStopped)
+                        {
+                            m_CallbackRegistry?.InvokeCallbacks(evt, PropagationPhase.TrickleDown);
+                        }
+                        if (!evt.IsPropagationStopped)
+                        {
+                            m_CallbackRegistry?.InvokeCallbacks(evt, PropagationPhase.BubbleUp);
                         }
                     }
                     break;
@@ -180,7 +213,23 @@ namespace Kurisu.Framework.Events
             HandleEventAtCurrentTargetAndPhase(evt);
         }
 
+        /// <summary>
+        /// Returns true if event handlers, for the event propagation TrickleDown phase, are attached to this object.
+        /// </summary>
+        /// <returns>True if object has event handlers for the TrickleDown phase.</returns>
+        public bool HasTrickleDownHandlers()
+        {
+            return m_CallbackRegistry != null && m_CallbackRegistry.HasTrickleDownHandlers();
+        }
 
+        /// <summary>
+        /// Return true if event handlers for the event propagation BubbleUp phase have been attached on this object.
+        /// </summary>
+        /// <returns>True if object has event handlers for the BubbleUp phase.</returns>
+        public bool HasBubbleUpHandlers()
+        {
+            return m_CallbackRegistry != null && m_CallbackRegistry.HasBubbleHandlers();
+        }
         /// <summary>
         /// Executes logic after the callbacks registered on the event target have executed,
         /// unless the event is marked to prevent its default behaviour.

@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -175,6 +174,39 @@ namespace Kurisu.Framework.Events
             AddExecuteDefaultAction(evt, phase, duration);
             UpdateModificationCount();
         }
+        public static void LogPropagationPaths(EventBase evt, PropagationPaths paths)
+        {
+#if UNITY_EDITOR
+            if (evt.Log)
+            {
+                evt.EventLogger.LogPropagationPathsInternal(evt, paths);
+            }
+#endif
+        }
+        public void LogPropagationPathsInternal(EventBase evt, PropagationPaths paths)
+        {
+            var pathsCopy = paths == null ? new PropagationPaths() : new PropagationPaths(paths);
+            AddPropagationPaths(evt, pathsCopy);
+            UpdateModificationCount();
+        }
+        public void AddPropagationPaths(EventBase evt, PropagationPaths paths)
+        {
+            if (Suspended)
+                return;
+
+            if (m_Log)
+            {
+                var pathObject = new EventDebuggerPathTrace(Coordinator, evt, paths);
+
+                if (!m_EventPathObjects.TryGetValue(Coordinator, out var list))
+                {
+                    list = new List<EventDebuggerPathTrace>();
+                    m_EventPathObjects.Add(Coordinator, list);
+                }
+
+                list.Add(pathObject);
+            }
+        }
         public List<EventDebuggerCallTrace> GetCalls(IEventCoordinator coordinator, EventDebuggerEventRecord evt = null)
         {
             if (!m_EventCalledObjects.TryGetValue(coordinator, out var list))
@@ -198,7 +230,29 @@ namespace Kurisu.Framework.Events
 
             return list;
         }
+        public List<EventDebuggerPathTrace> GetPropagationPaths(IEventCoordinator coordinator, EventDebuggerEventRecord evt = null)
+        {
+            if (!m_EventPathObjects.TryGetValue(coordinator, out var list))
+            {
+                return null;
+            }
 
+            if ((evt != null) && (list != null))
+            {
+                List<EventDebuggerPathTrace> filteredList = new();
+                foreach (var pathObject in list)
+                {
+                    if (pathObject.EventBase.EventId == evt.EventId)
+                    {
+                        filteredList.Add(pathObject);
+                    }
+                }
+
+                list = filteredList;
+            }
+
+            return list;
+        }
         public List<EventDebuggerDefaultActionTrace> GetDefaultActions(IEventCoordinator coordinator, EventDebuggerEventRecord evt = null)
         {
             if (!m_EventDefaultActionObjects.TryGetValue(coordinator, out var list))
@@ -434,6 +488,7 @@ namespace Kurisu.Framework.Events
         // Call Object
         private readonly Dictionary<IEventCoordinator, List<EventDebuggerCallTrace>> m_EventCalledObjects;
         private readonly Dictionary<IEventCoordinator, List<EventDebuggerDefaultActionTrace>> m_EventDefaultActionObjects;
+        private readonly Dictionary<IEventCoordinator, List<EventDebuggerPathTrace>> m_EventPathObjects;
         private readonly Dictionary<IEventCoordinator, List<EventDebuggerTrace>> m_EventProcessedEvents;
         private readonly Dictionary<IEventCoordinator, Stack<EventDebuggerTrace>> m_StackOfProcessedEvent;
         private readonly Dictionary<IEventCoordinator, Dictionary<long, int>> m_EventTypeProcessedCount;
@@ -454,6 +509,7 @@ namespace Kurisu.Framework.Events
             m_EventProcessedEvents = new Dictionary<IEventCoordinator, List<EventDebuggerTrace>>();
             m_EventTypeProcessedCount = new Dictionary<IEventCoordinator, Dictionary<long, int>>();
             m_ModificationCount = new Dictionary<IEventCoordinator, long>();
+            m_EventPathObjects = new Dictionary<IEventCoordinator, List<EventDebuggerPathTrace>>();
             m_Log = true;
         }
 

@@ -6,7 +6,7 @@ namespace Kurisu.Framework.Schedulers.Editor
     public class SchedulerRunnerEditor : UnityEditor.Editor
     {
         private SchedulerRunner Manager => target as SchedulerRunner;
-        private int ManagedSchedulersCount => Manager.managedSchedulers.Count;
+        private int ManagedScheduledCount => Manager.managedScheduled.Count;
         private void OnEnable()
         {
             if (!Application.isPlaying) return;
@@ -27,11 +27,11 @@ namespace Kurisu.Framework.Schedulers.Editor
             }
             if (!Application.isPlaying)
             {
-                EditorGUILayout.HelpBox("Enter play mode to track schedulers", MessageType.Info);
+                EditorGUILayout.HelpBox("Enter play mode to track tasks", MessageType.Info);
                 return;
             }
             GUILayout.BeginVertical(GUI.skin.box);
-            GUILayout.Label($"Managed scheduler count: {ManagedSchedulersCount}");
+            GUILayout.Label($"Managed scheduled task count: {ManagedScheduledCount}");
             GUILayout.EndVertical();
         }
     }

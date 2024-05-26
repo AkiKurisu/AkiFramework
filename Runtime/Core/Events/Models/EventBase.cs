@@ -31,8 +31,11 @@ namespace Kurisu.Framework.Events
         internal enum EventPropagation
         {
             None = 0,
-            Cancellable = 1,
-            SkipDisabledElements = 2,
+            Bubbles = 1,
+            TricklesDown = 2,
+            Cancellable = 4,
+            SkipDisabledElements = 8,
+            IgnoreCompositeRoots = 16,
         }
         private static long s_LastTypeId = 0;
 
@@ -61,6 +64,7 @@ namespace Kurisu.Framework.Events
         public long Timestamp { get; private set; }
         internal ulong EventId { get; private set; }
         internal ulong TriggerEventId { get; private set; }
+        internal PropagationPaths Path { get; set; }
         internal EventPropagation Propagation { get; set; }
         internal void SetTriggerEventId(ulong id)
         {
@@ -88,6 +92,49 @@ namespace Kurisu.Framework.Events
             Processed = true;
         }
 
+        /// <summary>
+        /// Returns whether this event type bubbles up in the event propagation path.
+        /// </summary>
+        [JsonIgnore]
+        public bool Bubbles
+        {
+            get { return (Propagation & EventPropagation.Bubbles) != 0; }
+            protected set
+            {
+                if (value)
+                {
+                    Propagation |= EventPropagation.Bubbles;
+                }
+                else
+                {
+                    Propagation &= ~EventPropagation.Bubbles;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns whether this event is sent down the event propagation path during the TrickleDown phase.
+        /// </summary>
+        [JsonIgnore]
+        public bool TricklesDown
+        {
+            get { return (Propagation & EventPropagation.TricklesDown) != 0; }
+            protected set
+            {
+                if (value)
+                {
+                    Propagation |= EventPropagation.TricklesDown;
+                }
+                else
+                {
+                    Propagation &= ~EventPropagation.TricklesDown;
+                }
+            }
+        }
+
+        internal bool BubblesOrTricklesDown =>
+            (Propagation & (EventPropagation.Bubbles | EventPropagation.TricklesDown)) != 0;
+
 
         IEventHandler m_Target;
 
@@ -102,9 +149,11 @@ namespace Kurisu.Framework.Events
             set
             {
                 m_Target = value;
+                LeafTarget ??= value;
             }
         }
-
+        // Original target. May be different than 'target' when propagating event and 'target.isCompositeRoot' is true.
+        internal IEventHandler LeafTarget { get; private set; }
         internal List<IEventHandler> SkipElements { get; } = new List<IEventHandler>();
 
         internal bool Skip(IEventHandler h)
@@ -123,6 +172,21 @@ namespace Kurisu.Framework.Events
                 else
                 {
                     Propagation &= ~EventPropagation.SkipDisabledElements;
+                }
+            }
+        }
+        internal bool IgnoreCompositeRoots
+        {
+            get { return (Propagation & EventPropagation.IgnoreCompositeRoots) != 0; }
+            set
+            {
+                if (value)
+                {
+                    Propagation |= EventPropagation.IgnoreCompositeRoots;
+                }
+                else
+                {
+                    Propagation &= ~EventPropagation.IgnoreCompositeRoots;
                 }
             }
         }
@@ -328,7 +392,10 @@ namespace Kurisu.Framework.Events
             EventId = s_NextEventId++;
 
             Target = null;
+            LeafTarget = null;
 
+            Path?.Release();
+            Path = null;
             SkipElements.Clear();
             Propagation = EventPropagation.None;
             PropagationPhase = PropagationPhase.None;
@@ -382,7 +449,7 @@ namespace Kurisu.Framework.Events
 
         internal abstract void Acquire();
         /// <summary>
-        /// Implementation of IDisposable.
+        /// Implementation of <see cref="IDisposable"/>.
         /// </summary>
         public abstract void Dispose();
     }
@@ -424,7 +491,7 @@ namespace Kurisu.Framework.Events
 
             if (m_RefCount != 0)
             {
-                Debug.Log("Event improperly released.");
+                Debug.LogWarning($"Event improperly released, reference count {m_RefCount}.");
                 m_RefCount = 0;
             }
         }

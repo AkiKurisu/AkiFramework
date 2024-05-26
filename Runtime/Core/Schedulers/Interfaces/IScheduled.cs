@@ -4,7 +4,7 @@ namespace Kurisu.Framework.Schedulers
     /// <summary>
     /// Interface for class can be scheduled
     /// </summary>
-    public interface IScheduler : IDisposable
+    public interface IScheduled : IDisposable
     {
         /// <summary>
         /// Get whether or not the scheduler has finished running for any reason.

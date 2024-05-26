@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Kurisu.Framework.Schedulers
 {
     /// <summary>
-    /// Manages updating all the <see cref="IScheduler"/>s that are running in the scene.
+    /// Manages updating all the <see cref="IScheduled"/> tasks that are running in the scene.
     /// This will be instantiated the first time you create a task.
     /// You do not need to add it into the scene manually.
     /// </summary>
@@ -19,13 +19,13 @@ namespace Kurisu.Framework.Schedulers
         }
         private const int ManagedCapacity = 200;
         private const int RunningCapacity = 100;
-        private readonly Dictionary<IScheduler, int> scheduler2Id = new(ManagedCapacity);
-        internal readonly Dictionary<int, IScheduler> managedSchedulers = new(ManagedCapacity);
-        internal List<IScheduler> _scheduler = new(RunningCapacity);
-        //Start from id=1, should not be 0 since it roles as default/invalid job symbol
-        internal int schedulerId = 1;
-        // buffer adding timers so we don't edit a collection during iteration
-        private readonly List<IScheduler> _schedulerToAdd = new(RunningCapacity);
+        private readonly Dictionary<IScheduled, int> scheduled2Id = new(ManagedCapacity);
+        internal readonly Dictionary<int, IScheduled> managedScheduled = new(ManagedCapacity);
+        internal List<IScheduled> _scheduled = new(RunningCapacity);
+        //Start from id=1, should not be 0 since it roles as default/invalid task symbol
+        internal int taskId = 1;
+        // buffer adding tasks so we don't edit a collection during iteration
+        private readonly List<IScheduled> _scheduledToAdd = new(RunningCapacity);
         public static SchedulerRunner Instance => instance != null ? instance : GetInstance();
         public static bool IsInitialized => instance != null;
         private static SchedulerRunner instance;
@@ -52,133 +52,134 @@ namespace Kurisu.Framework.Schedulers
         /// <summary>
         /// Register scheduler to managed
         /// </summary>
-        /// <param name="scheduler"></param>
-        public void RegisterScheduler(IScheduler scheduler)
+        /// <param name="scheduled"></param>
+        public void Register(IScheduled scheduled)
         {
-            _schedulerToAdd.Add(scheduler);
+            _scheduledToAdd.Add(scheduled);
             if (debugMode)
             {
-                Debug.Log($"Scheduler {scheduler.GetHashCode():x4} started");
+                Debug.Log($"Scheduled {scheduled.GetHashCode():x4} started");
             }
         }
         /// <summary>
         ///  Unregister scheduler from managed
         /// </summary>
-        /// <param name="scheduler"></param>
-        public void UnregisterScheduler(IScheduler scheduler)
+        /// <param name="scheduled"></param>
+        public void Unregister(IScheduled scheduled)
         {
-            if (scheduler2Id.TryGetValue(scheduler, out int id))
+            if (scheduled2Id.TryGetValue(scheduled, out int id))
             {
-                managedSchedulers.Remove(id);
+                managedScheduled.Remove(id);
             }
         }
-        public void CancelAllSchedulers()
+        public void CancelAll()
         {
-            foreach (IScheduler scheduler in _scheduler)
+            foreach (IScheduled scheduled in _scheduled)
             {
-                scheduler.Cancel();
+                scheduled.Cancel();
                 if (debugMode)
                 {
-                    Debug.Log($"Scheduler {scheduler.GetHashCode():x4} canceled");
+                    Debug.Log($"Scheduled {scheduled.GetHashCode():x4} canceled");
                 }
             }
-            _scheduler.Clear();
-            _schedulerToAdd.Clear();
+            _scheduled.Clear();
+            _scheduledToAdd.Clear();
         }
 
-        public void PauseAllSchedulers()
+        public void PauseAll()
         {
-            foreach (IScheduler scheduler in _scheduler)
+            foreach (IScheduled scheduled in _scheduled)
             {
-                scheduler.Pause();
+                scheduled.Pause();
                 if (debugMode)
                 {
-                    Debug.Log($"Scheduler {scheduler.GetHashCode():x4} paused");
+                    Debug.Log($"Scheduled {scheduled.GetHashCode():x4} paused");
                 }
             }
         }
 
-        public void ResumeAllSchedulers()
+        public void ResumeAll()
         {
-            foreach (IScheduler scheduler in _scheduler)
+            foreach (IScheduled scheduled in _scheduled)
             {
-                scheduler.Resume();
+                scheduled.Resume();
                 if (debugMode)
                 {
-                    Debug.Log($"Scheduler {scheduler.GetHashCode():x4} resumed");
+                    Debug.Log($"Scheduled {scheduled.GetHashCode():x4} resumed");
                 }
             }
         }
 
         private void Update()
         {
-            UpdateAllSchedulers();
+            UpdateAll();
         }
 
-        private void UpdateAllSchedulers()
+        private void UpdateAll()
         {
             // Add
-            if (_schedulerToAdd.Count > 0)
+            if (_scheduledToAdd.Count > 0)
             {
-                _scheduler.AddRange(_schedulerToAdd);
-                _schedulerToAdd.Clear();
+                _scheduled.AddRange(_scheduledToAdd);
+                _scheduledToAdd.Clear();
             }
             // Update
-            foreach (IScheduler scheduler in _scheduler)
+            foreach (IScheduled scheduled in _scheduled)
             {
-                scheduler.Update();
+                scheduled.Update();
             }
             // Release
-            for (int i = _scheduler.Count - 1; i >= 0; i--)
+            for (int i = _scheduled.Count - 1; i >= 0; i--)
             {
-                if (!_scheduler[i].IsDone) continue;
-                _scheduler[i].Dispose();
+                if (!_scheduled[i].IsDone) continue;
+                _scheduled[i].Dispose();
                 if (debugMode)
                 {
-                    Debug.Log($"Scheduler {_scheduler[i].GetHashCode():x4} ended");
+                    Debug.Log($"Scheduled {_scheduled[i].GetHashCode():x4} ended");
                 }
-                _scheduler.Remove(_scheduler[i]);
+                _scheduled.Remove(_scheduled[i]);
             }
         }
-        public SchedulerHandle CreateHandle(IScheduler task)
+        public SchedulerHandle CreateHandle(IScheduled task)
         {
-            int id = schedulerId++;
+            int id = taskId++;
             var handle = new SchedulerHandle(id);
-            managedSchedulers.Add(id, task);
+            scheduled2Id[task] = id;
+            managedScheduled.Add(id, task);
             return handle;
         }
         /// <summary>
-        /// Whether scheduler is valid, false means scheduler can not be used any more
+        /// Whether scheduled task is valid
         /// </summary>
-        /// <param name="schedulerId"></param>
+        /// <param name="taskId"></param>
         /// <returns></returns>
-        public bool IsValid(int schedulerId)
+        public bool IsValid(int taskId)
         {
-            return managedSchedulers.ContainsKey(schedulerId);
+            return managedScheduled.ContainsKey(taskId);
         }
         /// <summary>
-        /// Find internal scheduler if schedulerId is valid
+        /// Get internal scheduled task by <see cref="taskId"/>
         /// </summary>
-        /// <param name="schedulerId"></param>
-        /// <param name="scheduler"></param>
+        /// <param name="taskId"></param>
+        /// <param name="task"></param>
         /// <returns></returns>
-        public bool TryGet(int schedulerId, out IScheduler scheduler)
+        public bool TryGet(int taskId, out IScheduled task)
         {
-            return managedSchedulers.TryGetValue(schedulerId, out scheduler);
+            return managedScheduled.TryGetValue(taskId, out task);
         }
         /// <summary>
-        /// Cancel target scheduler
+        /// Cancel target scheduled task
         /// </summary>
-        /// <param name="schedulerId"></param>
-        public void CancelScheduler(int schedulerId)
+        /// <param name="taskId"></param>
+        public void Cancel(int taskId)
         {
-            var scheduler = managedSchedulers[schedulerId];
+            var scheduler = managedScheduled[taskId];
             if (debugMode)
             {
-                Debug.Log($"Scheduler {scheduler.GetHashCode():x4} canceled");
+                Debug.Log($"Scheduled {scheduler.GetHashCode():x4} canceled");
             }
             scheduler.Cancel();
-            managedSchedulers.Remove(schedulerId);
+            managedScheduled.Remove(taskId);
         }
     }
 }

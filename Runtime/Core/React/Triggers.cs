@@ -6,7 +6,7 @@ namespace Kurisu.Framework.React
     public class ObservableUpdateTrigger : MonoBehaviour
     {
         private AkiEvent onUpdate;
-        public IObservable<Action> UpdateAsObservable()
+        public IObservable<Unit> UpdateAsObservable()
         {
             return onUpdate ??= new();
         }
@@ -18,7 +18,7 @@ namespace Kurisu.Framework.React
     public class ObservableLateUpdateTrigger : MonoBehaviour
     {
         private AkiEvent onLateUpdate;
-        public IObservable<Action> LateUpdateAsObservable()
+        public IObservable<Unit> LateUpdateAsObservable()
         {
             return onLateUpdate ??= new();
         }
@@ -30,7 +30,7 @@ namespace Kurisu.Framework.React
     public class ObservableFixedUpdateTrigger : MonoBehaviour
     {
         private AkiEvent onFixedUpdate;
-        public IObservable<Action> FixedUpdateAsObservable()
+        public IObservable<Unit> FixedUpdateAsObservable()
         {
             return onFixedUpdate ??= new();
         }
@@ -44,7 +44,7 @@ namespace Kurisu.Framework.React
         private readonly HashSet<IDisposable> disposables = new();
         private bool isDestroyed = false;
         private AkiEvent onDestroy;
-        public IObservable<Action> OnDestroyAsObservable()
+        public IObservable<Unit> OnDestroyAsObservable()
         {
             return onDestroy ??= new();
         }

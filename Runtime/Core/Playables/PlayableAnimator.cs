@@ -88,7 +88,7 @@ namespace Kurisu.Framework.Playables
             rootMixer.SetInputWeight(1, 0);
             rootHandle.Cancel();
             if (fadeInTime > 0)
-                rootHandle = Scheduler.Delay(SetInGraph, x => FadeIn(rootMixer, x / fadeInTime), fadeInTime);
+                rootHandle = Scheduler.Delay(fadeInTime, SetInGraph, x => FadeIn(rootMixer, x / fadeInTime));
             else
                 SetInGraph();
             if (!IsPlaying) playableGraph.Play();
@@ -146,7 +146,7 @@ namespace Kurisu.Framework.Playables
                 handle.Cancel();
             }
             if (fadeInTime > 0)
-                subHandleMap[animatorController] = Scheduler.Delay(() => FadeIn(mixerPointer, 1), x => FadeIn(mixerPointer, x / fadeInTime), fadeInTime);
+                subHandleMap[animatorController] = Scheduler.Delay(fadeInTime, () => FadeIn(mixerPointer, 1), x => FadeIn(mixerPointer, x / fadeInTime));
             else
                 FadeIn(mixerPointer, 1);
         }
@@ -171,7 +171,7 @@ namespace Kurisu.Framework.Playables
                 return;
             }
             isFadeOut = true;
-            rootHandle = Scheduler.Delay(SetOutGraph, x => FadeIn(rootMixer, 1 - x / fadeOutTime), fadeOutTime);
+            rootHandle = Scheduler.Delay(fadeOutTime, SetOutGraph, x => FadeIn(rootMixer, 1 - x / fadeOutTime));
         }
         private void SetOutGraph()
         {

@@ -50,4 +50,14 @@ namespace Kurisu.Framework.Events
             Phase = phase;
         }
     }
+    class EventDebuggerPathTrace : EventDebuggerTrace
+    {
+        public PropagationPaths Paths { get; }
+
+        public EventDebuggerPathTrace(IEventCoordinator coordinator, EventBase evt, PropagationPaths paths)
+            : base(coordinator, evt, -1)
+        {
+            Paths = paths;
+        }
+    }
 }

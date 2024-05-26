@@ -61,15 +61,15 @@
                                 <ui:ScrollView name="eventCallbacksScrollView" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <!-- <ui:TwoPaneSplitView fixed-pane-index="0" fixed-pane-initial-dimension="320" orientation="Horizontal" class="verticalSplitViewMin"> -->
-                            <!-- <ui:VisualElement name="eventPropagationPathsContainer" class="containerMin">
+                        <ui:TwoPaneSplitView fixed-pane-index="0" fixed-pane-initial-dimension="320" orientation="Horizontal" class="verticalSplitViewMin">
+                            <ui:VisualElement name="eventPropagationPathsContainer" class="containerMin">
                                 <ui:Label name="eventPropagationPathsTitle" text="Event Propagation Paths" />
                                 <ui:VisualElement name="scrollViewContainer">
                                     <ui:ScrollView name="eventPropagationPathsScrollView">
                                         <ui:Label name="eventPropagationPaths" />
                                     </ui:ScrollView>
                                 </ui:VisualElement>
-                            </ui:VisualElement> -->
+                            </ui:VisualElement>
                             <ui:VisualElement name="eventbaseInfoContainer" class="containerMin">
                                 <ui:Label name="eventbaseInfoTitle" text="Event Information" />
                                 <ui:VisualElement name="scrollViewContainer">
@@ -78,7 +78,7 @@
                                     </ui:ScrollView>
                                 </ui:VisualElement>
                             </ui:VisualElement>
-                        <!-- </ui:TwoPaneSplitView> -->
+                        </ui:TwoPaneSplitView>
                     </ui:TwoPaneSplitView>
                 </ui:TwoPaneSplitView>
             </ui:VisualElement>

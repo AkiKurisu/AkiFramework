@@ -9,7 +9,7 @@ namespace Kurisu.Framework.Schedulers
     ///
     /// To create and start a Timer, use the <see cref="Register"/> method.
     /// </summary>
-    public class Timer : IScheduler
+    public class Timer : IScheduled
     {
         private static readonly ObjectPool<Timer> pool = new(() => new());
         #region Public Properties/Fields
@@ -76,7 +76,7 @@ namespace Kurisu.Framework.Schedulers
         {
             Timer timer = pool.Get();
             timer.Init(duration, onComplete, onUpdate, isLooped, useRealTime);
-            SchedulerRunner.Instance.RegisterScheduler(timer);
+            SchedulerRunner.Instance.Register(timer);
             return timer;
         }
         #endregion
@@ -173,7 +173,7 @@ namespace Kurisu.Framework.Schedulers
 
         #endregion
         #region Private Properties/Fields
-        public event Action OnComplete;
+        private Action OnComplete;
         private Action<float> _onUpdate;
         private float _startTime;
         private float _lastUpdateTime;
@@ -243,7 +243,7 @@ namespace Kurisu.Framework.Schedulers
 
             if (GetWorldTime() >= GetFireTime())
             {
-                SchedulerRunner.Instance.UnregisterScheduler(this);
+                SchedulerRunner.Instance.Unregister(this);
                 OnComplete?.Invoke();
 
                 if (IsLooped)
