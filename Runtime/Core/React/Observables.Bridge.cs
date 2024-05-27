@@ -85,15 +85,25 @@ namespace Kurisu.Framework.React
         /// Create Observable for <see cref="CallbackEventHandler"/>
         /// </summary>
         /// <param name="handler"></param>
+        /// <typeparam name="TEventType"></typeparam>
+        /// <returns></returns>
+        public static IObservable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler)
+where TEventType : EventBase<TEventType>, new()
+        {
+            return handler.AsObservable<TEventType>(TrickleDown.NoTrickleDown);
+        }
+        /// <summary>
+        /// Create Observable for <see cref="CallbackEventHandler"/>
+        /// </summary>
+        /// <param name="handler"></param>
         /// <param name="trickleDown"></param>
         /// <typeparam name="TEventType"></typeparam>
         /// <returns></returns>
-        public static IObservable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler, TrickleDown trickleDown = TrickleDown.NoTrickleDown)
+        public static IObservable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler, TrickleDown trickleDown)
         where TEventType : EventBase<TEventType>, new()
         {
-            return FromEvent<EventCallback<TEventType>, TEventType>(h => new EventCallback<TEventType>(h),
             //frame:5 => Skip this, FromEventObservable and FromEvent
-            h => handler.RegisterCallback(h, trickleDown, 5), h => handler.UnregisterCallback(h, trickleDown));
+            return handler.AsObservable<TEventType>(TrickleDown.NoTrickleDown, 5);
         }
         /// <summary>
         /// Create Observable for <see cref="CallbackEventHandler"/>
@@ -103,7 +113,7 @@ namespace Kurisu.Framework.React
         /// <param name="skipFrame">Skip frames for debugger</param>
         /// <typeparam name="TEventType"></typeparam>
         /// <returns></returns>
-        public static IObservable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler, TrickleDown trickleDown = TrickleDown.NoTrickleDown, int skipFrame = 5)
+        public static IObservable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler, TrickleDown trickleDown, int skipFrame)
         where TEventType : EventBase<TEventType>, new()
         {
             return FromEvent<EventCallback<TEventType>, TEventType>(h => new EventCallback<TEventType>(h),

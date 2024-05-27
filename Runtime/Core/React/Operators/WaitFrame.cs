@@ -27,6 +27,11 @@ namespace Kurisu.Framework.React
             private readonly Queue<FrameInterval<T>> queue = new();
             private SerialDisposable serialDisposable;
             private bool running = false;
+            private static readonly bool isEvent;
+            static WaitFrame()
+            {
+                isEvent = typeof(T).IsSubclassOf(typeof(EventBase));
+            }
             public WaitFrame(WaitFrameObservable<T> parent, Action<T> observer)
             {
                 this.parent = parent;
@@ -42,7 +47,7 @@ namespace Kurisu.Framework.React
             private void OnNext(T value)
             {
                 var dueTime = Time.frameCount + parent.frameCount;
-                if (value is EventBase eventBase) eventBase.Acquire();
+                if (isEvent) (value as EventBase).Acquire();
                 queue.Enqueue(new FrameInterval<T>(value, dueTime));
                 if (!running)
                 {
@@ -83,7 +88,7 @@ namespace Kurisu.Framework.React
                     if (hasValue)
                     {
                         observer(value);
-                        if (value is EventBase eventBase) eventBase.Dispose();
+                        if (isEvent) (value as EventBase).Dispose();
                         shouldYield = true;
                     }
                     else

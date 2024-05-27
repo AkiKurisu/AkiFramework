@@ -26,6 +26,11 @@ namespace Kurisu.Framework.React
             private readonly Queue<Timestamped<T>> queue = new();
             private SerialDisposable serialDisposable;
             private bool running = false;
+            private static readonly bool isEvent;
+            static Delay()
+            {
+                isEvent = typeof(T).IsSubclassOf(typeof(EventBase));
+            }
             public Delay(DelayObservable<T> parent, Action<T> observer)
             {
                 this.parent = parent;
@@ -41,7 +46,7 @@ namespace Kurisu.Framework.React
             private void OnNext(T value)
             {
                 var dueTime = Scheduler.Now.Add(parent.dueTime);
-                if (value is EventBase eventBase) eventBase.Acquire();
+                if (isEvent) (value as EventBase).Acquire();
                 queue.Enqueue(new Timestamped<T>(value, dueTime));
                 if (!running)
                 {
@@ -82,7 +87,7 @@ namespace Kurisu.Framework.React
                     if (hasValue)
                     {
                         observer(value);
-                        if (value is EventBase eventBase) eventBase.Dispose();
+                        if (isEvent) (value as EventBase).Dispose();
                         shouldYield = true;
                     }
                     else
