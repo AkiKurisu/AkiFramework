@@ -103,7 +103,7 @@ where TEventType : EventBase<TEventType>, new()
         where TEventType : EventBase<TEventType>, new()
         {
             //frame:5 => Skip this, FromEventObservable and FromEvent
-            return handler.AsObservable<TEventType>(TrickleDown.NoTrickleDown, 5);
+            return handler.AsObservable<TEventType>(trickleDown, 5);
         }
         /// <summary>
         /// Create Observable for <see cref="CallbackEventHandler"/>
