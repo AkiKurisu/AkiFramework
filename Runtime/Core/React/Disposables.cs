@@ -4,6 +4,7 @@ namespace Kurisu.Framework.React
 {
     public static class Disposable
     {
+        public static readonly IDisposable Empty = EmptyDisposable.Singleton;
         public static IDisposable Create(Action disposeAction)
         {
             return new AnonymousDisposable(disposeAction);

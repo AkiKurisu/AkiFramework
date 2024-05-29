@@ -1,7 +1,7 @@
 using System;
 namespace Kurisu.Framework.React
 {
-    internal class TakeObservable<T> : OperatorObservableBase<T>
+    internal class TakeObservable<T> : OperatorObservable<T>
     {
         private readonly IObservable<T> source;
         private readonly int count;
@@ -30,19 +30,15 @@ namespace Kurisu.Framework.React
             return source.Subscribe(new Take(this, observer, disposable).OnNext);
         }
 
-        private class Take
+        private class Take : OperatorObserver<T, T>
         {
             private int rest;
-            private readonly Action<T> observer;
-            private readonly IDisposable cancelable;
-            public Take(TakeObservable<T> parent, Action<T> observer, IDisposable cancelable)
+            public Take(TakeObservable<T> parent, Action<T> observer, IDisposable cancelable) : base(observer, cancelable)
             {
                 rest = parent.count;
-                this.observer = observer;
-                this.cancelable = cancelable;
             }
 
-            public void OnNext(T value)
+            public override void OnNext(T value)
             {
                 if (rest > 0)
                 {
@@ -50,7 +46,7 @@ namespace Kurisu.Framework.React
                     observer(value);
                     if (rest == 0)
                     {
-                        cancelable.Dispose();
+                        Dispose();
                     }
                 }
             }

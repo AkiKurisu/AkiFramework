@@ -1,7 +1,7 @@
 using System;
 namespace Kurisu.Framework.React
 {
-    public abstract class OperatorObservableBase<T> : IObservable<T>
+    public abstract class OperatorObservable<T> : IObservable<T>
     {
         public IDisposable Subscribe(Action<T> observer)
         {
@@ -11,5 +11,20 @@ namespace Kurisu.Framework.React
         }
 
         protected abstract IDisposable SubscribeCore(Action<T> observer, IDisposable cancel);
+    }
+    public abstract class OperatorObserver<TSource, TResult> : IDisposable
+    {
+        protected internal readonly Action<TResult> observer;
+        private readonly IDisposable cancel;
+        public OperatorObserver(Action<TResult> observer, IDisposable cancel)
+        {
+            this.observer = observer;
+            this.cancel = cancel;
+        }
+        public abstract void OnNext(TSource value);
+        public void Dispose()
+        {
+            cancel?.Dispose();
+        }
     }
 }

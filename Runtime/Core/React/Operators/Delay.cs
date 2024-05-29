@@ -22,11 +22,11 @@ namespace Kurisu.Framework.React
         private class Delay
         {
             private readonly DelayObservable<T> parent;
-            private readonly Action<T> observer;
             private readonly Queue<Timestamped<T>> queue = new();
             private SerialDisposable serialDisposable;
             private bool running = false;
             private static readonly bool isEvent;
+            private readonly Action<T> observer;
             static Delay()
             {
                 isEvent = typeof(T).IsSubclassOf(typeof(EventBase));
@@ -43,7 +43,7 @@ namespace Kurisu.Framework.React
                 return StableCompositeDisposable.Create(parent.source.Subscribe(OnNext), serialDisposable);
             }
 
-            private void OnNext(T value)
+            public void OnNext(T value)
             {
                 var dueTime = Scheduler.Now.Add(parent.dueTime);
                 if (isEvent) (value as EventBase).Acquire();

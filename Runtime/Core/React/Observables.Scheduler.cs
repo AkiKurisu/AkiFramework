@@ -17,8 +17,8 @@ namespace Kurisu.Framework.React
         }
         public static IObservable<T> Take<T>(this IObservable<T> source, int count)
         {
-            if (source == null) throw new ArgumentNullException("source");
-            if (count < 0) throw new ArgumentOutOfRangeException("count");
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));
 
             if (count == 0) return Empty<T>();
 
