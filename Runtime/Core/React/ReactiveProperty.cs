@@ -49,13 +49,7 @@ namespace Kurisu.Framework.React
             get => _value;
             set
             {
-                if (!value.Equals(_value))
-                {
-                    T previewsValue = _value;
-                    _value = value;
-                    using var evt = ChangeEvent<T>.GetPooled(previewsValue, value);
-                    SendEvent(evt);
-                }
+                SetValue(value);
             }
         }
         private Behaviour attachedBehaviour;
@@ -114,9 +108,17 @@ namespace Kurisu.Framework.React
             if (StopPropagationWhenDisabled && !AttachedBehaviour.isActiveAndEnabled) e.StopPropagation();
             AttachedCoordinator.Dispatch(e, dispatchMode, MonoDispatchType);
         }
-
-        public void SetValueWithoutNotify(T newValue)
+        public virtual void SetValue(T newValue)
         {
+            if (_value.Equals(newValue)) return;
+            T previewsValue = _value;
+            _value = newValue;
+            using var evt = ChangeEvent<T>.GetPooled(previewsValue, newValue);
+            SendEvent(evt);
+        }
+        public virtual void SetValueWithoutNotify(T newValue)
+        {
+            if (_value.Equals(newValue)) return;
             _value = newValue;
         }
 

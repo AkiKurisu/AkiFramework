@@ -81,8 +81,8 @@ namespace Kurisu.Framework.React
         /// <summary>
         /// Creates a new group containing two disposable resources that are disposed together.
         /// </summary>
-        /// <param name="disposable1">The first disposable resoruce to add to the group.</param>
-        /// <param name="disposable2">The second disposable resoruce to add to the group.</param>
+        /// <param name="disposable1">The first disposable resource to add to the group.</param>
+        /// <param name="disposable2">The second disposable resource to add to the group.</param>
         /// <returns>Group of disposable resources that are disposed together.</returns>
         public static ICancelable Create(IDisposable disposable1, IDisposable disposable2)
         {
@@ -95,9 +95,9 @@ namespace Kurisu.Framework.React
         /// <summary>
         /// Creates a new group containing three disposable resources that are disposed together.
         /// </summary>
-        /// <param name="disposable1">The first disposable resoruce to add to the group.</param>
-        /// <param name="disposable2">The second disposable resoruce to add to the group.</param>
-        /// <param name="disposable3">The third disposable resoruce to add to the group.</param>
+        /// <param name="disposable1">The first disposable resource to add to the group.</param>
+        /// <param name="disposable2">The second disposable resource to add to the group.</param>
+        /// <param name="disposable3">The third disposable resource to add to the group.</param>
         /// <returns>Group of disposable resources that are disposed together.</returns>
         public static ICancelable Create(IDisposable disposable1, IDisposable disposable2, IDisposable disposable3)
         {
@@ -111,10 +111,10 @@ namespace Kurisu.Framework.React
         /// <summary>
         /// Creates a new group containing four disposable resources that are disposed together.
         /// </summary>
-        /// <param name="disposable1">The first disposable resoruce to add to the group.</param>
-        /// <param name="disposable2">The second disposable resoruce to add to the group.</param>
-        /// <param name="disposable3">The three disposable resoruce to add to the group.</param>
-        /// <param name="disposable4">The four disposable resoruce to add to the group.</param>
+        /// <param name="disposable1">The first disposable resource to add to the group.</param>
+        /// <param name="disposable2">The second disposable resource to add to the group.</param>
+        /// <param name="disposable3">The three disposable resource to add to the group.</param>
+        /// <param name="disposable4">The four disposable resource to add to the group.</param>
         /// <returns>Group of disposable resources that are disposed together.</returns>
         public static ICancelable Create(IDisposable disposable1, IDisposable disposable2, IDisposable disposable3, IDisposable disposable4)
         {

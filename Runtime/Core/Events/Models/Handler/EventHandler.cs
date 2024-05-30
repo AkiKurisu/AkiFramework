@@ -25,11 +25,6 @@ namespace Kurisu.Framework.Events
         /// </summary>
         /// <value></value>
         public CallbackEventHandler Parent { get; protected set; } = null;
-        /// <summary>
-        /// Get and set children callBack handlers
-        /// </summary>
-        /// <value></value>
-        public CallbackEventHandler[] Children { get; protected set; } = null;
         private EventCallbackRegistry m_CallbackRegistry;
 
         /// <summary>

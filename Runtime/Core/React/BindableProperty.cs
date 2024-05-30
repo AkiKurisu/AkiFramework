@@ -21,7 +21,7 @@ namespace Kurisu.Framework.React
         void Unregister(Action<T> observer);
     }
 
-    public class BindableProperty<T> : AkiEvent<T>, IBindableProperty<T>
+    public class BindableProperty<T> : AkiEvent<T>, IBindableProperty<T>, IDisposable
     {
         public BindableProperty(T defaultValue = default)
         {
@@ -34,14 +34,17 @@ namespace Kurisu.Framework.React
             get => mValue;
             set
             {
-                if (value == null && mValue == null) return;
-                mValue = value;
-                OnValueChanged(value);
-                mEvent?.Invoke(value);
+                SetValue(value);
             }
         }
         protected virtual void OnValueChanged(T newValue) { }
-
+        public void SetValue(T newValue)
+        {
+            if (newValue == null && mValue == null) return;
+            mValue = newValue;
+            OnValueChanged(newValue);
+            mEvent?.Invoke(newValue);
+        }
         public void SetValueWithoutNotify(T newValue)
         {
             mValue = newValue;
@@ -67,8 +70,13 @@ namespace Kurisu.Framework.React
         public IDisposable SubscribeWithInitValue(Action<T> action)
         {
             var disposable = Subscribe(action);
-            action?.Invoke(mValue);
+            action(mValue);
             return disposable;
+        }
+
+        public virtual void Dispose()
+        {
+            Release();
         }
     }
 }

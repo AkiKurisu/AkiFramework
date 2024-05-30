@@ -106,8 +106,6 @@ namespace Kurisu.Framework.Events
             eventHandlers[MonoDispatchType.Update] = new MonoCallBackEventHandler(this, MonoDispatchType.Update, RootEventHandler);
             eventHandlers[MonoDispatchType.FixedUpdate] = new MonoCallBackEventHandler(this, MonoDispatchType.FixedUpdate, RootEventHandler);
             eventHandlers[MonoDispatchType.LateUpdate] = new MonoCallBackEventHandler(this, MonoDispatchType.LateUpdate, RootEventHandler);
-            //Set children to trickle Down
-            // root.SetChildren(eventHandlers[MonoDispatchType.Update]);
         }
         public CallbackEventHandler GetEventHandler(MonoDispatchType monoDispatchType)
         {
