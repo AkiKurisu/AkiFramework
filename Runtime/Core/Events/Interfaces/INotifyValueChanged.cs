@@ -27,7 +27,7 @@ namespace Kurisu.Framework.Events
         {
             if (control is CallbackEventHandler handler)
             {
-                handler.RegisterCallback(callback);
+                handler.RegisterCallback(callback, TrickleDown.NoTrickleDown);
                 return true;
             }
             return false;

@@ -1,18 +1,5 @@
-using UnityEngine;
 namespace Kurisu.Framework.Events
 {
-    /// <summary>
-    /// CallbackEventHandler of having behaviour lifetime scope.
-    /// </summary>
-    public abstract class BehaviourCallbackEventHandler : CallbackEventHandler, IBehaviourScope
-    {
-        public Behaviour AttachedBehaviour { get; set; }
-        public BehaviourCallbackEventHandler(Behaviour attachedBehaviour) : base()
-        {
-            AttachedBehaviour = attachedBehaviour;
-        }
-        public bool IsActiveAndEnabled => AttachedBehaviour.isActiveAndEnabled;
-    }
     /// <summary>
     /// Interface for classes capable of having callbacks to handle events.
     /// </summary>
@@ -25,11 +12,6 @@ namespace Kurisu.Framework.Events
         /// </summary>
         /// <value></value>
         public CallbackEventHandler Parent { get; protected set; } = null;
-        /// <summary>
-        /// Get and set children callBack handlers
-        /// </summary>
-        /// <value></value>
-        public CallbackEventHandler[] Children { get; protected set; } = null;
         private EventCallbackRegistry m_CallbackRegistry;
 
         /// <summary>
@@ -43,6 +25,16 @@ namespace Kurisu.Framework.Events
             m_CallbackRegistry.RegisterCallback(callback, useTrickleDown, default);
 #if UNITY_EDITOR
             GlobalCallbackRegistry.RegisterListeners<TEventType>(this, callback, useTrickleDown);
+#endif
+            // AddEventCategories<TEventType>();
+        }
+        internal void RegisterCallback<TEventType>(EventCallback<TEventType> callback, TrickleDown useTrickleDown = TrickleDown.NoTrickleDown, int skipFrame = 2) where TEventType : EventBase<TEventType>, new()
+        {
+            m_CallbackRegistry ??= new EventCallbackRegistry();
+
+            m_CallbackRegistry.RegisterCallback(callback, useTrickleDown, default);
+#if UNITY_EDITOR
+            GlobalCallbackRegistry.RegisterListeners<TEventType>(this, callback, useTrickleDown, skipFrame);
 #endif
             // AddEventCategories<TEventType>();
         }

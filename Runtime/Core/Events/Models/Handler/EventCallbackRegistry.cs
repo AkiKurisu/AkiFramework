@@ -411,7 +411,7 @@ namespace Kurisu.Framework.Events
             }
         }
 
-        public static void RegisterListeners<TEventType>(CallbackEventHandler ceh, Delegate callback, TrickleDown useTrickleDown)
+        public static void RegisterListeners<TEventType>(CallbackEventHandler ceh, Delegate callback, TrickleDown useTrickleDown, int skipFrame = 2)
         {
             if (!IsEventDebuggerConnected)
                 return;
@@ -431,7 +431,7 @@ namespace Kurisu.Framework.Events
                 dict.Add(typeof(TEventType), callbackRecords);
             }
 
-            StackFrame callStack = new(2, true);
+            StackFrame callStack = new(skipFrame, true);
             callbackRecords.Add(new ListenerRecord
             {
                 hashCode = callback.GetHashCode(),

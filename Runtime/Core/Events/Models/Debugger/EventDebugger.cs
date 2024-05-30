@@ -413,14 +413,7 @@ namespace Kurisu.Framework.Events
                     var getPooledMethod = Utils.GetStaticMethodWithNoParametersInBase(eventType, "GetPooled");
                     Assert.IsTrue(getPooledMethod != null);
                     newEvent = (EventBase)getPooledMethod.Invoke(null, null);
-#if JSON_CONVERTERS_FOR_UNITY_INSTALL
                     JsonConvert.PopulateObject(eventBase.JsonData, newEvent);
-#else
-                    JsonConvert.PopulateObject(eventBase.JsonData, newEvent, new JsonSerializerSettings
-                    {
-                        Converters = DebuggerConverterSettings.Converters
-                    });
-#endif
                 }
                 catch (Exception ex)
                 {

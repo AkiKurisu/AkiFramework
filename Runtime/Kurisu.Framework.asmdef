@@ -1,7 +1,9 @@
 {
     "name": "Kurisu.Framework",
     "rootNamespace": "Kurisu.Framework",
-    "references": [],
+    "references": [
+        "GUID:77221876cc6b8244180b96e320b1bcd4"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
@@ -9,12 +11,6 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "jillejr.newtonsoft.json-for-unity.converters",
-            "expression": "1.0.0",
-            "define": "JSON_CONVERTERS_FOR_UNITY_INSTALL"
-        }
-    ],
+    "versionDefines": [],
     "noEngineReferences": false
 }
