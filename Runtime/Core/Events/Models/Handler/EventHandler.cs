@@ -1,18 +1,5 @@
-using UnityEngine;
 namespace Kurisu.Framework.Events
 {
-    /// <summary>
-    /// CallbackEventHandler of having behaviour lifetime scope.
-    /// </summary>
-    public abstract class BehaviourCallbackEventHandler : CallbackEventHandler, IBehaviourScope
-    {
-        public Behaviour AttachedBehaviour { get; set; }
-        public BehaviourCallbackEventHandler(Behaviour attachedBehaviour) : base()
-        {
-            AttachedBehaviour = attachedBehaviour;
-        }
-        public bool IsActiveAndEnabled => AttachedBehaviour.isActiveAndEnabled;
-    }
     /// <summary>
     /// Interface for classes capable of having callbacks to handle events.
     /// </summary>

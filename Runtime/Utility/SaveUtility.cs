@@ -80,9 +80,8 @@ namespace Kurisu.Framework
         public static void SaveJson(string key, string jsonData)
         {
             if (!Directory.Exists(SavePath)) Directory.CreateDirectory(SavePath);
-            FileStream file = File.Create($"{SavePath}/{key}.bin");
+            using FileStream file = File.Create($"{SavePath}/{key}.bin");
             formatter.Serialize(file, jsonData);
-            file.Close();
         }
         public static bool SavingExists(string key)
         {

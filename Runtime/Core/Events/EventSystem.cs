@@ -5,13 +5,17 @@ namespace Kurisu.Framework.Events
 {
     public class EventSystem : MonoEventCoordinator
     {
-        private sealed class RootCallBackEventHandler : BehaviourCallbackEventHandler
+        private sealed class RootCallBackEventHandler : CallbackEventHandler, IBehaviourScope
         {
             public sealed override bool IsCompositeRoot => true;
             private readonly EventSystem eventCoordinator;
             public sealed override IEventCoordinator Root => eventCoordinator;
-            public RootCallBackEventHandler(EventSystem eventCoordinator) : base(eventCoordinator)
+
+            public MonoBehaviour AttachedBehaviour { get; }
+
+            public RootCallBackEventHandler(EventSystem eventCoordinator)
             {
+                AttachedBehaviour = eventCoordinator;
                 this.eventCoordinator = eventCoordinator;
             }
             public override void SendEvent(EventBase e)
@@ -25,14 +29,16 @@ namespace Kurisu.Framework.Events
                 eventCoordinator.Dispatch(e, dispatchMode, MonoDispatchType.Update);
             }
         }
-        private class MonoCallBackEventHandler : BehaviourCallbackEventHandler
+        private class MonoCallBackEventHandler : CallbackEventHandler, IBehaviourScope
         {
             public sealed override bool IsCompositeRoot => false;
             protected readonly MonoDispatchType monoDispatchType;
             protected readonly MonoEventCoordinator eventCoordinator;
             public sealed override IEventCoordinator Root => eventCoordinator;
-            public MonoCallBackEventHandler(MonoEventCoordinator eventCoordinator, MonoDispatchType monoDispatchType, CallbackEventHandler parent) : base(eventCoordinator)
+            public MonoBehaviour AttachedBehaviour { get; }
+            public MonoCallBackEventHandler(MonoEventCoordinator eventCoordinator, MonoDispatchType monoDispatchType, CallbackEventHandler parent)
             {
+                AttachedBehaviour = eventCoordinator;
                 this.monoDispatchType = monoDispatchType;
                 this.eventCoordinator = eventCoordinator;
                 Parent = parent;

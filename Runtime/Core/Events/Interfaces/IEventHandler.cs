@@ -20,10 +20,10 @@ namespace Kurisu.Framework.Events
 
     }
     /// <summary>
-    /// Interface for class have behaviour lifetime scope
+    /// Interface for class have <see cref="MonoBehaviour"/> lifetime scope
     /// </summary>
     public interface IBehaviourScope
     {
-        Behaviour AttachedBehaviour { get; }
+        MonoBehaviour AttachedBehaviour { get; }
     }
 }

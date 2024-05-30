@@ -1,20 +1,26 @@
 using System;
+using R3.Triggers;
 using UnityEngine;
 namespace Kurisu.Framework.React
 {
+    public interface IUnRegister
+    {
+        void Add(IDisposable disposable);
+    }
+    internal readonly struct ObservableDestroyTriggerUnRegister : IUnRegister
+    {
+        private readonly ObservableDestroyTrigger trigger;
+        public ObservableDestroyTriggerUnRegister(ObservableDestroyTrigger trigger)
+        {
+            this.trigger = trigger;
+        }
+        public readonly void Add(IDisposable disposable)
+        {
+            trigger.AddDisposableOnDestroy(disposable);
+        }
+    }
     public static class DisposableExtensions
     {
-        /// <summary>
-        /// Dispose when GameObject destroy
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <param name="gameObject"></param>
-        /// <returns></returns>
-        public static T AddTo<T>(this T handle, GameObject gameObject) where T : IDisposable
-        {
-            gameObject.GetUnRegister().Add(handle);
-            return handle;
-        }
         /// <summary>
         /// Get or create an UnRegister from GameObject, listening OnDestroy event
         /// </summary>
@@ -22,29 +28,12 @@ namespace Kurisu.Framework.React
         /// <returns></returns>
         public static IUnRegister GetUnRegister(this GameObject gameObject)
         {
-            return gameObject.GetOrAddComponent<ObservableDestroyTrigger>();
+            return new ObservableDestroyTriggerUnRegister(gameObject.GetOrAddComponent<ObservableDestroyTrigger>());
         }
-        /// <summary>
-        /// Dispose subscription when GameObject destroy
-        /// </summary>
-        /// <param name="subscription"></param>
-        /// <param name="gameObject"></param>
-        /// <returns></returns>
-        public static T AddTo<T>(this T subscription, Component component) where T : IDisposable
+        public static T AddTo<T>(this T disposable, IUnRegister unRegister) where T : IDisposable
         {
-            component.gameObject.GetUnRegister().Add(subscription);
-            return subscription;
-        }
-        /// <summary>
-        /// Dispose subscription managed by a <see cref="IUnRegister"/>
-        /// </summary>
-        /// <param name="subscription"></param>
-        /// <param name="gameObject"></param>
-        /// <returns></returns>
-        public static T AddTo<T>(this T subscription, IUnRegister unRegister) where T : IDisposable
-        {
-            unRegister.Add(subscription);
-            return subscription;
+            unRegister.Add(disposable);
+            return disposable;
         }
     }
 }

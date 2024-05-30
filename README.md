@@ -9,10 +9,9 @@ I supposed these code are useful but also not-must-be-included, which is my pers
 [Events](./Docs/Events.md) ⚡
 > A powerful event solution for dynamic and contextual event handling ported from UIElement
 
-[React](./Docs/React.md) 🔗
-> A simpler rx solution simplified from UniRx
-
 ## Reference
+
+[R3](https://github.com/Cysharp/R3)
 
 [UIElements Events](https://github.com/Unity-Technologies/UnityCsReference/tree/2022.3/ModuleOverrides/com.unity.ui/Core/Events)
 

@@ -9,14 +9,6 @@ namespace Kurisu.Framework.Events
     {
         public List<EventDebuggerEventRecord> eventList;
     }
-    /// <summary>
-    /// Control <see cref="JsonConverter"/> used in debugger, used when json convertors for unity not installed.
-    /// Recommend to use https://github.com/applejag/Newtonsoft.Json-for-Unity.Converters
-    /// </summary>
-    public static class DebuggerConverterSettings
-    {
-        public static JsonConverter[] Converters { get; set; }
-    }
     [Serializable]
     internal class EventDebuggerEventRecord
     {
@@ -43,11 +35,7 @@ namespace Kurisu.Framework.Events
             Timestamp = evt.Timestamp;
             Target = evt.Target;
             PropagationPhase = evt.PropagationPhase;
-#if JSON_CONVERTERS_FOR_UNITY_INSTALL
             JsonData = JsonConvert.SerializeObject(evt);
-#else
-            JsonData = JsonConvert.SerializeObject(evt, DebuggerConverterSettings.Converters);
-#endif
         }
 
         public EventDebuggerEventRecord(EventBase evt)
