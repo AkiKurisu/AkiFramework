@@ -1,16 +1,20 @@
 # Mod
 
-Simple mod system based on Addressables. 
+Simple and efficient mod system based on Addressables. 
 
-Editor part and runtime part can be separated, so you can build mod resources in another project.
+## Features
+
+Build mods in other project for your game.
 
 ## Runtime API
 
 ```C#
-private async void LoadMod()
+// Only support async way using UniTask
+private async UniTaskVoid LoadMod()
 {
-    List<ModInfo> modInfos = new();
-    await new ModImporter(new ModSetting()).LoadAllModsAsync(modInfos); 
+    // Setting defines mod's on and off
+    ModSetting setting = new();
+    await ModAPI.Initialize(setting, new ModImporter(setting));
 }
 ```
 ## Editor Export
@@ -21,6 +25,7 @@ You can inherit ``CustomBuilder`` and add it to export config to write mod addit
 
 ## Build Notice
 
-If you build mod in source project, you should add `DefaultBundleNamePatchBuilder` to export config for preventing bundle name conflict 
+If you build mod in source project, you should add `DefaultBundleNamePatchBuilder` to export config for preventing bundle name conflict.
 
-Reference https://docs.unity3d.com/Packages/com.unity.addressables@1.21/manual/MultiProject.html.
+## Reference
+>https://docs.unity3d.com/Packages/com.unity.addressables@1.21/manual/MultiProject.html.

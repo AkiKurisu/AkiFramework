@@ -4,6 +4,7 @@ using UnityEngine;
 using System.IO;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Build;
+using Newtonsoft.Json;
 namespace Kurisu.Framework.Mod.Editor
 {
     public class ModExporter
@@ -36,14 +37,33 @@ namespace Kurisu.Framework.Mod.Editor
             WritePipeline(buildPath);
             if (BuildContent())
             {
-                Debug.Log($"<color=#3aff48>Exporter</color>: Export succeed, export Path: {buildPath}");
+                string achievePath = buildPath + ".zip";
+                if (!ZipTogether(buildPath, achievePath))
+                {
+                    LogError($"Zip failed!");
+                    return false;
+                }
+                Directory.Delete(buildPath, true);
+                Log($"Export succeed, export path: {achievePath}");
                 return true;
             }
             else
             {
-                Debug.LogError($"Export failed!");
+                LogError($"Build pipeline failed!");
                 return false;
             }
+        }
+        private static void LogError(string message)
+        {
+            Debug.LogError($"<color=#3aff48>Exporter</color>: {message}");
+        }
+        private static void Log(string message)
+        {
+            Debug.LogError($"<color=#3aff48>Exporter</color>: {message}");
+        }
+        private static bool ZipTogether(string buildPath, string zipPath)
+        {
+            return ZipWrapper.Zip(new string[1] { buildPath }, zipPath);
         }
         private void WritePipeline(string buildPath)
         {
@@ -54,13 +74,13 @@ namespace Kurisu.Framework.Mod.Editor
                 modName = exportConfig.modName,
                 version = exportConfig.version,
                 modIconBytes = exportConfig.modIcon != null ? exportConfig.modIcon.EncodeToPNG() : new byte[0] { },
-                apiVersion = ExportConstants.APIVersion
+                apiVersion = ImportConstants.APIVersion.ToString()
             };
             foreach (var builder in builders)
             {
                 builder.Write(ref info);
             }
-            var stream = JsonUtility.ToJson(info);
+            var stream = JsonConvert.SerializeObject(info);
             File.WriteAllText(buildPath + "/ModConfig.cfg", stream);
         }
         private bool BuildContent()

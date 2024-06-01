@@ -19,11 +19,6 @@
     ],
     "versionDefines": [
         {
-            "name": "com.cysharp.unitask",
-            "expression": "2.5.3",
-            "define": "AF_UNITASK_INSTALL"
-        },
-        {
             "name": "com.unity.addressables",
             "expression": "1.21.0",
             "define": "AF_ADDRESSABLES_INSATLL"

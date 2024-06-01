@@ -1,4 +1,3 @@
-#if AF_UNITASK_INSTALL
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
@@ -95,4 +94,3 @@ namespace Kurisu.Framework.Resource
         }
     }
 }
-#endif

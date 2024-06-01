@@ -4,11 +4,7 @@ using System.Linq;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using System.Collections;
-#if AF_UNITASK_INSTALL
 using Cysharp.Threading.Tasks;
-#else
-using System.Threading.Tasks;
-#endif
 namespace Kurisu.Framework.Resource
 {
     public class InvalidResourceRequestException : Exception
@@ -42,11 +38,7 @@ namespace Kurisu.Framework.Resource
         /// </summary>
         /// <param name="address"></param>
         /// <returns></returns>
-#if AF_UNITASK_INSTALL
         public async UniTask<TAsset> LoadAssetAsync(string address)
-#else
-        public async Task<TAsset> LoadAssetAsync(string address)
-#endif
         {
             versionMap[address] = Version;
             if (!cacheMap.TryGetValue(address, out TAsset asset))
@@ -73,20 +65,12 @@ namespace Kurisu.Framework.Resource
             }
             return asset;
         }
-#if AF_UNITASK_INSTALL
         private async UniTask SafeCheckAsync(string address)
-#else
-        private async Task SafeCheckAsync(string address)
-#endif
         {
             //No need when global safe check is on
 #if !AF_RESOURCES_SAFE_CHECK
             var location = Addressables.LoadResourceLocationsAsync(address, typeof(TAsset));
-#if AF_UNITASK_INSTALL
             await location.ToUniTask();
-#else
-            await location.Task;
-#endif
             if (location.Status != AsyncOperationStatus.Succeeded || location.Result.Count == 0)
             {
                 throw new InvalidResourceRequestException(address, $"Address {address} not valid for loading {typeof(TAsset)} asset");
