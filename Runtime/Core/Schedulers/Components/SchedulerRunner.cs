@@ -29,10 +29,9 @@ namespace Kurisu.Framework.Schedulers
                 item.Timestamp = Scheduler.Now;
                 return item;
             }
-            public void Cancel(bool dispose)
+            public void Cancel()
             {
                 if (!Value.IsDone) Value.Cancel();
-                if (dispose) Dispose();
             }
 
             public void Dispose()
@@ -53,6 +52,7 @@ namespace Kurisu.Framework.Schedulers
         // buffer adding tasks so we don't edit a collection during iteration
         private readonly List<ScheduledItem> scheduledToAdd = new(RunningCapacity);
         private bool isDestroyed;
+        private bool isGateOpen;
         public static SchedulerRunner Instance => instance != null ? instance : GetInstance();
         public static bool IsInitialized => instance != null;
         private static SchedulerRunner instance;
@@ -90,7 +90,7 @@ namespace Kurisu.Framework.Schedulers
             }
             int id = taskId++;
             managedScheduled.Add(scheduled, ScheduledItem.GetPooled(id, scheduled));
-            scheduledToAdd.Add(managedScheduled[scheduled]);
+            (isGateOpen ? scheduledRunning : scheduledToAdd).Add(managedScheduled[scheduled]);
 #if UNITY_EDITOR
             SchedulerRegistry.RegisterListener(scheduled, @delegate);
 #endif
@@ -113,10 +113,16 @@ namespace Kurisu.Framework.Schedulers
         {
             foreach (ScheduledItem scheduled in scheduledRunning)
             {
-                scheduled.Cancel(true);
+                scheduled.Cancel();
+                if (isGateOpen)
+                {
+                    scheduled.Dispose();
+                }
             }
-            managedScheduled.Clear();
-            scheduledRunning.Clear();
+            if (isGateOpen)
+            {
+                scheduledRunning.Clear();
+            }
             scheduledToAdd.Clear();
         }
         /// <summary>
@@ -142,14 +148,17 @@ namespace Kurisu.Framework.Schedulers
 
         private void Update()
         {
+            isGateOpen = false;
             UpdateAll();
+            isGateOpen = true;
         }
         private void OnDestroy()
         {
             isDestroyed = true;
             foreach (ScheduledItem scheduled in scheduledRunning)
             {
-                scheduled.Cancel(true);
+                scheduled.Cancel();
+                scheduled.Dispose();
             }
             SchedulerRegistry.CleanListeners();
             managedScheduled.Clear();
@@ -177,7 +186,7 @@ namespace Kurisu.Framework.Schedulers
             {
                 if (!scheduledRunning[i].Value.IsDone) continue;
                 scheduledRunning[i].Dispose();
-                scheduledRunning.Remove(scheduledRunning[i]);
+                scheduledRunning.RemoveAt(i);
             }
         }
         public SchedulerHandle CreateHandle(IScheduled task)
@@ -236,10 +245,12 @@ namespace Kurisu.Framework.Schedulers
         public void Cancel(int taskId)
         {
             if (!TryGetItem(taskId, out ScheduledItem item)) return;
-            item.Cancel(false);
-            scheduledRunning.Remove(item);
-            managedScheduled.Remove(item.Value);
-            item.Dispose();
+            item.Cancel();
+            if (isGateOpen)
+            {
+                scheduledRunning.Remove(item);
+                item.Dispose();
+            }
         }
     }
 }
