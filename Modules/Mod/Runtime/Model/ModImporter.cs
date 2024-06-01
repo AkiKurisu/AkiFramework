@@ -53,18 +53,19 @@ namespace Kurisu.Framework.Mod
                 GetAllDirectories(directory, directories);
             }
         }
-        public static void UnZipAll(string modPath)
+        private static void UnZipAll(string modPath)
         {
             var zips = Directory.GetFiles(modPath, "*.zip", SearchOption.AllDirectories).ToList();
             foreach (var zip in zips)
             {
-                ZipWrapper.UnzipFile(zip, zip.Remove(zip.Length - 4, 4));
+                ZipWrapper.UnzipFile(zip, Path.GetDirectoryName(zip));
+                File.Delete(zip);
             }
         }
         public async UniTask<bool> LoadAllModsAsync(List<ModInfo> modInfos)
         {
             string modPath = modSettingData.LoadingPath;
-            if (!File.Exists(modPath))
+            if (!Directory.Exists(modPath))
             {
                 Directory.CreateDirectory(modPath);
                 return true;
@@ -151,10 +152,10 @@ namespace Kurisu.Framework.Mod
         }
         public async static UniTask<bool> LoadModCatalogAsync(string path)
         {
-            string[] jsonFiles = Directory.GetFiles(path, "*.json");
-            if (jsonFiles.Length > 0)
+            string catalogPath = Path.Combine(path, "catalog.json");
+            if (File.Exists(catalogPath))
             {
-                await LoadCatalogAsync(jsonFiles[0], path);
+                await LoadCatalogAsync(catalogPath, path);
                 return true;
             }
             return false;

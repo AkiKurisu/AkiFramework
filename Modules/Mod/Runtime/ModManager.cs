@@ -22,9 +22,9 @@ namespace Kurisu.Framework.Mod
         }
         private void LocalInitialize()
         {
+            settingData = SaveUtility.LoadOrNew<ModSetting>();
             ModAPI.OnModRefresh.Subscribe(_ => SaveData()).AddTo(destroyCancellationToken);
             ModAPI.IsModInit.Subscribe(_ => SaveData()).AddTo(destroyCancellationToken);
-            settingData = SaveUtility.LoadOrNew<ModSetting>();
             modImporter = new(settingData, modValidator = new ModValidator(ImportConstants.APIVersion));
             isInitialized = true;
         }

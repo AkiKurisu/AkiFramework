@@ -24,6 +24,7 @@ namespace Kurisu.Framework.Mod
                 Debug.LogError("[Mod API] Mod api is already initialized");
                 return false;
             }
+            Debug.Log("[Mod API] Initialize mod api...");
             modImporter ??= new ModImporter(modSetting, new ModValidator(ImportConstants.APIVersion));
             setting = modSetting;
             if (await modImporter.LoadAllModsAsync(modInfos))

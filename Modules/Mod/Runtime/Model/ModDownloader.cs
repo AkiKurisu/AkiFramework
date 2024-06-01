@@ -15,19 +15,19 @@ namespace Kurisu.Framework.Mod
         {
             this.cancellationToken = cancellationToken;
         }
-        public async UniTask DownloadMod(string url, string downloadFileName)
+        public async UniTask DownloadMod(string url, string downloadPath)
         {
             Result result = new();
             using UnityWebRequest request = UnityWebRequest.Get(new Uri(url).AbsoluteUri);
-            string downloadPath = Path.Combine(ImportConstants.LoadingPath, downloadFileName);
-            result.downloadPath = downloadPath.Replace(".zip", string.Empty);
             request.downloadHandler = new DownloadHandlerFile(downloadPath);
             using UnityWebRequest www = UnityWebRequest.Get(new Uri(url).AbsoluteUri);
             await www.SendWebRequest().ToUniTask(new Progress(this), cancellationToken: cancellationToken);
-            if (!ZipWrapper.UnzipFile(downloadPath, ImportConstants.LoadingPath))
+            string unzipFolder = Path.GetDirectoryName(downloadPath);
+            if (!ZipWrapper.UnzipFile(downloadPath, unzipFolder))
             {
                 result.errorInfo = $"Can't unzip mod: {downloadPath}!";
                 File.Delete(downloadPath);
+                result.downloadPath = downloadPath[..4];
                 onComplete.OnNext(result);
                 return;
             }
