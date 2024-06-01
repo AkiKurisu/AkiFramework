@@ -84,8 +84,9 @@ namespace Kurisu.Framework.Schedulers
         {
             if (isDestroyed)
             {
-                Debug.LogWarning("Can not schedule task when scene destroy.");
+                Debug.LogWarning("Can not schedule task when scene is destroying.");
                 scheduled.Dispose();
+                return;
             }
             int id = taskId++;
             managedScheduled.Add(scheduled, ScheduledItem.GetPooled(id, scheduled));

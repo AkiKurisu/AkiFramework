@@ -93,6 +93,8 @@ namespace Kurisu.Framework.Schedulers
         public void Dispose()
         {
             SchedulerRunner.Instance.Unregister(this, OnComplete == null ? _onUpdate : OnComplete);
+            _onUpdate = null;
+            OnComplete = null;
             pool.Release(this);
         }
         /// <summary>
