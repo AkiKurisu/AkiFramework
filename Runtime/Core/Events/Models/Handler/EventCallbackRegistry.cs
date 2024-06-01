@@ -449,7 +449,7 @@ namespace Kurisu.Framework.Events
                 return;
 
             var declType = callback.Method.DeclaringType?.Name ?? string.Empty;
-            var itemName = declType + "." + callback.Method.Name;
+            var itemName = declType + "." + callback.Method.Name + ">";
 
             if (!dict.TryGetValue(typeof(TEventType), out List<ListenerRecord> callbackRecords))
                 return;
@@ -457,12 +457,11 @@ namespace Kurisu.Framework.Events
             for (var i = callbackRecords.Count - 1; i >= 0; i--)
             {
                 var callbackRecord = callbackRecords[i];
-                if (callbackRecord.name == itemName)
+                if (callbackRecord.name.StartsWith(itemName))
                 {
                     callbackRecords.RemoveAt(i);
                 }
             }
-
             s_Listeners.Remove(ceh);
         }
     }

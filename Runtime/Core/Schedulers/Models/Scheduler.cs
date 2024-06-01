@@ -61,14 +61,5 @@ namespace Kurisu.Framework.Schedulers
             var counter = FrameCounter.Register(frame, callBack, onUpdate);
             return SchedulerRunner.Instance.CreateHandle(counter);
         }
-        /// <summary>
-        /// Enable schedular debug mode
-        /// </summary>
-        /// <value></value>
-        public static bool Debug
-        {
-            get => SchedulerRunner.Instance.DebugMode;
-            set => SchedulerRunner.Instance.DebugMode = value;
-        }
     }
 }
