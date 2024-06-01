@@ -1,29 +1,32 @@
-using System.Collections.Generic;
-using System.Linq;
 using Cysharp.Threading.Tasks;
 using R3;
 namespace Kurisu.Framework.Mod
 {
     /// <summary>
-    /// Mod manager class for AkiFramework
+    /// AF's default mod manager
     /// </summary>
     public class ModManager : Singleton<ModManager>
     {
-        private readonly List<ModInfo> modInfos = new();
-        public Subject<Unit> OnModInit { get; } = new();
-        public Subject<Unit> OnModRefresh { get; } = new();
         private ModSetting settingData;
-        public bool IsModInit { get; private set; }
+        private bool isInitialized;
         private ModImporter modImporter;
+        private IModValidator modValidator;
         protected override void Awake()
         {
             base.Awake();
             DontDestroyOnLoad(gameObject);
-            if (settingData == null)
+            if (!isInitialized)
             {
-                settingData = SaveUtility.LoadOrNew<ModSetting>();
-                modImporter = new(settingData);
+                LocalInitialize();
             }
+        }
+        private void LocalInitialize()
+        {
+            ModAPI.OnModRefresh.Subscribe(_ => SaveData()).AddTo(destroyCancellationToken);
+            ModAPI.IsModInit.Subscribe(_ => SaveData()).AddTo(destroyCancellationToken);
+            settingData = SaveUtility.LoadOrNew<ModSetting>();
+            modImporter = new(settingData, modValidator = new ModValidator(ImportConstants.APIVersion));
+            isInitialized = true;
         }
         protected override void OnDestroy()
         {
@@ -34,42 +37,20 @@ namespace Kurisu.Framework.Mod
         /// Load all mods
         /// </summary>
         /// <returns></returns>
-        public async UniTask<bool> LoadAllMods()
+        public async UniTask<bool> Initialize()
         {
-            if (settingData == null)
+            if (!isInitialized)
             {
-                settingData = SaveUtility.LoadOrNew<ModSetting>();
-                modImporter = new(settingData);
+                LocalInitialize();
             }
-            await modImporter.LoadAllModsAsync(modInfos);
-            settingData.stateInfos.RemoveAll(x => !modInfos.Any(y => y.FullName == x.modFullName));
-            SaveData();
-            IsModInit = true;
-            OnModInit.OnNext(Unit.Default);
-            return true;
+            //Skip if is initialized, use single mod import instead.
+            if (ModAPI.IsModInit.Value) return false;
+            return await ModAPI.Initialize(settingData, modImporter);
         }
-
         public bool IsModActivated(ModInfo modInfo)
         {
-            if (!ModImporter.IsValidAPIVersion(modInfo.apiVersion)) return false;
+            if (!modValidator.IsValidAPIVersion(modInfo.apiVersion)) return false;
             return settingData.IsModActivated(modInfo);
-        }
-        public void DeleteMod(ModInfo modInfo)
-        {
-            settingData.DelateMod(modInfo);
-            SaveData();
-            modInfos.Remove(modInfo);
-            OnModRefresh.OnNext(Unit.Default);
-        }
-        public void EnabledMod(ModInfo modInfo, bool isEnabled)
-        {
-            settingData.SetModEnabled(modInfo, isEnabled);
-            SaveData();
-            OnModRefresh.OnNext(Unit.Default);
-        }
-        public List<ModInfo> GetModInfos()
-        {
-            return modInfos.ToList();
         }
         private void SaveData()
         {

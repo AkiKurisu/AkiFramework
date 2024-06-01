@@ -25,7 +25,7 @@ namespace Kurisu.Framework.Mod.Editor
             {
                 var group = exportConfig.Group;
                 group.GetSchema<BundledAssetGroupSchema>().IncludeInBuild = true;
-                group.Settings.profileSettings.SetValue(group.Settings.activeProfileId, "Remote.LoadPath", ExportConstants.DynamicLoadPath);
+                group.Settings.profileSettings.SetValue(group.Settings.activeProfileId, "Remote.LoadPath", ImportConstants.DynamicLoadPath);
                 group.Settings.profileSettings.SetValue(group.Settings.activeProfileId, "Remote.BuildPath", buildPath);
             }
         }
@@ -59,7 +59,7 @@ namespace Kurisu.Framework.Mod.Editor
                     {
                         if (catalog.InternalIds[i].Contains(bundleName))
                         {
-                            catalog.InternalIds[i] = $"{ExportConstants.DynamicLoadPath}/{bundleName}";
+                            catalog.InternalIds[i] = $"{ImportConstants.DynamicLoadPath}/{bundleName}";
                             break;
                         }
                     }

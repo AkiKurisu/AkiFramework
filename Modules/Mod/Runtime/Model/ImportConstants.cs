@@ -7,6 +7,7 @@ namespace Kurisu.Framework.Mod
                 /// <summary>
                 /// API define, update this version to let old mod not be imported
                 /// </summary>
+                /// TODO: Currently hard code, should use a setting file instead
                 public const float APIVersion = 0.1f;
                 public const string DynamicLoadPath = "{LOCAL_MOD_PATH}";
 #if !UNITY_EDITOR && UNITY_ANDROID
