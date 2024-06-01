@@ -7,7 +7,10 @@ I supposed these code are useful but also not-must-be-included, which is my pers
 ## Features
 
 [Events](./Docs/Events.md) ⚡
-> A powerful event solution for dynamic and contextual event handling ported from UIElement
+> A powerful event solution for dynamic and contextual event handling ported from UIElement.
+
+[Mod](./Docs/Mod.md) ⛏
+> Simple mod system based on Addressables. 
 
 ## Reference
 
