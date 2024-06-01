@@ -35,7 +35,7 @@ namespace Kurisu.Framework.Schedulers.Editor
             foreach (var scheduled in Manager.scheduledRunning)
             {
                 double elapsedTime = (Scheduler.Now - scheduled.Timestamp).TotalSeconds;
-                GUILayout.Label($"Task {scheduled.Id}, elapsed time: {elapsedTime}s.");
+                GUILayout.Label($"Task Id {scheduled.Id}, elapsed time: {elapsedTime}s.");
                 if (SchedulerRegistry.TryGetListener(scheduled.Value, out var listener))
                 {
                     EditorGUI.indentLevel++;
