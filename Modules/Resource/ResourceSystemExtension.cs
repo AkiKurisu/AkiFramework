@@ -1,15 +1,10 @@
-#if AF_UNITASK_INSTALL
 using Cysharp.Threading.Tasks;
-#else
-using System.Runtime.CompilerServices;
-#endif
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 namespace Kurisu.Framework.Resource
 {
     public static class ResourceSystemExtension
     {
-#if AF_UNITASK_INSTALL
         public static UniTask<T>.Awaiter GetAwaiter<T>(this ResourceHandle<T> handle)
         {
             return handle.InternalHandle.GetAwaiter();
@@ -18,16 +13,6 @@ namespace Kurisu.Framework.Resource
         {
             return handle.InternalHandle.GetAwaiter();
         }
-#else
-        public static TaskAwaiter<T> GetAwaiter<T>(this ResourceHandle<T> handle)
-        {
-            return handle.Task.GetAwaiter();
-        }
-        public static TaskAwaiter GetAwaiter(this ResourceHandle handle)
-        {
-            return handle.Task.GetAwaiter();
-        }
-#endif
         /// <summary>
         /// Whether resource handle is empty
         /// </summary>

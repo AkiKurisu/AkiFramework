@@ -1,9 +1,5 @@
 using System;
-#if AF_UNITASK_INSTALL
 using Cysharp.Threading.Tasks;
-#else
-using System.Threading.Tasks;
-#endif
 using UnityEngine.ResourceManagement.AsyncOperations;
 namespace Kurisu.Framework.Resource
 {
@@ -16,11 +12,7 @@ namespace Kurisu.Framework.Resource
         internal readonly byte operationType;
         internal readonly AsyncOperationHandle InternalHandle => ResourceSystem.CastOperationHandle(handleID);
         public readonly object Result => InternalHandle.Result;
-#if AF_UNITASK_INSTALL
         public readonly UniTask Task => InternalHandle.ToUniTask();
-#else
-        public readonly Task Task => InternalHandle.Task;
-#endif
         public ResourceHandle(uint handleID, byte operationType)
         {
             this.handleID = handleID;
@@ -67,11 +59,7 @@ namespace Kurisu.Framework.Resource
         internal readonly byte operationType;
         internal readonly AsyncOperationHandle<T> InternalHandle => ResourceSystem.CastOperationHandle<T>(handleID);
         public readonly T Result => InternalHandle.Result;
-#if AF_UNITASK_INSTALL
         public readonly UniTask<T> Task => InternalHandle.ToUniTask();
-#else
-        public readonly Task<T> Task => InternalHandle.Task;
-#endif
         public ResourceHandle(uint handleID, byte operationType)
         {
             this.handleID = handleID;

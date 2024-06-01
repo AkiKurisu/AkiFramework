@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using R3;
 namespace Kurisu.Framework.Mod
 {
@@ -34,7 +34,7 @@ namespace Kurisu.Framework.Mod
         /// Load all mods
         /// </summary>
         /// <returns></returns>
-        public async Task<bool> LoadAllMods()
+        public async UniTask<bool> LoadAllMods()
         {
             if (settingData == null)
             {

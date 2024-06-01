@@ -1,11 +1,11 @@
 using System.IO;
 using System.Collections.Generic;
 using UnityEngine.AddressableAssets;
-using System.Threading.Tasks;
 using UnityEngine;
 using System;
 using Object = UnityEngine.Object;
 using System.Text;
+using Cysharp.Threading.Tasks;
 namespace Kurisu.Framework.Mod
 {
     public class ModImporter : IDisposable
@@ -33,7 +33,7 @@ namespace Kurisu.Framework.Mod
                 GetAllDirectories(directory, directories);
             }
         }
-        public async Task<bool> LoadAllModsAsync(List<ModInfo> modInfos)
+        public async UniTask<bool> LoadAllModsAsync(List<ModInfo> modInfos)
         {
             string modPath = modSettingData.LoadingPath;
             if (!File.Exists(modPath)) Directory.CreateDirectory(modPath);
@@ -100,7 +100,7 @@ namespace Kurisu.Framework.Mod
                 File.Delete(orgFile);
             }
         }
-        public async Task<ModInfo> LoadModAsync(ModSetting settingData, string path)
+        public async UniTask<ModInfo> LoadModAsync(ModSetting settingData, string path)
         {
             string config = null;
             foreach (var file in Directory.GetFiles(path))
@@ -133,7 +133,7 @@ namespace Kurisu.Framework.Mod
             await LoadModCatalogAsync(path);
             return modInfo;
         }
-        public async static Task<bool> LoadModCatalogAsync(string path)
+        public async static UniTask<bool> LoadModCatalogAsync(string path)
         {
             foreach (var file in Directory.GetFiles(path))
             {
@@ -160,13 +160,13 @@ namespace Kurisu.Framework.Mod
             tempTextures.Add(texture);
             return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
         }
-        public static async Task LoadCatalogAsync(string catalogPath, string directoryPath)
+        public static async UniTask LoadCatalogAsync(string catalogPath, string directoryPath)
         {
             catalogPath = catalogPath.Replace(@"\", "/");
             string contentCatalog = File.ReadAllText(catalogPath, Encoding.UTF8);
             File.WriteAllText(catalogPath, contentCatalog.Replace(ImportConstants.DynamicLoadPath, directoryPath.Replace(@"\", "/")), Encoding.UTF8);
             Debug.Log($"Load mod catalog {catalogPath}");
-            await Addressables.LoadContentCatalogAsync(catalogPath).Task;
+            await Addressables.LoadContentCatalogAsync(catalogPath).ToUniTask();
             File.WriteAllText(catalogPath, contentCatalog, Encoding.UTF8);
         }
         private void ClearAllTempTexture()
