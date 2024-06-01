@@ -71,12 +71,12 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="useRealTime">Whether the timer uses real-time(i.e. not affected by pauses,
         /// slow/fast motion) or game-time(will be affected by pauses and slow/fast-motion).</param>
         /// <returns>A timer object that allows you to examine stats and stop/resume progress.</returns>
-        public static Timer Register(float duration, Action onComplete, Action<float> onUpdate = null,
+        internal static Timer Register(float duration, Action onComplete, Action<float> onUpdate = null,
             bool isLooped = false, bool useRealTime = false)
         {
             Timer timer = pool.Get();
             timer.Init(duration, onComplete, onUpdate, isLooped, useRealTime);
-            SchedulerRunner.Instance.Register(timer);
+            SchedulerRunner.Instance.Register(timer, onComplete == null ? onUpdate : onComplete);
             return timer;
         }
         #endregion
@@ -92,6 +92,7 @@ namespace Kurisu.Framework.Schedulers
         }
         public void Dispose()
         {
+            SchedulerRunner.Instance.Unregister(this, OnComplete == null ? _onUpdate : OnComplete);
             pool.Release(this);
         }
         /// <summary>
@@ -243,7 +244,6 @@ namespace Kurisu.Framework.Schedulers
 
             if (GetWorldTime() >= GetFireTime())
             {
-                SchedulerRunner.Instance.Unregister(this);
                 OnComplete?.Invoke();
 
                 if (IsLooped)

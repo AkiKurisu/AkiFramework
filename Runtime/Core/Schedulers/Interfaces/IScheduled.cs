@@ -2,7 +2,7 @@ using System;
 namespace Kurisu.Framework.Schedulers
 {
     /// <summary>
-    /// Interface for class can be scheduled
+    /// Interface for task can be scheduled
     /// </summary>
     public interface IScheduled : IDisposable
     {

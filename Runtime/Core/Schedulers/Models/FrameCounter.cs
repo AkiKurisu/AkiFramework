@@ -49,12 +49,12 @@ namespace Kurisu.Framework.Schedulers
         /// Register a new counter that should fire an event after a certain amount of frame
         /// has elapsed.
         /// </summary>
-        public static FrameCounter Register(int frame, Action onComplete, Action<int> onUpdate = null,
+        internal static FrameCounter Register(int frame, Action onComplete, Action<int> onUpdate = null,
             bool isLooped = false)
         {
             FrameCounter timer = pool.Get();
             timer.Init(frame, onComplete, onUpdate, isLooped);
-            SchedulerRunner.Instance.Register(timer);
+            SchedulerRunner.Instance.Register(timer, onComplete == null ? onUpdate : onComplete);
             return timer;
         }
         #endregion
@@ -70,6 +70,7 @@ namespace Kurisu.Framework.Schedulers
         }
         public void Dispose()
         {
+            SchedulerRunner.Instance.Unregister(this, OnComplete == null ? _onUpdate : OnComplete);
             pool.Release(this);
         }
         /// <summary>
@@ -150,7 +151,7 @@ namespace Kurisu.Framework.Schedulers
 
             if (count >= Frame)
             {
-                SchedulerRunner.Instance.Unregister(this);
+                SchedulerRunner.Instance.Unregister(this, OnComplete == null ? _onUpdate : OnComplete);
                 OnComplete?.Invoke();
 
                 if (IsLooped)
