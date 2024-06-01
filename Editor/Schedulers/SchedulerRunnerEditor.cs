@@ -1,3 +1,4 @@
+using Unity.CodeEditor;
 using UnityEditor;
 using UnityEngine;
 namespace Kurisu.Framework.Schedulers.Editor
@@ -19,19 +20,32 @@ namespace Kurisu.Framework.Schedulers.Editor
         }
         public override void OnInspectorGUI()
         {
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("debugMode"), new GUIContent("Debug Mode"));
-            if (EditorGUI.EndChangeCheck())
-            {
-                serializedObject.ApplyModifiedProperties();
-            }
             if (!Application.isPlaying)
             {
                 EditorGUILayout.HelpBox("Enter play mode to track tasks", MessageType.Info);
                 return;
             }
+            GUIStyle stackTraceButtonStyle = new(GUI.skin.button)
+            {
+                wordWrap = true,
+                fontSize = 12
+            };
             GUILayout.BeginVertical(GUI.skin.box);
             GUILayout.Label($"Managed scheduled task count: {ManagedScheduledCount}");
+            foreach (var scheduled in Manager.scheduledRunning)
+            {
+                double elapsedTime = (Scheduler.Now - scheduled.Timestamp).TotalSeconds;
+                GUILayout.Label($"Task {scheduled.Id}, elapsed time: {elapsedTime}s.");
+                if (SchedulerRegistry.TryGetListener(scheduled.Value, out var listener))
+                {
+                    EditorGUI.indentLevel++;
+                    if (GUILayout.Button($"{listener.fileName} {listener.lineNumber}", stackTraceButtonStyle))
+                    {
+                        CodeEditor.Editor.CurrentCodeEditor.OpenProject(listener.fileName, listener.lineNumber);
+                    }
+                    EditorGUI.indentLevel--;
+                }
+            }
             GUILayout.EndVertical();
         }
     }
