@@ -11,9 +11,9 @@ namespace Kurisu.Framework.Mod
                 public const float APIVersion = 0.1f;
                 public const string DynamicLoadPath = "{LOCAL_MOD_PATH}";
 #if !UNITY_EDITOR && UNITY_ANDROID
-                public static string LoadingPath => Path.Combine(Application.persistentDataPath, "Mods");
+                public static string LoadingPath = Path.Combine(Application.persistentDataPath, "Mods");
 #else
-                public static string LoadingPath => Path.Combine(Path.GetDirectoryName(Application.dataPath), "Mods");
+                public static string LoadingPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Mods");
 #endif
         }
 }
