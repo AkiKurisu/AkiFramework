@@ -29,7 +29,7 @@ namespace Kurisu.Framework.Mod.Editor
         }
         private static readonly FieldInfo m_UseCustomPaths = typeof(BundledAssetGroupSchema).GetField("m_UseCustomPaths", BindingFlags.Instance | BindingFlags.NonPublic);
         private static string ConfigGUIDKey => Application.productName + "_ModConfigGUID";
-        [MenuItem("Tools/Mod Exporter")]
+        [MenuItem("Tools/AkiFramework/Mod Exporter")]
         public static void OpenEditor()
         {
             var window = GetWindow<ModExportWindow>("Mod Exporter");

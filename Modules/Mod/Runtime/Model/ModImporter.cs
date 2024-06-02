@@ -2,8 +2,6 @@ using System.IO;
 using System.Collections.Generic;
 using UnityEngine.AddressableAssets;
 using UnityEngine;
-using System;
-using Object = UnityEngine.Object;
 using System.Text;
 using Cysharp.Threading.Tasks;
 using System.Linq;
@@ -12,29 +10,29 @@ namespace Kurisu.Framework.Mod
 {
     public interface IModValidator
     {
-        bool IsValidAPIVersion(string version);
+        bool IsValidAPIVersion(ModInfo modInfo);
     }
     public interface IModImporter
     {
         UniTask<bool> LoadAllModsAsync(List<ModInfo> modInfos);
     }
-    public class ModValidator : IModValidator
+    public class APIValidator : IModValidator
     {
         private readonly float apiVersion;
-        public ModValidator(float apiVersion)
+        public APIValidator(float apiVersion)
         {
             this.apiVersion = apiVersion;
         }
-        public bool IsValidAPIVersion(string version)
+        public bool IsValidAPIVersion(ModInfo modInfo)
         {
-            if (float.TryParse(version, out var version2))
+            if (float.TryParse(modInfo.apiVersion, out var version2))
             {
                 return version2 >= apiVersion;
             }
-            return version == apiVersion.ToString();
+            return false;
         }
     }
-    public class ModImporter : IModImporter, IDisposable
+    public class ModImporter : IModImporter
     {
         private readonly ModSetting modSettingData;
         private readonly IModValidator validator;
@@ -42,25 +40,6 @@ namespace Kurisu.Framework.Mod
         {
             this.modSettingData = modSettingData;
             this.validator = validator;
-        }
-        private readonly List<Texture2D> tempTextures = new();
-        private static void GetAllDirectories(string rootFolder, List<string> directories)
-        {
-            string[] subDirectories = Directory.GetDirectories(rootFolder);
-            directories.AddRange(subDirectories);
-            foreach (var directory in subDirectories)
-            {
-                GetAllDirectories(directory, directories);
-            }
-        }
-        private static void UnZipAll(string modPath)
-        {
-            var zips = Directory.GetFiles(modPath, "*.zip", SearchOption.AllDirectories).ToList();
-            foreach (var zip in zips)
-            {
-                ZipWrapper.UnzipFile(zip, Path.GetDirectoryName(zip));
-                File.Delete(zip);
-            }
         }
         public async UniTask<bool> LoadAllModsAsync(List<ModInfo> modInfos)
         {
@@ -70,7 +49,7 @@ namespace Kurisu.Framework.Mod
                 Directory.CreateDirectory(modPath);
                 return true;
             }
-            UnZipAll(modPath);
+            ModAPI.UnZipAll(modPath, true);
             var directories = Directory.GetDirectories(modPath, "*", SearchOption.AllDirectories);
             if (directories.Length == 0)
             {
@@ -89,18 +68,17 @@ namespace Kurisu.Framework.Mod
             }
             if (configPaths.Count == 0)
             {
-                return false;
+                return true;
             }
             for (int i = configPaths.Count - 1; i >= 0; i--)
             {
-                var stream = await File.ReadAllTextAsync(configPaths[i]);
-                var modInfo = InitModInfo(stream, directoryPaths[i]);
+                var modInfo = await ModAPI.LoadModInfo(configPaths[i]);
                 var state = modSettingData.GetModState(modInfo);
-                if (state == ModStateInfo.ModState.Enabled)
+                if (state == ModState.Enabled)
                 {
                     modInfos.Add(modInfo);
                 }
-                else if (state == ModStateInfo.ModState.Disabled)
+                else if (state == ModState.Disabled)
                 {
                     directoryPaths.RemoveAt(i);
                     modInfos.Add(modInfo);
@@ -108,7 +86,7 @@ namespace Kurisu.Framework.Mod
                 }
                 else
                 {
-                    DelateMod(modInfo);
+                    ModAPI.DeleteModFromDisk(modInfo);
                     directoryPaths.RemoveAt(i);
                     continue;
                 }
@@ -116,86 +94,35 @@ namespace Kurisu.Framework.Mod
             }
             foreach (var directory in directoryPaths)
             {
-                await LoadModCatalogAsync(directory);
+                await ModAPI.LoadModCatalogAsync(directory);
             }
             return true;
-        }
-        public static void DelateMod(ModInfo modInfo)
-        {
-            Directory.Delete(modInfo.DownloadPath, true);
         }
         public async UniTask<ModInfo> LoadModAsync(ModSetting settingData, string path)
         {
             var configs = Directory.GetFiles(path, "*.cfg");
             if (configs.Length == 0) return null;
             string config = configs[0];
-            var modInfo = InitModInfo(await File.ReadAllTextAsync(config), path);
+            var modInfo = await ModAPI.LoadModInfo(config);
             var state = settingData.GetModState(modInfo);
-            if (state == ModStateInfo.ModState.Enabled)
+            if (state == ModState.Enabled)
             {
-                if (!validator.IsValidAPIVersion(modInfo.apiVersion))
+                if (!validator.IsValidAPIVersion(modInfo))
                 {
                     return modInfo;
                 }
             }
-            else if (state == ModStateInfo.ModState.Disabled)
+            else if (state == ModState.Disabled)
             {
                 return modInfo;
             }
             else
             {
-                DelateMod(modInfo);
+                ModAPI.DeleteModFromDisk(modInfo);
                 return null;
             }
-            await LoadModCatalogAsync(path);
+            await ModAPI.LoadModCatalogAsync(path);
             return modInfo;
-        }
-        public async static UniTask<bool> LoadModCatalogAsync(string path)
-        {
-            string catalogPath = Path.Combine(path, "catalog.json");
-            if (File.Exists(catalogPath))
-            {
-                await LoadCatalogAsync(catalogPath, path);
-                return true;
-            }
-            return false;
-        }
-        private ModInfo InitModInfo(string stream, string path)
-        {
-            var modInfo = JsonConvert.DeserializeObject<ModInfo>(stream);
-            modInfo.DownloadPath = path.Replace(@"\", "/");
-            if (modInfo.modIconBytes.Length != 0)
-                modInfo.ModIcon = CreateSpriteFromBytes(modInfo.modIconBytes);
-            return modInfo;
-        }
-        private Sprite CreateSpriteFromBytes(byte[] bytes)
-        {
-            Texture2D texture = new(2, 2);
-            texture.LoadImage(bytes);
-            tempTextures.Add(texture);
-            return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
-        }
-        public static async UniTask LoadCatalogAsync(string catalogPath, string directoryPath)
-        {
-            catalogPath = catalogPath.Replace(@"\", "/");
-            string contentCatalog = File.ReadAllText(catalogPath, Encoding.UTF8);
-            File.WriteAllText(catalogPath, contentCatalog.Replace(ImportConstants.DynamicLoadPath, directoryPath.Replace(@"\", "/")), Encoding.UTF8);
-            Debug.Log($"Load mod catalog {catalogPath}");
-            await Addressables.LoadContentCatalogAsync(catalogPath).ToUniTask();
-            File.WriteAllText(catalogPath, contentCatalog, Encoding.UTF8);
-        }
-        private void ClearAllTempTexture()
-        {
-            foreach (var texture in tempTextures)
-            {
-                Object.Destroy(texture);
-            }
-            tempTextures.Clear();
-        }
-
-        public void Dispose()
-        {
-            ClearAllTempTexture();
         }
     }
 }

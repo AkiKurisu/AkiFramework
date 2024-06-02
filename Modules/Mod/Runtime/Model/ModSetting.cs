@@ -10,11 +10,11 @@ namespace Kurisu.Framework.Mod
     {
         public string LoadingPath { get; set; } = ImportConstants.LoadingPath;
         public List<ModStateInfo> stateInfos = new();
-        public ModStateInfo.ModState GetModState(ModInfo modInfo)
+        public ModState GetModState(ModInfo modInfo)
         {
             if (TryGetStateInfo(modInfo, out var modStateInfo))
             {
-                if (modStateInfo.modState == ModStateInfo.ModState.Delate)
+                if (modStateInfo.modState == ModState.Delate)
                 {
                     stateInfos.Remove(modStateInfo);
                 }
@@ -23,18 +23,18 @@ namespace Kurisu.Framework.Mod
             stateInfos.Add(new ModStateInfo()
             {
                 modFullName = modInfo.FullName,
-                modState = ModStateInfo.ModState.Enabled
+                modState = ModState.Enabled
             });
-            return ModStateInfo.ModState.Enabled;
+            return ModState.Enabled;
         }
         public bool IsModActivated(ModInfo modInfo)
         {
             if (TryGetStateInfo(modInfo, out var modStateInfo))
-                return modStateInfo.modState == ModStateInfo.ModState.Enabled;
+                return modStateInfo.modState == ModState.Enabled;
             stateInfos.Add(new ModStateInfo()
             {
                 modFullName = modInfo.FullName,
-                modState = ModStateInfo.ModState.Enabled
+                modState = ModState.Enabled
             });
             return true;
         }
@@ -43,13 +43,13 @@ namespace Kurisu.Framework.Mod
             if (TryGetStateInfo(modInfo, out var modStateInfo))
             {
                 if (force) stateInfos.Remove(modStateInfo);
-                else modStateInfo.modState = ModStateInfo.ModState.Delate;
+                else modStateInfo.modState = ModState.Delate;
             }
         }
         public void SetModEnabled(ModInfo modInfo, bool isEnabled)
         {
             if (TryGetStateInfo(modInfo, out var modStateInfo))
-                modStateInfo.modState = isEnabled ? ModStateInfo.ModState.Enabled : ModStateInfo.ModState.Disabled;
+                modStateInfo.modState = isEnabled ? ModState.Enabled : ModState.Disabled;
         }
         public bool TryGetStateInfo(ModInfo modInfo, out ModStateInfo modStateInfo)
         {
