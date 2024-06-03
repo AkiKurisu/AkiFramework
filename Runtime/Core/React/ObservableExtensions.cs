@@ -16,7 +16,7 @@ namespace Kurisu.Framework.React
         public static Observable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler)
 where TEventType : EventBase<TEventType>, new()
         {
-            return handler.AsObservable<TEventType>(TrickleDown.NoTrickleDown);
+            return handler.AsObservable<TEventType>(TrickleDown.NoTrickleDown, 8);
         }
         /// <summary>
         /// Create Observable for <see cref="CallbackEventHandler"/>
@@ -28,8 +28,7 @@ where TEventType : EventBase<TEventType>, new()
         public static Observable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler, TrickleDown trickleDown)
         where TEventType : EventBase<TEventType>, new()
         {
-            //frame:5 => Skip this, FromEventObservable and FromEvent
-            return handler.AsObservable<TEventType>(trickleDown, 5);
+            return handler.AsObservable<TEventType>(trickleDown, 8);
         }
         /// <summary>
         /// Create Observable for <see cref="CallbackEventHandler"/>
