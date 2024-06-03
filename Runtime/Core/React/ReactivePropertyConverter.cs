@@ -5,7 +5,7 @@ using R3;
 namespace Kurisu.Framework.React
 {
     /// <summary>
-    /// Serialization helper when use <see cref="JsonConverter"/>
+    /// Serialization helper for <see cref="ReactiveProperty{T}"/> when use <see cref="JsonConverter"/>
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class ReactivePropertyConverter<T> : JsonConverter
