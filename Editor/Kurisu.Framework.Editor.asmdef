@@ -2,8 +2,7 @@
     "name": "Kurisu.Framework.Editor",
     "rootNamespace": "Kurisu.Framework.Editor",
     "references": [
-        "GUID:e61a2a07ba2680848ad23eef5b7c024b",
-        "GUID:03a02e6858eef43b383e305cd83babb4"
+        "GUID:e61a2a07ba2680848ad23eef5b7c024b"
     ],
     "includePlatforms": [
         "Editor"

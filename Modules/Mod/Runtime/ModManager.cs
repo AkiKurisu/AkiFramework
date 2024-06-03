@@ -11,13 +11,22 @@ namespace Kurisu.Framework.Mod
         private bool isInitialized;
         private ModImporter modImporter;
         private IModValidator modValidator;
+        public bool initializeOnStart;
         protected override void Awake()
         {
             base.Awake();
             DontDestroyOnLoad(gameObject);
+
+        }
+        private void Start()
+        {
             if (!isInitialized)
             {
                 LocalInitialize();
+            }
+            if (initializeOnStart)
+            {
+                Initialize().Forget();
             }
         }
         private void LocalInitialize()
