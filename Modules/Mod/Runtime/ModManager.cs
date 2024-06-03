@@ -11,45 +11,49 @@ namespace Kurisu.Framework.Mod
         private bool isInitialized;
         private ModImporter modImporter;
         private IModValidator modValidator;
+        public bool initializeOnStart;
         protected override void Awake()
         {
             base.Awake();
             DontDestroyOnLoad(gameObject);
+
+        }
+        private void Start()
+        {
             if (!isInitialized)
             {
                 LocalInitialize();
             }
+            if (initializeOnStart)
+            {
+                Initialize().Forget();
+            }
         }
         private void LocalInitialize()
         {
+            settingData = SaveUtility.LoadOrNew<ModSetting>();
             ModAPI.OnModRefresh.Subscribe(_ => SaveData()).AddTo(destroyCancellationToken);
             ModAPI.IsModInit.Subscribe(_ => SaveData()).AddTo(destroyCancellationToken);
-            settingData = SaveUtility.LoadOrNew<ModSetting>();
-            modImporter = new(settingData, modValidator = new ModValidator(ImportConstants.APIVersion));
+            modImporter = new(settingData, modValidator = new APIValidator(ImportConstants.APIVersion));
             isInitialized = true;
-        }
-        protected override void OnDestroy()
-        {
-            modImporter.Dispose();
-            base.OnDestroy();
         }
         /// <summary>
         /// Load all mods
         /// </summary>
         /// <returns></returns>
-        public async UniTask<bool> Initialize()
+        public async UniTask Initialize()
         {
             if (!isInitialized)
             {
                 LocalInitialize();
             }
             //Skip if is initialized, use single mod import instead.
-            if (ModAPI.IsModInit.Value) return false;
-            return await ModAPI.Initialize(settingData, modImporter);
+            if (ModAPI.IsModInit.Value) return;
+            await ModAPI.Initialize(settingData, modImporter);
         }
         public bool IsModActivated(ModInfo modInfo)
         {
-            if (!modValidator.IsValidAPIVersion(modInfo.apiVersion)) return false;
+            if (!modValidator.IsValidAPIVersion(modInfo)) return false;
             return settingData.IsModActivated(modInfo);
         }
         private void SaveData()

@@ -55,7 +55,7 @@ namespace Kurisu.Framework.Mod.Editor
         }
         private static void LogError(string message)
         {
-            Debug.LogError($"<color=#3aff48>Exporter</color>: {message}");
+            Debug.LogError($"<color=#ff2f2f>Exporter</color>: {message}");
         }
         private static void Log(string message)
         {

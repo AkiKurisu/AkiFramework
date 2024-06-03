@@ -1,24 +1,27 @@
 using System;
 namespace Kurisu.Framework.Mod
 {
+    /// <summary>
+    /// Status of installed mod
+    /// </summary>
+    public enum ModState
+    {
+        /// <summary>
+        /// Mod is loaded
+        /// </summary>
+        Enabled,
+        /// <summary>
+        /// Mod is not loaded
+        /// </summary>
+        Disabled,
+        /// <summary>
+        /// Mod waits to be deleted (will be deleted on next launch)
+        /// </summary>
+        Delate
+    }
     [Serializable]
     public class ModStateInfo
     {
-        public enum ModState
-        {
-            /// <summary>
-            /// Mod is installed and loaded
-            /// </summary>
-            Enabled,
-            /// <summary>
-            /// Mod is installed but not loaded
-            /// </summary>
-            Disabled,
-            /// <summary>
-            /// Mod is installed but wait to delate
-            /// </summary>
-            Delate
-        }
         public string modFullName;
         public ModState modState;
     }

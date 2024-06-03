@@ -20,7 +20,7 @@ namespace Kurisu.Framework.Events.Editor
         [SerializeField]
         private EventsDebuggerImpl m_DebuggerImpl;
 
-        [MenuItem("Window/AkiFramework/Event Debugger")]
+        [MenuItem("Tools/AkiFramework/Event Debugger")]
         public static void ShowEventDebugger()
         {
             var window = GetWindow<EventsDebuggerWindow>();

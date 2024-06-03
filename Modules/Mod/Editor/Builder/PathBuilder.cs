@@ -64,7 +64,13 @@ namespace Kurisu.Framework.Mod.Editor
                         }
                     }
                 }
-                File.WriteAllText(catalogPath, JsonUtility.ToJson(catalog));
+                File.Delete(catalogPath);
+                string newCatalogPath = Path.Combine(exportConfig.lastExportPath, "catalog.json");
+                File.WriteAllText(newCatalogPath, JsonUtility.ToJson(catalog));
+                //Replace hash file
+                string hashPath = catalogPath.Replace(".json", ".hash");
+                File.Copy(hashPath, newCatalogPath.Replace(".json", ".hash"));
+                File.Delete(hashPath);
             }
         }
         public void Write(ref ModInfo modInfo) { }

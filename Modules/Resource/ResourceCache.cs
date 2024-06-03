@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using System.Collections;
 using Cysharp.Threading.Tasks;
 namespace Kurisu.Framework.Resource
@@ -44,7 +42,7 @@ namespace Kurisu.Framework.Resource
             if (!cacheMap.TryGetValue(address, out TAsset asset))
             {
                 if (SafeAddressCheck)
-                    await SafeCheckAsync(address);
+                    await ResourceSystem.SafeCheckAsync<TAsset>(address);
                 asset = await LoadNewAssetAsync(address);
             }
             return asset;
@@ -60,34 +58,10 @@ namespace Kurisu.Framework.Resource
             if (!cacheMap.TryGetValue(address, out TAsset asset))
             {
                 if (SafeAddressCheck)
-                    SafeCheck(address);
+                    ResourceSystem.SafeCheck<TAsset>(address);
                 asset = LoadNewAssetAsync(address).WaitForCompletion();
             }
             return asset;
-        }
-        private async UniTask SafeCheckAsync(string address)
-        {
-            //No need when global safe check is on
-#if !AF_RESOURCES_SAFE_CHECK
-            var location = Addressables.LoadResourceLocationsAsync(address, typeof(TAsset));
-            await location.ToUniTask();
-            if (location.Status != AsyncOperationStatus.Succeeded || location.Result.Count == 0)
-            {
-                throw new InvalidResourceRequestException(address, $"Address {address} not valid for loading {typeof(TAsset)} asset");
-            }
-#endif
-        }
-        private void SafeCheck(string address)
-        {
-            //No need when global safe check is on
-#if !AF_RESOURCES_SAFE_CHECK
-            var location = Addressables.LoadResourceLocationsAsync(address, typeof(TAsset));
-            location.WaitForCompletion();
-            if (location.Status != AsyncOperationStatus.Succeeded || location.Result.Count == 0)
-            {
-                throw new InvalidResourceRequestException(address, $"Address {address} not valid for loading {typeof(TAsset)} asset");
-            }
-#endif
         }
         private ResourceHandle<TAsset> LoadNewAssetAsync(string address, Action<TAsset> callBack = null)
         {
