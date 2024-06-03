@@ -4,12 +4,13 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using System;
 using System.Collections;
+using Cysharp.Threading.Tasks;
 namespace Kurisu.Framework.Resource
 {
     /// <summary>
-    /// Simple system to load resource from address and label using Addressables
+    /// Resource system that loads resource by address and label based on Addressables.
     /// </summary>
-    public class ResourceSystem
+    public static class ResourceSystem
     {
         /// <summary>
         /// Options for merging the results of requests.
@@ -21,6 +22,9 @@ namespace Kurisu.Framework.Resource
         ///  - Intersection takes results of each key, and collects items that matched every key.
         ///  -- [4]
         /// </summary>
+        /// <remarks>
+        /// Aligned with <see cref="Addressables.MergeMode"/>
+        /// </remarks>
         public enum MergeMode
         {
             /// <summary>
@@ -45,15 +49,15 @@ namespace Kurisu.Framework.Resource
         }
         internal const byte AssetLoadOperation = 0;
         internal const byte InstantiateOperation = 1;
+
         #region  Asset Load
         /// <summary>
-        /// Check location whether valid and throw exception earlier
+        /// Check resource location whether exists and throw <see cref="InvalidResourceRequestException"/> if not exist
         /// </summary>
         /// <param name="key"></param>
         /// <typeparam name="TAsset"></typeparam>
-        private static void SafeCheck<TAsset>(object key)
+        public static void SafeCheck<TAsset>(object key)
         {
-#if AF_RESOURCES_SAFE_CHECK
             var location = Addressables.LoadResourceLocationsAsync(key, typeof(TAsset));
             location.WaitForCompletion();
             if (location.Status != AsyncOperationStatus.Succeeded || location.Result.Count == 0)
@@ -63,10 +67,27 @@ namespace Kurisu.Framework.Resource
                 else stringValue = key.ToString();
                 throw new InvalidResourceRequestException(stringValue, $"Address {stringValue} not valid for loading {typeof(TAsset)} asset");
             }
-#endif
         }
         /// <summary>
-        /// Load asset
+        /// Check resource location whether exists and throw <see cref="InvalidResourceRequestException"/> if not exist
+        /// </summary>
+        /// <param name="key"></param>
+        /// <typeparam name="TAsset"></typeparam>
+        /// <returns></returns>
+        public static async UniTask SafeCheckAsync<TAsset>(object key)
+        {
+            var location = Addressables.LoadResourceLocationsAsync(key, typeof(TAsset));
+            await location.ToUniTask();
+            if (location.Status != AsyncOperationStatus.Succeeded || location.Result.Count == 0)
+            {
+                string stringValue;
+                if (key is IEnumerable<string> list) stringValue = $"[{string.Join(",", list)}]";
+                else stringValue = key.ToString();
+                throw new InvalidResourceRequestException(stringValue, $"Address {stringValue} not valid for loading {typeof(TAsset)} asset");
+            }
+        }
+        /// <summary>
+        /// Load asset async
         /// </summary>
         /// <param name="address"></param>
         /// <param name="action"></param>
@@ -75,7 +96,6 @@ namespace Kurisu.Framework.Resource
         /// <returns></returns>
         public static ResourceHandle<T> AsyncLoadAsset<T>(string address, Action<T> callBack = null)
         {
-            SafeCheck<T>(address);
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
             if (callBack != null)
                 handle.Completed += (h) => callBack.Invoke(h.Result);
@@ -84,16 +104,15 @@ namespace Kurisu.Framework.Resource
         #endregion
         #region Instantiate
         /// <summary>
-        /// Instantiate GameObject
+        /// Instantiate GameObject async
         /// </summary>
         /// <param name="address"></param>
         /// <param name="parent"></param>
         /// <param name="action"></param>
         /// <param name="bindObject"></param>
         /// <returns></returns>
-        public static ResourceHandle<GameObject> AsyncInstantiate(string address, Transform parent, Action<GameObject> callBack = null, GameObject bindObject = null)
+        public static ResourceHandle<GameObject> AsyncInstantiate(string address, Transform parent, Action<GameObject> callBack = null)
         {
-            SafeCheck<GameObject>(address);
             AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
             var resourceHandle = CreateHandle(handle, InstantiateOperation);
             handle.Completed += (h) => instanceIDMap.Add(h.Result.GetInstanceID(), resourceHandle.handleID);
@@ -152,7 +171,6 @@ namespace Kurisu.Framework.Resource
         #region  Multi Assets Load
         public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(object key, Action<IList<T>> callBack = null)
         {
-            SafeCheck<T>(key);
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null);
             if (callBack != null)
                 handle.Completed += (h) => callBack.Invoke(h.Result);
@@ -160,7 +178,6 @@ namespace Kurisu.Framework.Resource
         }
         public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(IEnumerable key, MergeMode mode, Action<IList<T>> callBack = null)
         {
-            SafeCheck<T>(key);
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null, (Addressables.MergeMode)mode);
             if (callBack != null)
                 handle.Completed += (h) => callBack.Invoke(h.Result);

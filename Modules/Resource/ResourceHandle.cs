@@ -4,7 +4,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 namespace Kurisu.Framework.Resource
 {
     /// <summary>
-    /// A light weight replacement of <see cref="AsyncOperationHandle"/>
+    /// A light weight encapsulation of <see cref="AsyncOperationHandle"/>
     /// </summary>
     public readonly struct ResourceHandle : IEquatable<ResourceHandle>, IDisposable
     {
