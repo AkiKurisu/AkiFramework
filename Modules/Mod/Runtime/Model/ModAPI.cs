@@ -122,7 +122,7 @@ namespace Kurisu.Framework.Mod
             path = path.Replace(@"\", "/");
             string contentCatalog = File.ReadAllText(path, Encoding.UTF8);
             File.WriteAllText(path, contentCatalog.Replace(ImportConstants.DynamicLoadPath, Path.GetDirectoryName(path).Replace(@"\", "/")), Encoding.UTF8);
-            Debug.Log($"Load mod catalog {path}");
+            Debug.Log($"[Mod API] Load mod content catalog {path}");
             await Addressables.LoadContentCatalogAsync(path).ToUniTask();
             File.WriteAllText(path, contentCatalog, Encoding.UTF8);
             return true;

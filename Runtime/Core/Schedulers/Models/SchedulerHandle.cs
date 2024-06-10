@@ -7,35 +7,43 @@ namespace Kurisu.Framework.Schedulers
     public readonly struct SchedulerHandle : IDisposable
     {
         public int TaskId { get; }
+        /// <summary>
+        /// Get scheduled task whether is valid
+        /// </summary>
+        /// <value></value>
         public readonly bool IsValid
         {
             get
             {
-                if (!SchedulerRunner.IsInitialized) return false;
+                if (!SchedulerRunner.IsInitialized) return default;
                 return SchedulerRunner.Instance.IsValid(TaskId);
             }
         }
+        /// <summary>
+        /// Get scheduled task whether is done
+        /// </summary>
+        /// <value></value>
         public readonly bool IsDone
         {
             get
             {
-                if (!SchedulerRunner.IsInitialized) return false;
+                if (!SchedulerRunner.IsInitialized) return default;
                 if (SchedulerRunner.Instance.TryGet(TaskId, out IScheduled task))
                 {
                     return task.IsDone;
                 }
-                return false;
+                return true;
             }
         }
         /// <summary>
         /// Get scheduler if scheduler is valid
         /// </summary>
         /// <value></value>
-        public readonly IScheduled Task
+        internal readonly IScheduled Task
         {
             get
             {
-                if (!SchedulerRunner.IsInitialized) return null;
+                if (!SchedulerRunner.IsInitialized) return default;
                 if (SchedulerRunner.Instance.TryGet(TaskId, out IScheduled task))
                 {
                     return task;
