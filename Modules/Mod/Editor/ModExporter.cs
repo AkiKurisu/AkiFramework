@@ -59,7 +59,7 @@ namespace Kurisu.Framework.Mod.Editor
         }
         private static void Log(string message)
         {
-            Debug.LogError($"<color=#3aff48>Exporter</color>: {message}");
+            Debug.Log($"<color=#3aff48>Exporter</color>: {message}");
         }
         private static bool ZipTogether(string buildPath, string zipPath)
         {
