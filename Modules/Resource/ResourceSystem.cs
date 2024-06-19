@@ -202,7 +202,8 @@ namespace Kurisu.Framework.Resource
             {
                 internalHandleMap.Remove(handleID);
             }
-            Addressables.ReleaseInstance(obj);
+            if (obj != null)
+                Addressables.ReleaseInstance(obj);
         }
         #endregion
         #region  Multi Assets Load

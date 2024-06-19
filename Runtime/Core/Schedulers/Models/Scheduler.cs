@@ -18,24 +18,26 @@ namespace Kurisu.Framework.Schedulers
         /// <summary>
         /// Delay some time and invoke callBack
         /// </summary>
-        /// <param name="callBack"></param>
         /// <param name="delay"></param>
+        /// <param name="callBack"></param>
+        /// <param name="isLooped"></param>
+        /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
-        public static SchedulerHandle Delay(float delay, Action callBack, bool ignoreTimeScale = false)
+        public static SchedulerHandle Delay(float delay, Action callBack, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            var timer = Timer.Register(delay, callBack, useRealTime: ignoreTimeScale);
-            return SchedulerRunner.Instance.CreateHandle(timer);
+            return Timer.Register(delay, callBack, null, isLooped, ignoreTimeScale).CreateHandle();
         }
         /// <summary>
         /// Delay some time and invoke callBack
         /// </summary>
-        /// <param name="onUpdate"></param>
         /// <param name="delay"></param>
+        /// <param name="onUpdate"></param>
+        /// <param name="isLooped"></param>
+        /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
-        public static SchedulerHandle Delay(float delay, Action<float> onUpdate, bool ignoreTimeScale = false)
+        public static SchedulerHandle Delay(float delay, Action<float> onUpdate, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            var timer = Timer.Register(delay, null, onUpdate, useRealTime: ignoreTimeScale);
-            return SchedulerRunner.Instance.CreateHandle(timer);
+            return Timer.Register(delay, null, onUpdate, isLooped, ignoreTimeScale).CreateHandle();
         }
         /// <summary>
         /// Delay some time and invoke callBack
@@ -46,8 +48,7 @@ namespace Kurisu.Framework.Schedulers
         /// <returns></returns>
         public static SchedulerHandle Delay(float delay, Action callBack, Action<float> onUpdate, bool ignoreTimeScale = false)
         {
-            var timer = Timer.Register(delay, callBack, onUpdate, useRealTime: ignoreTimeScale);
-            return SchedulerRunner.Instance.CreateHandle(timer);
+            return Timer.Register(delay, callBack, onUpdate, useRealTime: ignoreTimeScale).CreateHandle();
         }
         /// <summary>
         /// Wait some frames and invoke callBack
@@ -57,8 +58,7 @@ namespace Kurisu.Framework.Schedulers
         /// <returns></returns>
         public static SchedulerHandle WaitFrame(int frame, Action callBack)
         {
-            var counter = FrameCounter.Register(frame, callBack);
-            return SchedulerRunner.Instance.CreateHandle(counter);
+            return FrameCounter.Register(frame, callBack).CreateHandle();
         }
         /// <summary>
         /// Wait some frames and invoke callBack
@@ -68,8 +68,7 @@ namespace Kurisu.Framework.Schedulers
         /// <returns></returns>
         public static SchedulerHandle WaitFrame(int frame, Action<int> onUpdate)
         {
-            var counter = FrameCounter.Register(frame, null, onUpdate);
-            return SchedulerRunner.Instance.CreateHandle(counter);
+            return FrameCounter.Register(frame, null, onUpdate).CreateHandle();
         }
         /// <summary>
         /// Wait some frames and invoke callBack
@@ -80,8 +79,7 @@ namespace Kurisu.Framework.Schedulers
         /// <returns></returns>
         public static SchedulerHandle WaitFrame(int frame, Action callBack, Action<int> onUpdate)
         {
-            var counter = FrameCounter.Register(frame, callBack, onUpdate);
-            return SchedulerRunner.Instance.CreateHandle(counter);
+            return FrameCounter.Register(frame, callBack, onUpdate).CreateHandle();
         }
     }
 }

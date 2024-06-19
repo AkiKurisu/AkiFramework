@@ -17,5 +17,10 @@ namespace Kurisu.Framework.Schedulers
                 handle.AddTo(cancellationToken);
             return UniTask.WaitUntil(() => handle.IsDone, cancellationToken: cancellationToken);
         }
+
+        internal static SchedulerHandle CreateHandle(this IScheduled scheduled)
+        {
+            return SchedulerRunner.Instance.CreateHandle(scheduled);
+        }
     }
 }
