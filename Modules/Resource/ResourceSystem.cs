@@ -72,11 +72,48 @@ namespace Kurisu.Framework.Resource
         /// Check resource location whether exists and throw <see cref="InvalidResourceRequestException"/> if not exist
         /// </summary>
         /// <param name="key"></param>
+        /// <param name="mergeMode"></param>
+        /// <typeparam name="TAsset"></typeparam>
+        public static void SafeCheck<TAsset>(IEnumerable key, MergeMode mergeMode)
+        {
+            var location = Addressables.LoadResourceLocationsAsync(key, (Addressables.MergeMode)mergeMode, typeof(TAsset));
+            location.WaitForCompletion();
+            if (location.Status != AsyncOperationStatus.Succeeded || location.Result.Count == 0)
+            {
+                string stringValue;
+                if (key is IEnumerable<string> list) stringValue = $"[{string.Join(",", list)}]";
+                else stringValue = key.ToString();
+                throw new InvalidResourceRequestException(stringValue, $"Address {stringValue} not valid for loading {typeof(TAsset)} asset");
+            }
+        }
+        /// <summary>
+        /// Check resource location whether exists and throw <see cref="InvalidResourceRequestException"/> if not exist
+        /// </summary>
+        /// <param name="key"></param>
         /// <typeparam name="TAsset"></typeparam>
         /// <returns></returns>
         public static async UniTask SafeCheckAsync<TAsset>(object key)
         {
             var location = Addressables.LoadResourceLocationsAsync(key, typeof(TAsset));
+            await location.ToUniTask();
+            if (location.Status != AsyncOperationStatus.Succeeded || location.Result.Count == 0)
+            {
+                string stringValue;
+                if (key is IEnumerable<string> list) stringValue = $"[{string.Join(",", list)}]";
+                else stringValue = key.ToString();
+                throw new InvalidResourceRequestException(stringValue, $"Address {stringValue} not valid for loading {typeof(TAsset)} asset");
+            }
+        }
+        /// <summary>
+        /// Check resource location whether exists and throw <see cref="InvalidResourceRequestException"/> if not exist
+        /// </summary>
+        /// <param name="key"></param>
+        /// <param name="mergeMode"></param>
+        /// <typeparam name="TAsset"></typeparam>
+        /// <returns></returns>
+        public static async UniTask SafeCheckAsync<TAsset>(IEnumerable key, MergeMode mergeMode)
+        {
+            var location = Addressables.LoadResourceLocationsAsync(key, (Addressables.MergeMode)mergeMode, typeof(TAsset));
             await location.ToUniTask();
             if (location.Status != AsyncOperationStatus.Succeeded || location.Result.Count == 0)
             {
@@ -165,7 +202,8 @@ namespace Kurisu.Framework.Resource
             {
                 internalHandleMap.Remove(handleID);
             }
-            Addressables.ReleaseInstance(obj);
+            if (obj != null)
+                Addressables.ReleaseInstance(obj);
         }
         #endregion
         #region  Multi Assets Load
