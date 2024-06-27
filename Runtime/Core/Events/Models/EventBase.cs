@@ -460,7 +460,7 @@ namespace Kurisu.Framework.Events
     public abstract class EventBase<T> : EventBase where T : EventBase<T>, new()
     {
         private static readonly long s_TypeId = RegisterEventType();
-        private static readonly ObjectPool<T> s_Pool = new(() => new T());
+        private static readonly _ObjectPool<T> s_Pool = new(() => new T());
 
         internal static void SetCreateFunction(Func<T> createMethod)
         {

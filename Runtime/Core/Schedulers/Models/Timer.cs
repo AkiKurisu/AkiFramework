@@ -1,6 +1,6 @@
 using UnityEngine;
 using System;
-using UnityEngine.Pool;
+using Kurisu.Framework.Pool;
 namespace Kurisu.Framework.Schedulers
 {
     /// <summary>
@@ -11,7 +11,7 @@ namespace Kurisu.Framework.Schedulers
     /// </summary>
     public class Timer : IScheduled
     {
-        private static readonly ObjectPool<Timer> pool = new(() => new());
+        private static readonly _ObjectPool<Timer> pool = new(() => new());
         #region Public Properties/Fields
         /// <summary>
         /// How long the timer takes to complete from start to finish.

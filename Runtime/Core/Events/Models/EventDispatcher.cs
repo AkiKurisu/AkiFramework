@@ -75,7 +75,7 @@ namespace Kurisu.Framework.Events
         }
 
         private readonly List<IEventDispatchingStrategy> m_DispatchingStrategies;
-        private static readonly ObjectPool<Queue<EventRecord>> k_EventQueuePool = new(() => new Queue<EventRecord>());
+        private static readonly _ObjectPool<Queue<EventRecord>> k_EventQueuePool = new(() => new Queue<EventRecord>());
         private Queue<EventRecord> m_Queue;
         private uint m_GateCount;
         private readonly DebuggerEventDispatchingStrategy m_DebuggerEventDispatchingStrategy;

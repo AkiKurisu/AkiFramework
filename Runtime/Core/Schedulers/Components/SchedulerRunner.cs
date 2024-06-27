@@ -17,7 +17,7 @@ namespace Kurisu.Framework.Schedulers
     {
         internal class ScheduledItem : IDisposable
         {
-            private static readonly ObjectPool<ScheduledItem> pool = new(() => new());
+            private static readonly _ObjectPool<ScheduledItem> pool = new(() => new());
             public int Id { get; private set; }
             public DateTimeOffset Timestamp { get; private set; }
             public IScheduled Value { get; private set; }
