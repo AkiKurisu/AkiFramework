@@ -16,7 +16,7 @@ namespace Kurisu.Framework.Editor
             int indent = EditorGUI.indentLevel;
             position.x += position.width;
             EditorGUI.BeginChangeCheck();
-            var Object = EditorGUI.ObjectField(position, null, selector.SelectAssetType, false);
+            var Object = EditorGUI.ObjectField(position, null, selector.SelectAssetType, selector.AllowSceneObjects);
             if (EditorGUI.EndChangeCheck())
             {
                 if (string.IsNullOrEmpty(selector.ProcessMethod))
