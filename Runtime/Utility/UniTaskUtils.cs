@@ -50,6 +50,10 @@ namespace Kurisu.Framework
         {
             return UniTask.WhenAll(this).GetAwaiter();
         }
+        public void Forget()
+        {
+            UniTask.WhenAll(this).Forget();
+        }
     }
     public class ParallelTask<T> : List<UniTask<T>>, IDisposable
     {
@@ -95,6 +99,10 @@ namespace Kurisu.Framework
         public UniTask<T[]>.Awaiter GetAwaiter()
         {
             return UniTask.WhenAll(this).GetAwaiter();
+        }
+        public void Forget()
+        {
+            UniTask.WhenAll(this).Forget();
         }
     }
     public class SequenceTask : List<UniTask>, IDisposable
@@ -148,6 +156,10 @@ namespace Kurisu.Framework
             {
                 await task;
             };
+        }
+        public void Forget()
+        {
+            AwaitAsSequence().Forget();
         }
     }
     public class SequenceTask<T> : List<UniTask<T>>, IDisposable
@@ -211,6 +223,10 @@ namespace Kurisu.Framework
                 results[i] = await this[i];
             };
             return results;
+        }
+        public void Forget()
+        {
+            AwaitAsSequence().Forget();
         }
     }
 }
