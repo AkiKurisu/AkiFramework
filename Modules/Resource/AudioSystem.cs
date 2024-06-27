@@ -32,10 +32,10 @@ namespace Kurisu.Framework.Resource
             disposableCache[address] = disposable;
         }
         /// <summary>
-        /// Release an addressable audio source
+        /// Stop an addressable audio source
         /// </summary>
         /// <param name="address"></param>
-        public static void Release(string address)
+        public static void Stop(string address)
         {
             if (disposableCache.TryGetValue(address, out var handle))
             {
@@ -83,7 +83,7 @@ namespace Kurisu.Framework.Resource
             PlayClipAtPoint(audioClip, audioObject, position);
         }
         /// <summary>
-        /// Schedule audioClip by address at point, stop it using <see cref="Release"/>. 
+        /// Schedule audioClip by address at point, stop it using <see cref="Stop"/>. 
         /// </summary>
         /// <param name="audioClipAddress"></param>
         /// <param name="position"></param>
@@ -96,7 +96,7 @@ namespace Kurisu.Framework.Resource
             ScheduleClipAtPointAsync(audioClipAddress, position, scheduleTime, volume, spatialBlend, minDistance, appendClipDuration).Forget();
         }
         /// <summary>
-        ///  Schedule audioClip by address at point, stop it using <see cref="Release"/>. 
+        ///  Schedule audioClip by address at point, stop it using <see cref="Stop"/>. 
         /// </summary>
         /// <param name="audioClip"></param>
         /// <param name="position"></param>
@@ -119,13 +119,17 @@ namespace Kurisu.Framework.Resource
             // Register loop audio object
             Register(audioClipAddress, audioObject);
         }
+        private static float GetDuration(AudioClip clip)
+        {
+            return clip.length * ((Time.timeScale < 0.01f) ? 0.01f : Time.timeScale);
+        }
         private static void PlayClipAtPoint(AudioClip clip, PooledAudioSource audioObject, Vector3 position)
         {
             var gameObject = audioObject.GameObject;
             gameObject.transform.position = position;
             audioObject.Component.clip = clip;
             audioObject.Component.Play();
-            Scheduler.Delay(clip.length * ((Time.timeScale < 0.01f) ? 0.01f : Time.timeScale), audioObject.Dispose);
+            Scheduler.Delay(GetDuration(clip), audioObject.Dispose);
         }
         private static void ScheduleClipAtPoint(AudioClip clip, PooledAudioSource audioObject, Vector3 position, float scheduleTime, bool appendClipDuration)
         {
@@ -134,7 +138,7 @@ namespace Kurisu.Framework.Resource
             audioObject.Component.clip = clip;
             audioObject.Component.Play();
             if (appendClipDuration)
-                scheduleTime += clip.length * ((Time.timeScale < 0.01f) ? 0.01f : Time.timeScale);
+                scheduleTime += GetDuration(clip);
             Scheduler.Delay(scheduleTime, audioObject.Component.Play, isLooped: true).AddTo(audioObject);
         }
         private sealed class PooledAudioSource : PooledComponent<PooledAudioSource, AudioSource>

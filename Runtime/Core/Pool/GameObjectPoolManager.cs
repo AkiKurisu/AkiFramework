@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Kurisu.Framework.React;
+using Kurisu.Framework.Schedulers;
 using R3;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -12,7 +13,7 @@ namespace Kurisu.Framework.Pool
     public class PooledGameObject : IDisposable, IUnRegister
     {
         public PooledGameObject() { }
-        private readonly static UnityEngine.Pool.ObjectPool<PooledGameObject> pool = new(() => new());
+        private readonly static _ObjectPool<PooledGameObject> pool = new(() => new());
         public GameObject GameObject { get; protected set; }
         public bool IsDisposed { get; protected set; }
         protected DisposableBag disposableBag;
@@ -30,7 +31,7 @@ namespace Kurisu.Framework.Pool
         /// Should not use AddTo(GameObject gameObject) since gameObject will not be destroyed until pool manager cleanup
         /// </summary>
         /// <param name="disposable"></param>
-        public void Add(IDisposable disposable)
+        void IUnRegister.Add(IDisposable disposable)
         {
             disposableBag.Add(disposable);
         }
@@ -43,6 +44,11 @@ namespace Kurisu.Framework.Pool
                 GameObjectPoolManager.Release(GameObject, Name);
             IsDisposed = true;
             pool.Release(this);
+        }
+
+        public void Destroy(float t)
+        {
+            Scheduler.Delay(t, Dispose).AddTo(this);
         }
     }
     public class PooledComponent<T, K> : PooledGameObject where K : Component where T : PooledComponent<T, K>, new()
