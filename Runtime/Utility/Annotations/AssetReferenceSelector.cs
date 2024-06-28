@@ -5,20 +5,24 @@ namespace Kurisu.Framework
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
     public class AssetReferenceSelector : PropertyAttribute
     {
-        private readonly Type m_SelectAssetType;
-        private readonly string m_ProcessMethod;
         /// <summary>
         /// Asset to select
         /// </summary>
-        public Type SelectAssetType => m_SelectAssetType;
+        public Type SelectAssetType { get; private set; }
         /// <summary>
         /// Reference process method to get customized reference
         /// </summary>
-        public string ProcessMethod => m_ProcessMethod;
-        public AssetReferenceSelector(Type selectAssetType, string processMethod = null)
+        public string ProcessMethod { get; private set; }
+        /// <summary>
+        /// Allow assigning Scene objects
+        /// </summary>
+        /// <value></value>
+        public bool AllowSceneObjects { get; private set; }
+        public AssetReferenceSelector(Type selectAssetType, string processMethod = null, bool allowSceneObjects = false)
         {
-            m_SelectAssetType = selectAssetType;
-            m_ProcessMethod = processMethod;
+            SelectAssetType = selectAssetType;
+            ProcessMethod = processMethod;
+            AllowSceneObjects = allowSceneObjects;
         }
     }
 }

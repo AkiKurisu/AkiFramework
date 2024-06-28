@@ -5,7 +5,7 @@ namespace Kurisu.Framework.Events
 {
     internal class PropagationPaths
     {
-        static readonly ObjectPool<PropagationPaths> s_Pool = new(() => new PropagationPaths());
+        static readonly _ObjectPool<PropagationPaths> s_Pool = new(() => new PropagationPaths());
 
         [Flags]
         public enum Type

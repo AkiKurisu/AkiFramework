@@ -1,11 +1,11 @@
 using UnityEngine;
 using System;
-using UnityEngine.Pool;
+using Kurisu.Framework.Pool;
 namespace Kurisu.Framework.Schedulers
 {
     public class FrameCounter : IScheduled
     {
-        private static readonly ObjectPool<FrameCounter> pool = new(() => new());
+        private static readonly _ObjectPool<FrameCounter> pool = new(() => new());
         #region Public Properties/Fields
         /// <summary>
         /// How many frame the counter takes to complete from start to finish.

@@ -3,7 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace Kurisu.Framework.Pool
 {
-    internal class ObjectPool<T> where T : new()
+#pragma warning disable IDE1006
+    /// <summary>
+    /// Internal simple object pool
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    internal class _ObjectPool<T> where T : new()
+#pragma warning restore IDE1006 
     {
         private readonly Stack<T> m_Stack = new();
         private int m_MaxSize;
@@ -22,7 +28,7 @@ namespace Kurisu.Framework.Pool
             }
         }
 
-        public ObjectPool(Func<T> CreateFunc, int maxSize = 100)
+        public _ObjectPool(Func<T> CreateFunc, int maxSize = 100)
         {
             MaxSize = maxSize;
 
