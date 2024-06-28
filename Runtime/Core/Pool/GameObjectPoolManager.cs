@@ -186,10 +186,6 @@ namespace Kurisu.Framework.Pool
             if (instance == this) instance = null;
             LocalReleaseAll();
         }
-        public static void SetPersistent()
-        {
-            if (instance) DontDestroyOnLoad(instance);
-        }
         /// <summary>
         /// Get pooled gameObject
         /// </summary>
