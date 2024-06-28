@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using Kurisu.Framework.React;
 using Kurisu.Framework.Schedulers;
 using R3;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
 namespace Kurisu.Framework.Pool
 {
     /// <summary>
@@ -15,28 +17,47 @@ namespace Kurisu.Framework.Pool
         public PooledGameObject() { }
         private readonly static _ObjectPool<PooledGameObject> pool = new(() => new());
         public GameObject GameObject { get; protected set; }
+        public Transform Transform { get; protected set; }
         public bool IsDisposed { get; protected set; }
         protected DisposableBag disposableBag;
         public string Name { get; protected set; }
+
+        /// <summary>
+        /// Get or create empty pooled gameObject by address
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="parent"></param>
+        /// <returns></returns>
         public static PooledGameObject Get(string address, Transform parent = null)
         {
             var pooledObject = pool.Get();
             pooledObject.Name = address;
             pooledObject.GameObject = GameObjectPoolManager.Get(address, parent);
-            pooledObject.disposableBag = new();
+            pooledObject.Init();
             return pooledObject;
         }
 
         /// <summary>
-        /// Should not use AddTo(GameObject gameObject) since gameObject will not be destroyed until pool manager cleanup
+        /// Should not use AddTo(GameObject gameObject) since gameObject will not be destroyed until pool manager cleanup.
         /// </summary>
         /// <param name="disposable"></param>
+        /// <remarks>
+        /// Implement of <see cref="IUnRegister"/> to manage <see cref="IDisposable"/> in pooling scope.
+        /// </remarks>
         void IUnRegister.Add(IDisposable disposable)
         {
             disposableBag.Add(disposable);
         }
-
-        public void Dispose()
+        protected virtual void Init()
+        {
+            LocalInit();
+        }
+        private void LocalInit()
+        {
+            Transform = GameObject.transform;
+            disposableBag = new();
+        }
+        public virtual void Dispose()
         {
             if (IsDisposed) return;
             disposableBag.Dispose();
@@ -45,10 +66,12 @@ namespace Kurisu.Framework.Pool
             IsDisposed = true;
             pool.Release(this);
         }
-
-        public void Destroy(float t)
+        public void Destroy(float t = 0f)
         {
-            Scheduler.Delay(t, Dispose).AddTo(this);
+            if (t >= 0f)
+                Scheduler.Delay(t, Dispose).AddTo(this);
+            else
+                Dispose();
         }
     }
     public class PooledComponent<T, K> : PooledGameObject where K : Component where T : PooledComponent<T, K>, new()
@@ -59,22 +82,65 @@ namespace Kurisu.Framework.Pool
         {
             componentName = typeof(T).FullName;
         }
-        protected readonly static UnityEngine.Pool.ObjectPool<T> pool = new(() => new());
-        public new static T Get(string name, Transform parent = null)
-        {
-            var pooledComponent = pool.Get();
-            pooledComponent.GameObject = GameObjectPoolManager.Get($"{componentName}.{name}", parent);
-            pooledComponent.Init();
-            return pooledComponent;
-        }
+        internal readonly static _ObjectPool<T> pool = new(() => new());
+        /// <summary>
+        /// Get or create empty pooled component
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="parent"></param>
+        /// <returns></returns>
         public static T Get(Transform parent = null)
         {
             var pooledComponent = pool.Get();
+            pooledComponent.Name = componentName;
             pooledComponent.GameObject = GameObjectPoolManager.Get(componentName, parent);
             pooledComponent.Init();
             return pooledComponent;
         }
-        protected virtual void Init()
+        public static string GetFullPath(GameObject prefab)
+        {
+            // append instance id since prefabs may have same name
+            return $"{prefab.name} {prefab.GetInstanceID()}";
+        }
+        /// <summary>
+        /// Instantiate pooled component by prefab, optimized version of <see cref="Object.Instantiate(Object, Transform)"/> 
+        /// </summary>
+        /// <param name="prefab"></param>
+        /// <param name="parent"></param>
+        /// <returns></returns>
+        public static T Instantiate(GameObject prefab, Transform parent = null)
+        {
+            var pooledComponent = pool.Get();
+            string fullPath = GetFullPath(prefab);
+            pooledComponent.Name = fullPath;
+            var @object = GameObjectPoolManager.Get(fullPath, parent, createEmptyIfNotExist: false);
+            if (!@object)
+            {
+                @object = Object.Instantiate(prefab, parent);
+            }
+            pooledComponent.GameObject = @object;
+            pooledComponent.Init();
+            return pooledComponent;
+        }
+        /// <summary>
+        /// Instantiate pooled component by prefab, optimized version of <see cref="Object.Instantiate(Object, Vector3, Quaternion, Transform)"/> 
+        /// </summary>
+        /// <param name="prefab"></param>
+        /// <param name="position"></param>
+        /// <param name="rotation"></param>
+        /// <param name="parent">The parent attached to. If parent exists, it will use prefab's scale as local scale instead of lossy scale</param>
+        /// <param name="useLocalPosition">Whether use local position instead of world position, default is false</param>
+        /// <returns></returns>
+        public static T Instantiate(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool useLocalPosition = false)
+        {
+            var pooledComponent = Instantiate(prefab, parent);
+            if (useLocalPosition)
+                pooledComponent.GameObject.transform.SetLocalPositionAndRotation(position, rotation);
+            else
+                pooledComponent.GameObject.transform.SetPositionAndRotation(position, rotation);
+            return pooledComponent;
+        }
+        protected override void Init()
         {
             LocalInit();
         }
@@ -82,10 +148,23 @@ namespace Kurisu.Framework.Pool
         {
             IsDisposed = false;
             disposableBag = new();
+            Transform = GameObject.transform;
+            // allocate few to get component from gameObject
             Component = GameObject.GetOrAddComponent<K>();
         }
+        public sealed override void Dispose()
+        {
+            if (IsDisposed) return;
+            OnDispose();
+            disposableBag.Dispose();
+            if (GameObjectPoolManager.IsInstantiated)
+                GameObjectPoolManager.Release(GameObject, Name);
+            IsDisposed = true;
+            pool.Release((T)this);
+        }
+        protected virtual void OnDispose() { }
     }
-    public class GameObjectPoolManager : MonoBehaviour
+    public sealed class GameObjectPoolManager : MonoBehaviour
     {
         private static GameObjectPoolManager Instance
         {

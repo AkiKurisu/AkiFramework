@@ -24,7 +24,7 @@ namespace Kurisu.Framework.Resource
         /// Validate asset location before loading, throw <see cref="InvalidResourceRequestException"/> if not exist
         /// </summary>
         /// <value></value>
-        public bool SafeAddressCheck { get; set; } = false;
+        public bool AddressSafeCheck { get; set; } = false;
         public int Version { get; private set; } = 0;
         public IEnumerable<string> Keys => cacheMap.Keys;
         public IEnumerable<TAsset> Values => cacheMap.Values;
@@ -41,7 +41,7 @@ namespace Kurisu.Framework.Resource
             versionMap[address] = Version;
             if (!cacheMap.TryGetValue(address, out TAsset asset))
             {
-                if (SafeAddressCheck)
+                if (AddressSafeCheck)
                     await ResourceSystem.SafeCheckAsync<TAsset>(address);
                 asset = await LoadNewAssetAsync(address);
             }
@@ -57,7 +57,7 @@ namespace Kurisu.Framework.Resource
             versionMap[address] = Version;
             if (!cacheMap.TryGetValue(address, out TAsset asset))
             {
-                if (SafeAddressCheck)
+                if (AddressSafeCheck)
                     ResourceSystem.SafeCheck<TAsset>(address);
                 asset = LoadNewAssetAsync(address).WaitForCompletion();
             }

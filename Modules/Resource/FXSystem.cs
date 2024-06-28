@@ -1,10 +1,6 @@
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using Cysharp.Threading.Tasks;
 using Kurisu.Framework.Pool;
 using Kurisu.Framework.React;
-using Kurisu.Framework.Schedulers;
 using R3;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -15,12 +11,19 @@ namespace Kurisu.Framework.Resource
     public static class FXSystem
     {
         /// <summary>
+        /// Validate asset location before loading, throw <see cref="InvalidResourceRequestException"/> if not exist
+        /// </summary>
+        /// <value></value>
+        public static bool AddressSafeCheck { get; set; } = false;
+        /// <summary>
         /// Play particle system by address
         /// </summary>
         /// <param name="address"></param>
         /// <param name="parent"></param>
         public static void PlayFX(string address, Transform parent)
         {
+            if (AddressSafeCheck)
+                ResourceSystem.SafeCheck<GameObject>(address);
             PlayFXAsync(address, Vector3.zero, Quaternion.identity, parent, true).Forget();
         }
         /// <summary>
@@ -33,6 +36,8 @@ namespace Kurisu.Framework.Resource
         /// <param name="useLocalPosition"></param>
         public static void PlayFX(string address, Vector3 position, Quaternion rotation, Transform parent = null, bool useLocalPosition = false)
         {
+            if (AddressSafeCheck)
+                ResourceSystem.SafeCheck<GameObject>(address);
             PlayFXAsync(address, position, rotation, parent, useLocalPosition).Forget();
         }
         /// <summary>
@@ -72,7 +77,9 @@ namespace Kurisu.Framework.Resource
         /// <returns></returns>
         public static async UniTask<PooledParticleSystem> InstantiateAsync(string address, Transform parent)
         {
-            return await PooledParticleSystem.Get(address, parent);
+            if (AddressSafeCheck)
+                await ResourceSystem.SafeCheckAsync<GameObject>(address);
+            return await PooledParticleSystem.InstantiateAsync(address, parent);
         }
         /// <summary>
         /// Async instantiate pooled particle system by address
@@ -80,17 +87,12 @@ namespace Kurisu.Framework.Resource
         /// <param name="address"></param>
         /// <param name="position"></param>
         /// <param name="rotation"></param>
-        /// <param name="parent"></param>
-        /// <param name="useLocalPosition"></param>
+        /// <param name="parent">The parent attached to. If parent exists, it will use prefab's scale as local scale instead of lossy scale</param>
+        /// <param name="useLocalPosition">Whether use local position instead of world position, default is false</param>
         /// <returns></returns>
         public static async UniTask<PooledParticleSystem> InstantiateAsync(string address, Vector3 position, Quaternion rotation, Transform parent = null, bool useLocalPosition = false)
         {
-            var pooledFX = await PooledParticleSystem.Get(address, parent);
-            if (useLocalPosition)
-                pooledFX.GameObject.transform.SetLocalPositionAndRotation(position, rotation);
-            else
-                pooledFX.GameObject.transform.SetPositionAndRotation(position, rotation);
-            return pooledFX;
+            return await PooledParticleSystem.InstantiateAsync(address, position, rotation, parent, useLocalPosition);
         }
         /// <summary>
         /// Instantiate pooled particle system by prefab, optimized version of <see cref="Object.Instantiate(Object, Transform)"/> 
@@ -100,7 +102,7 @@ namespace Kurisu.Framework.Resource
         /// <returns></returns>
         public static PooledParticleSystem Instantiate(GameObject prefab, Transform parent)
         {
-            return PooledParticleSystem.Get(prefab, parent);
+            return PooledParticleSystem.Instantiate(prefab, parent);
         }
         /// <summary>
         /// Instantiate pooled particle system by prefab, optimized version of <see cref="Object.Instantiate(Object, Vector3, Quaternion, Transform)"/> 
@@ -108,17 +110,12 @@ namespace Kurisu.Framework.Resource
         /// <param name="prefab"></param>
         /// <param name="position"></param>
         /// <param name="rotation"></param>
-        /// <param name="parent"></param>
+        /// <param name="parent">The parent attached to. If parent exists, it will use prefab's scale as local scale instead of lossy scale</param>
         /// <param name="useLocalPosition">Whether use local position instead of world position, default is false</param>
         /// <returns></returns>
         public static PooledParticleSystem Instantiate(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool useLocalPosition = false)
         {
-            var pooledFX = PooledParticleSystem.Get(prefab, parent);
-            if (useLocalPosition)
-                pooledFX.GameObject.transform.SetLocalPositionAndRotation(position, rotation);
-            else
-                pooledFX.GameObject.transform.SetPositionAndRotation(position, rotation);
-            return pooledFX;
+            return PooledParticleSystem.Instantiate(prefab, position, rotation, parent, useLocalPosition);
         }
         private static async UniTask PlayFXAsync(string address, Vector3 position, Quaternion rotation, Transform parent, bool useLocalPosition)
         {
@@ -129,14 +126,10 @@ namespace Kurisu.Framework.Resource
         {
             public static string GetFullPath(string address)
             {
+                // append prefix since different type UObjects can have same address
                 return $"FX {address}";
             }
-            public static string GetFullPath(GameObject prefab)
-            {
-                // append instance id since prefabs may have same name
-                return $"FX {prefab.name} {prefab.GetInstanceID()}";
-            }
-            public new static async UniTask<PooledParticleSystem> Get(string address, Transform parent)
+            public static async UniTask<PooledParticleSystem> InstantiateAsync(string address, Transform parent)
             {
                 var pooledParticleSystem = pool.Get();
                 string fullPath = GetFullPath(address);
@@ -153,19 +146,14 @@ namespace Kurisu.Framework.Resource
                 pooledParticleSystem.Init();
                 return pooledParticleSystem;
             }
-            public static PooledParticleSystem Get(GameObject prefab, Transform parent)
+            public static async UniTask<PooledParticleSystem> InstantiateAsync(string address, Vector3 position, Quaternion rotation, Transform parent = null, bool useLocalPosition = false)
             {
-                var pooledParticleSystem = pool.Get();
-                string fullPath = GetFullPath(prefab);
-                pooledParticleSystem.Name = fullPath;
-                var fxObject = GameObjectPoolManager.Get(fullPath, parent, createEmptyIfNotExist: false);
-                if (!fxObject)
-                {
-                    fxObject = Object.Instantiate(prefab, parent);
-                }
-                pooledParticleSystem.GameObject = fxObject;
-                pooledParticleSystem.Init();
-                return pooledParticleSystem;
+                var pooledFX = await InstantiateAsync(address, parent);
+                if (useLocalPosition)
+                    pooledFX.GameObject.transform.SetLocalPositionAndRotation(position, rotation);
+                else
+                    pooledFX.GameObject.transform.SetPositionAndRotation(position, rotation);
+                return pooledFX;
             }
             protected sealed override void Init()
             {
@@ -175,6 +163,7 @@ namespace Kurisu.Framework.Resource
             {
                 IsDisposed = false;
                 disposableBag = new();
+                Transform = GameObject.transform;
                 // Allow add a pivot
                 Component = GameObject.GetComponentInChildren<ParticleSystem>();
                 Assert.IsNotNull(Component);
