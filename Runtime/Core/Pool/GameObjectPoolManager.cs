@@ -32,7 +32,7 @@ namespace Kurisu.Framework.Pool
         {
             var pooledObject = pool.Get();
             pooledObject.Name = address;
-            pooledObject.GameObject = GameObjectPoolManager.Get(address, parent);
+            pooledObject.GameObject = GameObjectPoolManager.Get(address, out _, parent);
             pooledObject.Init();
             return pooledObject;
         }
@@ -76,7 +76,15 @@ namespace Kurisu.Framework.Pool
     }
     public class PooledComponent<T, K> : PooledGameObject where K : Component where T : PooledComponent<T, K>, new()
     {
-        public K Component { get; protected set; }
+        /// <summary>
+        /// Cache component as meta data to reduce allocation
+        /// </summary>
+        public class ComponentCache : IPooledMetaData
+        {
+            public K component;
+        }
+        public K Component => Cache.component;
+        protected ComponentCache Cache { get; set; }
         private static readonly string componentName;
         static PooledComponent()
         {
@@ -93,7 +101,8 @@ namespace Kurisu.Framework.Pool
         {
             var pooledComponent = pool.Get();
             pooledComponent.Name = componentName;
-            pooledComponent.GameObject = GameObjectPoolManager.Get(componentName, parent);
+            pooledComponent.GameObject = GameObjectPoolManager.Get(componentName, out var metaData, parent);
+            pooledComponent.Cache = metaData as ComponentCache;
             pooledComponent.Init();
             return pooledComponent;
         }
@@ -113,11 +122,12 @@ namespace Kurisu.Framework.Pool
             var pooledComponent = pool.Get();
             string fullPath = GetFullPath(prefab);
             pooledComponent.Name = fullPath;
-            var @object = GameObjectPoolManager.Get(fullPath, parent, createEmptyIfNotExist: false);
+            var @object = GameObjectPoolManager.Get(fullPath, out var metaData, parent, createEmptyIfNotExist: false);
             if (!@object)
             {
                 @object = Object.Instantiate(prefab, parent);
             }
+            pooledComponent.Cache = metaData as ComponentCache;
             pooledComponent.GameObject = @object;
             pooledComponent.Init();
             return pooledComponent;
@@ -149,8 +159,12 @@ namespace Kurisu.Framework.Pool
             IsDisposed = false;
             disposableBag = new();
             Transform = GameObject.transform;
-            // allocate few to get component from gameObject
-            Component = GameObject.GetOrAddComponent<K>();
+            Cache ??= new ComponentCache();
+            if (!Cache.component)
+            {
+                // allocate few to get component from gameObject
+                Cache.component = GameObject.GetOrAddComponent<K>();
+            }
         }
         public sealed override void Dispose()
         {
@@ -158,12 +172,13 @@ namespace Kurisu.Framework.Pool
             OnDispose();
             disposableBag.Dispose();
             if (GameObjectPoolManager.IsInstantiated)
-                GameObjectPoolManager.Release(GameObject, Name);
+                GameObjectPoolManager.Release(GameObject, Name, Cache);
             IsDisposed = true;
             pool.Release((T)this);
         }
         protected virtual void OnDispose() { }
     }
+    public interface IPooledMetaData { }
     public sealed class GameObjectPoolManager : MonoBehaviour
     {
         private static GameObjectPoolManager Instance
@@ -190,15 +205,17 @@ namespace Kurisu.Framework.Pool
         /// Get pooled gameObject
         /// </summary>
         /// <param name="address"></param>
+        /// <param name="pooledMetaData"></param>
         /// <param name="parent"></param>
         /// <param name="createEmptyIfNotExist"></param>
         /// <returns></returns>
-        public static GameObject Get(string address, Transform parent = null, bool createEmptyIfNotExist = true)
+        public static GameObject Get(string address, out IPooledMetaData pooledMetaData, Transform parent = null, bool createEmptyIfNotExist = true)
         {
             GameObject obj = null;
+            pooledMetaData = null;
             if (Instance.poolDic.TryGetValue(address, out GameObjectPool poolData) && poolData.poolQueue.Count > 0)
             {
-                obj = poolData.GetObj(parent);
+                obj = poolData.GetObj(parent, out pooledMetaData);
             }
             else if (createEmptyIfNotExist)
             {
@@ -211,17 +228,15 @@ namespace Kurisu.Framework.Pool
         /// </summary>
         /// <param name="obj"></param>
         /// <param name="address"></param>
-        public static void Release(GameObject obj, string address = null)
+        /// <param name="pooledMetaData"></param>
+        public static void Release(GameObject obj, string address = null, IPooledMetaData pooledMetaData = null)
         {
             address ??= obj.name;
-            if (Instance.poolDic.TryGetValue(address, out GameObjectPool poolData))
+            if (!Instance.poolDic.TryGetValue(address, out GameObjectPool poolData))
             {
-                poolData.PushObj(obj);
+                poolData = Instance.poolDic[address] = new GameObjectPool(address, Instance.transform);
             }
-            else
-            {
-                Instance.poolDic.Add(address, new GameObjectPool(address, obj, Instance.gameObject));
-            }
+            poolData.PushObj(obj, pooledMetaData);
         }
         /// <summary>
         /// Release addressable gameObject pool
@@ -253,24 +268,25 @@ namespace Kurisu.Framework.Pool
         }
         private class GameObjectPool
         {
-            public GameObject fatherObj;
-            public Queue<GameObject> poolQueue;
-            public GameObjectPool(string address, GameObject obj, GameObject poolRootObj)
+            public readonly GameObject fatherObj;
+            public readonly Queue<GameObject> poolQueue = new();
+            private readonly Dictionary<GameObject, IPooledMetaData> metaData = new();
+            public GameObjectPool(string address, Transform poolRoot)
             {
                 fatherObj = new GameObject(address);
-                fatherObj.transform.SetParent(poolRootObj.transform);
-                poolQueue = new Queue<GameObject>();
-                PushObj(obj);
+                fatherObj.transform.SetParent(poolRoot);
             }
-            public void PushObj(GameObject obj)
+            public void PushObj(GameObject obj, IPooledMetaData pooledMetaData)
             {
                 poolQueue.Enqueue(obj);
+                metaData[obj] = pooledMetaData;
                 obj.transform.SetParent(fatherObj.transform);
                 obj.SetActive(false);
             }
-            public GameObject GetObj(Transform parent = null)
+            public GameObject GetObj(Transform parent, out IPooledMetaData pooledMetaData)
             {
                 GameObject obj = poolQueue.Dequeue();
+                if (metaData.TryGetValue(obj, out pooledMetaData)) metaData.Remove(obj);
                 obj.SetActive(true);
                 obj.transform.SetParent(parent);
                 if (parent == null)

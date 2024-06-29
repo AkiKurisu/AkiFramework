@@ -134,7 +134,7 @@ namespace Kurisu.Framework.Resource
                 var pooledParticleSystem = pool.Get();
                 string fullPath = GetFullPath(address);
                 pooledParticleSystem.Name = fullPath;
-                var fxObject = GameObjectPoolManager.Get(fullPath, parent, createEmptyIfNotExist: false);
+                var fxObject = GameObjectPoolManager.Get(fullPath, out var metaData, parent, createEmptyIfNotExist: false);
                 if (!fxObject)
                 {
                     var handle = ResourceSystem.AsyncInstantiate(address, parent);
@@ -143,6 +143,7 @@ namespace Kurisu.Framework.Resource
                     _ = handle.AddTo(fxObject);
                 }
                 pooledParticleSystem.GameObject = fxObject;
+                pooledParticleSystem.Cache = metaData as ComponentCache;
                 pooledParticleSystem.Init();
                 return pooledParticleSystem;
             }
@@ -164,8 +165,13 @@ namespace Kurisu.Framework.Resource
                 IsDisposed = false;
                 disposableBag = new();
                 Transform = GameObject.transform;
-                // Allow add a pivot
-                Component = GameObject.GetComponentInChildren<ParticleSystem>();
+                Cache ??= new ComponentCache();
+                if (!Cache.component)
+                {
+                    // Allow add a pivot
+                    // allocate few to get component from gameObject
+                    Cache.component = GameObject.GetComponentInChildren<ParticleSystem>();
+                }
                 Assert.IsNotNull(Component);
             }
             public void Play(bool releaseOnEnd = true)
