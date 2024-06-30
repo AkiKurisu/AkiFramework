@@ -34,7 +34,7 @@ namespace Kurisu.Framework.Schedulers.Editor
             GUILayout.Label($"Managed scheduled task count: {ManagedScheduledCount}");
             foreach (var scheduled in Manager.scheduledRunning)
             {
-                double elapsedTime = (Scheduler.Now - scheduled.Timestamp).TotalSeconds;
+                double elapsedTime = Time.timeSinceLevelLoadAsDouble - scheduled.Timestamp;
                 GUILayout.Label($"Task Id {scheduled.Id}, elapsed time: {elapsedTime}s.");
                 if (SchedulerRegistry.TryGetListener(scheduled.Value, out var listener))
                 {

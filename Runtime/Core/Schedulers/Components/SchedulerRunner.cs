@@ -19,14 +19,14 @@ namespace Kurisu.Framework.Schedulers
         {
             private static readonly _ObjectPool<ScheduledItem> pool = new(() => new());
             public int Id { get; private set; }
-            public DateTimeOffset Timestamp { get; private set; }
+            public double Timestamp { get; private set; }
             public IScheduled Value { get; private set; }
             public static ScheduledItem GetPooled(int id, IScheduled scheduled)
             {
                 var item = pool.Get();
                 item.Id = id;
                 item.Value = scheduled;
-                item.Timestamp = Scheduler.Now;
+                item.Timestamp = Time.timeSinceLevelLoadAsDouble;
                 return item;
             }
             public void Cancel()
@@ -88,8 +88,8 @@ namespace Kurisu.Framework.Schedulers
                 scheduled.Dispose();
                 return;
             }
-            int id = taskId++;
-            managedScheduled.Add(scheduled, ScheduledItem.GetPooled(id, scheduled));
+            if (taskId == int.MaxValue) taskId = 1;
+            managedScheduled.Add(scheduled, ScheduledItem.GetPooled(taskId++, scheduled));
             (isGateOpen ? scheduledRunning : scheduledToAdd).Add(managedScheduled[scheduled]);
 #if UNITY_EDITOR
             SchedulerRegistry.RegisterListener(scheduled, @delegate);
