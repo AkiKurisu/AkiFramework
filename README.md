@@ -1,16 +1,26 @@
+<div align="center">
+
 # AkiFramework
 
 This is a code collection that i really used in my games, will be update through my development. 
 
 I supposed these code are useful but also not-must-be-included, which is my personal understanding of "Game Framework" should be, so that you can pick code you like and use in your project for free.
 
+</div>
+
 ## Features
 
-[Events](./Docs/Events.md) ⚡
+[Events](./Docs/Events.md) 
 > A powerful event solution for dynamic and contextual event handling ported from UIElement.
 
-[Mod](./Docs/Mod.md) ⛏
+[Mod](./Docs/Mod.md) 
 > Simple mod system based on Addressables. 
+
+[Pool](./Docs/Pool.md) 
+> Zero allocation GameObject/Component pooling. 
+
+[Resource](./Docs/Resource.md) 
+> Resource loading system based on Addressables. 
 
 ## Reference
 

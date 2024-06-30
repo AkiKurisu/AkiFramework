@@ -28,7 +28,7 @@ namespace Kurisu.Framework.Pool
             }
         }
 
-        public _ObjectPool(Func<T> CreateFunc, int maxSize = 100)
+        public _ObjectPool(Func<T> CreateFunc, int maxSize = 5000)
         {
             MaxSize = maxSize;
 
@@ -71,6 +71,10 @@ namespace Kurisu.Framework.Pool
             {
                 m_Stack.Push(element);
             }
+#if UNITY_EDITOR
+            else
+                Debug.LogWarning("Internal error. Pool is already full, try to increase max size.");
+#endif
         }
     }
 }

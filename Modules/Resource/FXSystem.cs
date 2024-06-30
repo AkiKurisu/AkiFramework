@@ -67,7 +67,7 @@ namespace Kurisu.Framework.Resource
         /// <param name="address"></param>
         public static void ReleaseFX(string address)
         {
-            GameObjectPoolManager.ReleasePool(PooledParticleSystem.GetFullPath(address));
+            GameObjectPoolManager.ReleasePool(PooledParticleSystem.GetPooledKey(address));
         }
         /// <summary>
         /// Async instantiate pooled particle system by address
@@ -124,17 +124,18 @@ namespace Kurisu.Framework.Resource
         }
         public sealed class PooledParticleSystem : PooledComponent<PooledParticleSystem, ParticleSystem>
         {
-            public static string GetFullPath(string address)
+            private const string key = "FX";
+            public static PooledKey GetPooledKey(string address)
             {
                 // append prefix since different type UObjects can have same address
-                return $"FX {address}";
+                return new PooledKey(key, address);
             }
             public static async UniTask<PooledParticleSystem> InstantiateAsync(string address, Transform parent)
             {
                 var pooledParticleSystem = pool.Get();
-                string fullPath = GetFullPath(address);
-                pooledParticleSystem.Name = fullPath;
-                var fxObject = GameObjectPoolManager.Get(fullPath, out var metaData, parent, createEmptyIfNotExist: false);
+                PooledKey key = GetPooledKey(address);
+                pooledParticleSystem.Name = key;
+                var fxObject = GameObjectPoolManager.Get(key, out var metaData, parent, createEmptyIfNotExist: false);
                 if (!fxObject)
                 {
                     var handle = ResourceSystem.AsyncInstantiate(address, parent);
@@ -163,7 +164,7 @@ namespace Kurisu.Framework.Resource
             private void LocalInit()
             {
                 IsDisposed = false;
-                disposableBag = new();
+                disposableBag.Clear();
                 Transform = GameObject.transform;
                 Cache ??= new ComponentCache();
                 if (!Cache.component)
