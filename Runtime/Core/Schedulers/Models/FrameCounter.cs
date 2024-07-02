@@ -3,7 +3,7 @@ using System;
 using Kurisu.Framework.Pool;
 namespace Kurisu.Framework.Schedulers
 {
-    public class FrameCounter : IScheduled
+    internal class FrameCounter : IScheduled
     {
         private static readonly _ObjectPool<FrameCounter> pool = new(() => new());
         #region Public Properties/Fields

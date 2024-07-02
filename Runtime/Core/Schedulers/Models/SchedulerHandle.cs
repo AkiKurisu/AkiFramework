@@ -6,7 +6,7 @@ namespace Kurisu.Framework.Schedulers
     /// </summary>
     public readonly struct SchedulerHandle : IDisposable
     {
-        public int TaskId { get; }
+        public uint TaskId { get; }
         /// <summary>
         /// Get scheduled task whether is valid
         /// </summary>
@@ -51,7 +51,7 @@ namespace Kurisu.Framework.Schedulers
                 return null;
             }
         }
-        public SchedulerHandle(int taskId)
+        public SchedulerHandle(uint taskId)
         {
             TaskId = taskId;
         }

@@ -14,7 +14,7 @@ namespace Kurisu.Framework.React
         /// <typeparam name="TEventType"></typeparam>
         /// <returns></returns>
         public static Observable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler)
-where TEventType : EventBase<TEventType>, new()
+        where TEventType : EventBase<TEventType>, new()
         {
             return handler.AsObservable<TEventType>(TrickleDown.NoTrickleDown, 8);
         }
