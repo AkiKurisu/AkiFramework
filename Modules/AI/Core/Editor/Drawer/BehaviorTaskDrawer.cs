@@ -7,9 +7,9 @@ namespace Kurisu.Framework.AI.Editor
     [CustomPropertyDrawer(typeof(BehaviorTask))]
     public class BehaviorTaskDrawer : PropertyDrawer
     {
-        private static Color AkiGreen = new(170 / 255f, 255 / 255f, 97 / 255f);
-        private static Color AkiBlue = new(140 / 255f, 160 / 255f, 250 / 255f);
-        private static Color AkiYellow = new(255 / 255f, 244 / 255f, 94 / 255f);
+        private static Color ColorGreen = new(170 / 255f, 255 / 255f, 97 / 255f);
+        private static Color ColorBlue = new(140 / 255f, 160 / 255f, 250 / 255f);
+        private static Color ColorYellow = new(255 / 255f, 244 / 255f, 94 / 255f);
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
@@ -25,11 +25,7 @@ namespace Kurisu.Framework.AI.Editor
                 EditorGUI.PropertyField(rect, property.FindPropertyRelative("taskID"));
                 rect.y += rect.height + EditorGUIUtility.standardVerticalSpacing;
             }
-#if AKIAI_TASK_JSON_SERIALIZATION
-            EditorGUI.PropertyField(rect, property.FindPropertyRelative("behaviorTreeSerializeData"));
-#else
-            EditorGUI.PropertyField(rect, property.FindPropertyRelative("behaviorTree"));
-#endif
+            EditorGUI.PropertyField(rect, property.FindPropertyRelative("behaviorTreeAsset"));
             rect.y += rect.height + EditorGUIUtility.standardVerticalSpacing;
             GUI.enabled = Application.isPlaying;
             var task = ReflectionUtility.GetTargetObjectWithProperty(property) as BehaviorTask;
@@ -46,9 +42,9 @@ namespace Kurisu.Framework.AI.Editor
         }
         private Color GetStatusColor(TaskStatus taskStatus)
         {
-            if (taskStatus == TaskStatus.Enabled) return AkiGreen;
-            if (taskStatus == TaskStatus.Disabled) return AkiBlue;
-            else return AkiYellow;
+            if (taskStatus == TaskStatus.Enabled) return ColorGreen;
+            if (taskStatus == TaskStatus.Disabled) return ColorBlue;
+            else return ColorYellow;
         }
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {

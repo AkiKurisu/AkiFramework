@@ -140,7 +140,7 @@ namespace Kurisu.Framework.EQS
             }
         }
         /// <summary>
-        /// Query actors overlap in fieldView
+        /// Query actors overlap in field of view
         /// </summary>
         /// <param name="actors"></param>
         /// <param name="position"></param>

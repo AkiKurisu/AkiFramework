@@ -14,13 +14,13 @@ namespace Kurisu.Framework.AI
         /// </summary>
         void Abort();
     }
-    public interface IAIProxy<T> : IAIProxy where T : IAIContext
+    public interface IAIProxy<T> : IAIProxy where T : Actor, IAIPawn
     {
         /// <summary>
-        /// Bind host
+        /// Bind controller
         /// </summary>
         /// <value></value>
-        AIController<T> Host { get; }
+        AIController<T> Controller { get; }
         /// <summary>
         /// Start a proxy plan
         /// </summary>

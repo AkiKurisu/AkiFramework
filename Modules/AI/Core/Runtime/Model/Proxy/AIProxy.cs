@@ -4,11 +4,11 @@ using UnityEngine;
 using UnityEngine.Events;
 namespace Kurisu.Framework.AI
 {
-    public abstract class AIProxy<T> : MonoBehaviour, IAIProxy<T> where T : IAIContext
+    public abstract class AIProxy<T> : MonoBehaviour, IAIProxy<T> where T : Actor, IAIPawn
     {
         [SerializeField]
         private UnityEvent OnProxyStart;
-        public AIController<T> Host { get; private set; }
+        public AIController<T> Controller { get; private set; }
         private SequenceTask sequenceTask;
         private IReadOnlyList<ITask> tasks;
         private Action callBack;
@@ -19,7 +19,7 @@ namespace Kurisu.Framework.AI
         public void StartProxy(AIController<T> host, IReadOnlyList<ITask> tasks, Action callBack)
         {
             this.callBack = callBack;
-            Host = host;
+            Controller = host;
             this.tasks = tasks;
 #if UNITY_EDITOR
             Debug.Log($"Start proxy: {GetType().Name}");
@@ -45,7 +45,7 @@ namespace Kurisu.Framework.AI
 #endif
             callBack?.Invoke();
             callBack = null;
-            Host = null;
+            Controller = null;
         }
         public void Abort()
         {

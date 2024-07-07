@@ -2,11 +2,10 @@ using UnityEngine;
 using System.Collections.Generic;
 using System;
 using Kurisu.AkiBT;
-using Kurisu.Framework;
 namespace Kurisu.Framework.AI
 {
     [RequireComponent(typeof(BlackBoardComponent))]
-    public abstract class AIController : Actor
+    public abstract class AIController : MonoBehaviour
     {
         [SerializeField]
         private BehaviorTask[] behaviorTasks;
@@ -15,7 +14,6 @@ namespace Kurisu.Framework.AI
         public virtual Transform Transform => transform;
         public virtual GameObject Object => gameObject;
         public BlackBoard BlackBoard { get; private set; }
-        public abstract IAIContext Context { get; }
         protected virtual void Awake()
         {
             BlackBoard = GetComponent<BlackBoardComponent>().GetBlackBoard();
@@ -24,6 +22,7 @@ namespace Kurisu.Framework.AI
         {
             SetupBehaviorTree();
         }
+        public abstract IAIPawn GetAIPawn();
         private void SetupBehaviorTree()
         {
             foreach (var task in behaviorTasks)
@@ -35,7 +34,6 @@ namespace Kurisu.Framework.AI
         {
             if (!IsAIEnabled) return;
             TickTasks();
-            OnUpdate();
         }
         protected virtual void OnDestroy()
         {
@@ -52,7 +50,6 @@ namespace Kurisu.Framework.AI
                 if (task.Status == TaskStatus.Enabled) task.Tick();
             }
         }
-        protected virtual void OnUpdate() { }
         public void EnableAI()
         {
             IsAIEnabled = true;
@@ -104,13 +101,16 @@ namespace Kurisu.Framework.AI
         }
     }
     /// <summary>
-    /// AI Agent for custom context (eg. Data model, GamePlay components)
+    /// AI Controller for <see cref="T"/>
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class AIController<T> : AIController where T : IAIContext
+    public abstract class AIController<T> : AIController where T : Actor, IAIPawn
     {
-        public sealed override IAIContext Context => TContext;
-        public abstract T TContext { get; }
+        public T Pawn { get; protected set; }
+        public sealed override IAIPawn GetAIPawn()
+        {
+            return Pawn;
+        }
     }
 }
 

@@ -57,6 +57,8 @@ namespace Kurisu.Framework.AI
             InstanceTree.InitVariables();
             InstanceTree.BlackBoard.MapTo(host.BlackBoard);
             InstanceTree.Run(host.Object);
+            InstanceTree.Awake();
+            InstanceTree.Start();
         }
         public void Tick()
         {
