@@ -7,7 +7,7 @@ namespace Kurisu.Framework.Schedulers
     /// <summary>
     /// Manages updating all the <see cref="IScheduled"/> tasks that are running in the scene.
     /// This will be instantiated the first time you create a task.
-    /// You do not need to add it into the scene manually.
+    /// You do not need to add it into the scene manually. Similar to Unreal's TimerManager.
     /// </summary>
     /// <remarks>
     /// Currently only work on Update().
@@ -18,28 +18,41 @@ namespace Kurisu.Framework.Schedulers
         internal class ScheduledItem : IDisposable
         {
             private static readonly _ObjectPool<ScheduledItem> pool = new(() => new());
-            public int Id { get; private set; }
+            public uint Id { get; private set; }
             public double Timestamp { get; private set; }
             public IScheduled Value { get; private set; }
-            public static ScheduledItem GetPooled(int id, IScheduled scheduled)
+            private bool delay;
+            public static ScheduledItem GetPooled(uint id, IScheduled scheduled, bool delay)
             {
                 var item = pool.Get();
                 item.Id = id;
                 item.Value = scheduled;
                 item.Timestamp = Time.timeSinceLevelLoadAsDouble;
+                item.delay = delay;
                 return item;
+            }
+            public bool IsDone() => Value.IsDone;
+            public void Update()
+            {
+                if (Value.IsDone) return;
+                if (delay)
+                {
+                    delay = false;
+                    return;
+                }
+                Value.Update();
             }
             public void Cancel()
             {
                 if (!Value.IsDone) Value.Cancel();
             }
-
             public void Dispose()
             {
                 Value?.Dispose();
                 Value = default;
                 Id = default;
                 Timestamp = default;
+                delay = default;
                 pool.Release(this);
             }
         }
@@ -47,19 +60,24 @@ namespace Kurisu.Framework.Schedulers
         private const int RunningCapacity = 100;
         internal readonly Dictionary<IScheduled, ScheduledItem> managedScheduled = new(ManagedCapacity);
         internal List<ScheduledItem> scheduledRunning = new(RunningCapacity);
-        //Start from id=1, should not be 0 since it roles as default/invalid task symbol
-        private int taskId = 1;
+        // start from id = 1, should not be 0 since it roles as default/invalid task symbol
+        private uint taskId = 1;
         // buffer adding tasks so we don't edit a collection during iteration
         private readonly List<ScheduledItem> scheduledToAdd = new(RunningCapacity);
         private bool isDestroyed;
         private bool isGateOpen;
+        private int lastFrame;
         public static SchedulerRunner Instance => instance != null ? instance : GetInstance();
         public static bool IsInitialized => instance != null;
         private static SchedulerRunner instance;
         private static SchedulerRunner GetInstance()
         {
 #if UNITY_EDITOR
-            if (!Application.isPlaying) return null;
+            if (!Application.isPlaying)
+            {
+                Debug.LogError("Scheduler can not be used in Editor Mode.");
+                return null;
+            }
 #endif
             if (instance == null)
             {
@@ -70,8 +88,7 @@ namespace Kurisu.Framework.Schedulers
                 }
                 else
                 {
-                    GameObject managerObject = new() { name = nameof(SchedulerRunner) };
-                    instance = managerObject.AddComponent<SchedulerRunner>();
+                    instance = new GameObject(nameof(SchedulerRunner)).AddComponent<SchedulerRunner>();
                 }
             }
             return instance;
@@ -88,8 +105,10 @@ namespace Kurisu.Framework.Schedulers
                 scheduled.Dispose();
                 return;
             }
-            if (taskId == int.MaxValue) taskId = 1;
-            managedScheduled.Add(scheduled, ScheduledItem.GetPooled(taskId++, scheduled));
+            if (taskId == uint.MaxValue) taskId = 1;
+            // schedule one frame if register before runner update
+            bool needDelayFrame = lastFrame < Time.frameCount;
+            managedScheduled.Add(scheduled, ScheduledItem.GetPooled(taskId++, scheduled, needDelayFrame));
             (isGateOpen ? scheduledRunning : scheduledToAdd).Add(managedScheduled[scheduled]);
 #if UNITY_EDITOR
             SchedulerRegistry.RegisterListener(scheduled, @delegate);
@@ -151,6 +170,7 @@ namespace Kurisu.Framework.Schedulers
             isGateOpen = false;
             UpdateAll();
             isGateOpen = true;
+            lastFrame = Time.frameCount;
         }
         private void OnDestroy()
         {
@@ -178,13 +198,12 @@ namespace Kurisu.Framework.Schedulers
             // Update
             foreach (ScheduledItem item in scheduledRunning)
             {
-                if (!item.Value.IsDone)
-                    item.Value.Update();
+                item.Update();
             }
             // Release
             for (int i = scheduledRunning.Count - 1; i >= 0; i--)
             {
-                if (!scheduledRunning[i].Value.IsDone) continue;
+                if (!scheduledRunning[i].IsDone()) continue;
                 scheduledRunning[i].Dispose();
                 scheduledRunning.RemoveAt(i);
             }
@@ -198,7 +217,7 @@ namespace Kurisu.Framework.Schedulers
         /// </summary>
         /// <param name="taskId"></param>
         /// <returns></returns>
-        public bool IsValid(int taskId)
+        public bool IsValid(uint taskId)
         {
             foreach (var value in managedScheduled.Values)
             {
@@ -212,7 +231,7 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="taskId"></param>
         /// <param name="task"></param>
         /// <returns></returns>
-        public bool TryGet(int taskId, out IScheduled task)
+        public bool TryGet(uint taskId, out IScheduled task)
         {
             foreach (var value in managedScheduled.Values)
             {
@@ -225,7 +244,7 @@ namespace Kurisu.Framework.Schedulers
             task = null;
             return false;
         }
-        private bool TryGetItem(int taskId, out ScheduledItem item)
+        private bool TryGetItem(uint taskId, out ScheduledItem item)
         {
             foreach (var value in managedScheduled.Values)
             {
@@ -242,7 +261,7 @@ namespace Kurisu.Framework.Schedulers
         /// Cancel target scheduled task
         /// </summary>
         /// <param name="taskId"></param>
-        public void Cancel(int taskId)
+        public void Cancel(uint taskId)
         {
             if (!TryGetItem(taskId, out ScheduledItem item)) return;
             item.Cancel();

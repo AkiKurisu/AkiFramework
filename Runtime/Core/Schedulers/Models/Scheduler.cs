@@ -6,15 +6,6 @@ namespace Kurisu.Framework.Schedulers
     /// </summary>
     public static class Scheduler
     {
-        public static DateTimeOffset Now
-        {
-            get { return DateTimeOffset.UtcNow; }
-        }
-
-        public static TimeSpan Normalize(TimeSpan timeSpan)
-        {
-            return timeSpan >= TimeSpan.Zero ? timeSpan : TimeSpan.Zero;
-        }
         /// <summary>
         /// Delay some time and invoke callBack
         /// </summary>
@@ -81,5 +72,75 @@ namespace Kurisu.Framework.Schedulers
         {
             return FrameCounter.Register(frame, callBack, onUpdate).CreateHandle();
         }
+        #region Unreal Style
+        /// <summary>
+        /// Delay some time and invoke callBack
+        /// </summary>
+        /// <param name="handle">Handle to overwrite</param>
+        /// <param name="delay"></param>
+        /// <param name="callBack"></param>
+        /// <param name="isLooped"></param>
+        /// <param name="ignoreTimeScale"></param>
+        public static void Delay(ref SchedulerHandle handle, float delay, Action callBack, bool isLooped = false, bool ignoreTimeScale = false)
+        {
+            Timer.Register(delay, callBack, null, isLooped, ignoreTimeScale).OverwriteHandle(ref handle);
+        }
+        /// <summary>
+        /// Delay some time and invoke callBack
+        /// </summary>
+        /// <param name="handle">Handle to overwrite</param>
+        /// <param name="delay"></param>
+        /// <param name="onUpdate"></param>
+        /// <param name="isLooped"></param>
+        /// <param name="ignoreTimeScale"></param>
+        /// <returns></returns>
+        public static void Delay(ref SchedulerHandle handle, float delay, Action<float> onUpdate, bool isLooped = false, bool ignoreTimeScale = false)
+        {
+            Timer.Register(delay, null, onUpdate, isLooped, ignoreTimeScale).OverwriteHandle(ref handle);
+        }
+        /// <summary>
+        /// Delay some time and invoke callBack
+        /// </summary>
+        /// <param name="handle">Handle to overwrite</param>
+        /// <param name="delay"></param>
+        /// <param name="callBack"></param>
+        /// <param name="onUpdate"></param>
+        /// <param name="ignoreTimeScale"></param>
+        public static void Delay(ref SchedulerHandle handle, float delay, Action callBack, Action<float> onUpdate, bool ignoreTimeScale = false)
+        {
+            Timer.Register(delay, callBack, onUpdate, useRealTime: ignoreTimeScale).OverwriteHandle(ref handle);
+        }
+        /// <summary>
+        /// Wait some frames and invoke callBack
+        /// </summary>
+        /// <param name="handle">Handle to overwrite</param>
+        /// <param name="frame"></param>
+        /// <param name="callBack"></param>
+        public static void WaitFrame(ref SchedulerHandle handle, int frame, Action callBack)
+        {
+            FrameCounter.Register(frame, callBack).OverwriteHandle(ref handle);
+        }
+        /// <summary>
+        /// Wait some frames and invoke callBack
+        /// </summary>
+        /// <param name="handle">Handle to overwrite</param>
+        /// <param name="frame"></param>
+        /// <param name="onUpdate"></param>
+        public static void WaitFrame(ref SchedulerHandle handle, int frame, Action<int> onUpdate)
+        {
+            FrameCounter.Register(frame, null, onUpdate).OverwriteHandle(ref handle);
+        }
+        /// <summary>
+        /// Wait some frames and invoke callBack
+        /// </summary>
+        /// <param name="handle">Handle to overwrite</param>
+        /// <param name="frame"></param>
+        /// <param name="callBack"></param>
+        /// <param name="onUpdate"></param>
+        public static void WaitFrame(ref SchedulerHandle handle, int frame, Action callBack, Action<int> onUpdate)
+        {
+            FrameCounter.Register(frame, callBack, onUpdate).OverwriteHandle(ref handle);
+        }
+        #endregion
     }
 }

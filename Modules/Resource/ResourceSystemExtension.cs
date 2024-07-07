@@ -68,7 +68,7 @@ namespace Kurisu.Framework.Resource
             return ResourceSystem.IsValid(handle.handleID) && handle.InternalHandle.IsDone;
         }
         /// <summary>
-        /// Convert to <see cref="ResourceHandle{T}"/>
+        /// Async load asset by <see cref="AssetReferenceT{T}"/> and convert operation to <see cref="ResourceHandle{T}"/>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="assetReferenceT"></param>

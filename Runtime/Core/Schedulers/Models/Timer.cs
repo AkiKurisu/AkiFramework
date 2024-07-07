@@ -9,7 +9,7 @@ namespace Kurisu.Framework.Schedulers
     ///
     /// To create and start a Timer, use the <see cref="Register"/> method.
     /// </summary>
-    public class Timer : IScheduled
+    internal class Timer : IScheduled
     {
         private static readonly _ObjectPool<Timer> pool = new(() => new());
         #region Public Properties/Fields

@@ -13,7 +13,7 @@ namespace Kurisu.Framework.Editor
             object obj = property.serializedObject.targetObject;
             string[] elements = path.Split('.');
 
-            for (int i = 0; i < elements.Length - 1; i++)
+            for (int i = 0; i < elements.Length; i++)
             {
                 string element = elements[i];
                 if (element.Contains("["))
@@ -60,8 +60,7 @@ namespace Kurisu.Framework.Editor
         }
         private static object GetValue_Imp(object source, string name, int index)
         {
-            IEnumerable enumerable = GetValue_Imp(source, name) as IEnumerable;
-            if (enumerable == null)
+            if (GetValue_Imp(source, name) is not IEnumerable enumerable)
             {
                 return null;
             }
