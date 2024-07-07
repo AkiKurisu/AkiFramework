@@ -1,0 +1,27 @@
+{
+    "name": "Kurisu.Framework.AI.GOAP",
+    "rootNamespace": "",
+    "references": [
+        "GUID:41ce47af1d69c28458bf06fdc18c263d",
+        "GUID:9468b0f290541f649a4b8e65539d0f47",
+        "GUID:bf89a8bf6625fad4eb6879c01e73541d",
+        "GUID:e61a2a07ba2680848ad23eef5b7c024b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "AKIAI_AKIGOAP_INSTALL"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.kurisu.akigoap",
+            "expression": "1.0.0",
+            "define": "AKIAI_AKIGOAP_INSTALL"
+        }
+    ],
+    "noEngineReferences": false
+}
