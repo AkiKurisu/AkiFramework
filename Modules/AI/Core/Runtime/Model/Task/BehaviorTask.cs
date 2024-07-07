@@ -1,7 +1,6 @@
 using System;
 using Kurisu.AkiBT;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Object = UnityEngine.Object;
 namespace Kurisu.Framework.AI
 {
@@ -64,7 +63,10 @@ namespace Kurisu.Framework.AI
         {
             InstanceTree.Tick();
         }
-
+        protected override void OnStop()
+        {
+            InstanceTree.Abort();
+        }
         public BehaviorTree GetBehaviorTree()
         {
             // get runtime instance tree only
