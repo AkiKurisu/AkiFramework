@@ -16,7 +16,7 @@ namespace Kurisu.Framework.React
         public static Observable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler)
         where TEventType : EventBase<TEventType>, new()
         {
-            return handler.AsObservable<TEventType>(TrickleDown.NoTrickleDown, 8);
+            return handler.AsObservable<TEventType>(TrickleDown.NoTrickleDown);
         }
         /// <summary>
         /// Create Observable for <see cref="CallbackEventHandler"/>
@@ -28,24 +28,11 @@ namespace Kurisu.Framework.React
         public static Observable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler, TrickleDown trickleDown)
         where TEventType : EventBase<TEventType>, new()
         {
-            return handler.AsObservable<TEventType>(trickleDown, 8);
-        }
-        /// <summary>
-        /// Create Observable for <see cref="CallbackEventHandler"/>
-        /// </summary>
-        /// <param name="handler"></param>
-        /// <param name="trickleDown"></param>
-        /// <param name="skipFrame">Skip frames for debugger</param>
-        /// <typeparam name="TEventType"></typeparam>
-        /// <returns></returns>
-        public static Observable<TEventType> AsObservable<TEventType>(this CallbackEventHandler handler, TrickleDown trickleDown, int skipFrame)
-        where TEventType : EventBase<TEventType>, new()
-        {
             CancellationToken cancellationToken = default;
             if (handler is IBehaviourScope behaviourScope && behaviourScope.AttachedBehaviour)
                 cancellationToken = behaviourScope.AttachedBehaviour.destroyCancellationToken;
             return new FromEventHandler<TEventType>(static h => new(h),
-            h => handler.RegisterCallback(h, trickleDown, skipFrame), h => handler.UnregisterCallback(h, trickleDown), cancellationToken);
+            h => handler.RegisterCallback(h, trickleDown), h => handler.UnregisterCallback(h, trickleDown), cancellationToken);
         }
         #endregion
         #region IReadonlyReactiveProperty<T>
@@ -73,6 +60,7 @@ namespace Kurisu.Framework.React
         /// <param name="onNext"></param>
         /// <typeparam name="TEventType"></typeparam>
         /// <returns></returns>
+        [StackTraceFrame]
         public static IDisposable SubscribeSafe<TEventType>(this Observable<TEventType> source, EventCallback<TEventType> onNext) where TEventType : EventBase<TEventType>, new()
         {
             var action = new Action<TEventType>(OnNext);

@@ -410,8 +410,7 @@ namespace Kurisu.Framework.Events
                     s_Listeners.Remove(eventRegistrationListener.Key);
             }
         }
-
-        public static void RegisterListeners<TEventType>(CallbackEventHandler ceh, Delegate callback, TrickleDown useTrickleDown, int skipFrame = 2)
+        public static void RegisterListeners<TEventType>(CallbackEventHandler ceh, Delegate callback, TrickleDown useTrickleDown)
         {
             if (!IsEventDebuggerConnected)
                 return;
@@ -431,13 +430,14 @@ namespace Kurisu.Framework.Events
                 dict.Add(typeof(TEventType), callbackRecords);
             }
 
-            StackFrame callStack = new(skipFrame, true);
+            StackFrame frame = Utils.GetCurrentStackFrame();
+
             callbackRecords.Add(new ListenerRecord
             {
                 hashCode = callback.GetHashCode(),
                 name = itemName,
-                fileName = callStack.GetFileName(),
-                lineNumber = callStack.GetFileLineNumber()
+                fileName = frame.GetFileName(),
+                lineNumber = frame.GetFileLineNumber()
             });
         }
 

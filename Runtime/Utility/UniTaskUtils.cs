@@ -5,21 +5,21 @@ using UnityEngine.Assertions;
 using UnityEngine.Pool;
 namespace Kurisu.Framework
 {
-    public class ParallelTask : List<UniTask>, IDisposable
+    public class UniParallel : List<UniTask>, IDisposable
     {
-        private static readonly ObjectPool<ParallelTask> pool = new(() => new(), null, (e) => e.Clear());
-        public static ParallelTask Get()
+        private static readonly ObjectPool<UniParallel> pool = new(() => new(), null, (e) => e.Clear());
+        public static UniParallel Get()
         {
             return pool.Get();
         }
-        public static ParallelTask Create(UniTask task1, UniTask task2)
+        public static UniParallel Create(UniTask task1, UniTask task2)
         {
             var task = Get();
             task.Add(task1);
             task.Add(task2);
             return task;
         }
-        public static ParallelTask Create(UniTask task1, UniTask task2, UniTask task3)
+        public static UniParallel Create(UniTask task1, UniTask task2, UniTask task3)
         {
             var task = Get();
             task.Add(task1);
@@ -27,7 +27,7 @@ namespace Kurisu.Framework
             task.Add(task3);
             return task;
         }
-        public static ParallelTask Create(UniTask task1, UniTask task2, UniTask task3, UniTask task4)
+        public static UniParallel Create(UniTask task1, UniTask task2, UniTask task3, UniTask task4)
         {
             var task = Get();
             task.Add(task1);
@@ -36,7 +36,7 @@ namespace Kurisu.Framework
             task.Add(task4);
             return task;
         }
-        public static ParallelTask Create(IEnumerable<UniTask> uniTasks)
+        public static UniParallel Create(IEnumerable<UniTask> uniTasks)
         {
             var task = Get();
             task.AddRange(uniTasks);
@@ -55,21 +55,21 @@ namespace Kurisu.Framework
             UniTask.WhenAll(this).Forget();
         }
     }
-    public class ParallelTask<T> : List<UniTask<T>>, IDisposable
+    public class UniParallel<T> : List<UniTask<T>>, IDisposable
     {
-        private static readonly ObjectPool<ParallelTask<T>> pool = new(() => new(), null, (e) => e.Clear());
-        public static ParallelTask<T> Get()
+        private static readonly ObjectPool<UniParallel<T>> pool = new(() => new(), null, (e) => e.Clear());
+        public static UniParallel<T> Get()
         {
             return pool.Get();
         }
-        public static ParallelTask<T> Create(UniTask<T> task1, UniTask<T> task2)
+        public static UniParallel<T> Create(UniTask<T> task1, UniTask<T> task2)
         {
             var task = Get();
             task.Add(task1);
             task.Add(task2);
             return task;
         }
-        public static ParallelTask<T> Create(UniTask<T> task1, UniTask<T> task2, UniTask<T> task3)
+        public static UniParallel<T> Create(UniTask<T> task1, UniTask<T> task2, UniTask<T> task3)
         {
             var task = Get();
             task.Add(task1);
@@ -77,7 +77,7 @@ namespace Kurisu.Framework
             task.Add(task3);
             return task;
         }
-        public static ParallelTask<T> Create(UniTask<T> task1, UniTask<T> task2, UniTask<T> task3, UniTask<T> task4)
+        public static UniParallel<T> Create(UniTask<T> task1, UniTask<T> task2, UniTask<T> task3, UniTask<T> task4)
         {
             var task = Get();
             task.Add(task1);
@@ -86,7 +86,7 @@ namespace Kurisu.Framework
             task.Add(task4);
             return task;
         }
-        public static ParallelTask<T> Create(IEnumerable<UniTask<T>> uniTasks)
+        public static UniParallel<T> Create(IEnumerable<UniTask<T>> uniTasks)
         {
             var task = Get();
             task.AddRange(uniTasks);
@@ -105,21 +105,21 @@ namespace Kurisu.Framework
             UniTask.WhenAll(this).Forget();
         }
     }
-    public class SequenceTask : List<UniTask>, IDisposable
+    public class UniSequence : List<UniTask>, IDisposable
     {
-        private static readonly ObjectPool<SequenceTask> pool = new(() => new(), null, (e) => e.Clear());
-        public static SequenceTask Get()
+        private static readonly ObjectPool<UniSequence> pool = new(() => new(), null, (e) => e.Clear());
+        public static UniSequence Get()
         {
             return pool.Get();
         }
-        public static SequenceTask Create(UniTask task1, UniTask task2)
+        public static UniSequence Create(UniTask task1, UniTask task2)
         {
             var task = Get();
             task.Add(task1);
             task.Add(task2);
             return task;
         }
-        public static SequenceTask Create(UniTask task1, UniTask task2, UniTask task3)
+        public static UniSequence Create(UniTask task1, UniTask task2, UniTask task3)
         {
             var task = Get();
             task.Add(task1);
@@ -127,7 +127,7 @@ namespace Kurisu.Framework
             task.Add(task3);
             return task;
         }
-        public static SequenceTask Create(UniTask task1, UniTask task2, UniTask task3, UniTask task4)
+        public static UniSequence Create(UniTask task1, UniTask task2, UniTask task3, UniTask task4)
         {
             var task = Get();
             task.Add(task1);
@@ -136,7 +136,7 @@ namespace Kurisu.Framework
             task.Add(task4);
             return task;
         }
-        public static SequenceTask Create(IEnumerable<UniTask> uniTasks)
+        public static UniSequence Create(IEnumerable<UniTask> uniTasks)
         {
             var task = Get();
             task.AddRange(uniTasks);

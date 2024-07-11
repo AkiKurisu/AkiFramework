@@ -50,7 +50,7 @@ namespace Kurisu.Framework.Schedulers
             {
                 Value?.Dispose();
                 Value = default;
-                Id = default;
+                // Id = default;
                 Timestamp = default;
                 delay = default;
                 pool.Release(this);
@@ -265,11 +265,17 @@ namespace Kurisu.Framework.Schedulers
         {
             if (!TryGetItem(taskId, out ScheduledItem item)) return;
             item.Cancel();
-            if (isGateOpen)
+            // ensure add buffer also remove task
+            if (scheduledToAdd.Remove(item))
+            {
+                item.Dispose();
+            }
+            else if (isGateOpen)
             {
                 scheduledRunning.Remove(item);
                 item.Dispose();
             }
+
         }
     }
 }

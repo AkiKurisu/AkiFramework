@@ -29,7 +29,6 @@ namespace Kurisu.Framework.React
             private Action<EventCallback<T>>? removeHandler;
             private readonly EventCallback<T> registeredHandler;
             private CancellationTokenRegistration cancellationTokenRegistration;
-
             public FromEventHandlerPattern(Func<Action<T>, EventCallback<T>> conversion, Action<EventCallback<T>> addHandler, Action<EventCallback<T>> removeHandler, Observer<T> observer, CancellationToken cancellationToken)
             {
                 this.observer = observer;
@@ -46,7 +45,6 @@ namespace Kurisu.Framework.React
                     }, this, false);
                 }
             }
-
             private void OnNext(T value)
             {
                 //Prevent eventBase pooled => needs manually call dispose once

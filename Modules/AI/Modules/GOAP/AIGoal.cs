@@ -1,12 +1,12 @@
 using Kurisu.GOAP;
 namespace Kurisu.Framework.AI.GOAP
 {
-    public abstract class AIGoal<TContext> : GOAPGoal where TContext : IAIContext
+    public abstract class AIGoal<TPawn> : GOAPGoal where TPawn : Actor, IAIPawn
     {
-        protected AIController<TContext> Host { get; private set; }
-        public void Setup(AIController<TContext> host)
+        protected AIController<TPawn> Pawn { get; private set; }
+        public void Setup(AIController<TPawn> pawn)
         {
-            Host = host;
+            Pawn = pawn;
             OnSetup();
         }
         protected virtual void OnSetup() { }

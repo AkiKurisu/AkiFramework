@@ -3,7 +3,7 @@ using Kurisu.AkiBT;
 using Kurisu.GOAP;
 namespace Kurisu.Framework.AI.GOAP
 {
-    [AkiGroup("AkiGOAP")]
+    [AkiGroup("GOAP")]
     [AkiInfo("Action: Set State of GOAP WorldState")]
     public class SetState : Action
     {
