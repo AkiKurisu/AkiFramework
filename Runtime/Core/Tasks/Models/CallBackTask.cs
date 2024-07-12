@@ -1,6 +1,9 @@
 using System;
 namespace Kurisu.Framework.Tasks
 {
+    /// <summary>
+    /// Represent an immediately completed task for callBack purpose
+    /// </summary>
     public class CallBackTask : PooledTaskBase<CallBackTask>
     {
         private Action callBack;

@@ -72,6 +72,17 @@ namespace Kurisu.Framework
             if (frameId < stackTrace.FrameCount - 1) ++frameId;
             return stackTrace.GetFrame(frameId);
         }
+        internal static string GetDelegatePath(Delegate callback)
+        {
+            var declType = callback.Method.DeclaringType?.Name ?? string.Empty;
+            string itemName = $"{declType}.{callback.Method.Name}";
+            if (callback.Target != null)
+            {
+                string objectName = callback.Target.ToString();
+                itemName = $"{itemName}>[{objectName}]";
+            };
+            return itemName;
+        }
         #endregion
     }
 }

@@ -70,6 +70,11 @@ namespace Kurisu.Framework.Tasks
         private int m_RefCount;
         private bool pooled;
         private static readonly _ObjectPool<T> s_Pool = new(() => new T());
+        private static readonly string defaultName;
+        static PooledTaskBase()
+        {
+            defaultName = typeof(T).Name;
+        }
         protected PooledTaskBase() : base()
         {
             m_RefCount = 0;
@@ -85,12 +90,8 @@ namespace Kurisu.Framework.Tasks
         {
             if (evt.pooled)
             {
-                // Reset the event before pooling to avoid leaking
                 evt.Reset();
-
                 s_Pool.Release(evt);
-
-                // To avoid double release from pool
                 evt.pooled = false;
             }
         }
@@ -116,7 +117,7 @@ namespace Kurisu.Framework.Tasks
         }
         public override string GetTaskID()
         {
-            return typeof(T).Name;
+            return defaultName;
         }
     }
 }
