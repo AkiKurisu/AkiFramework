@@ -1,6 +1,7 @@
 using Kurisu.AkiBT.Editor;
 using Kurisu.Framework.Editor;
 using UnityEditor;
+using Kurisu.Framework.Tasks;
 using UnityEngine;
 namespace Kurisu.Framework.AI.Editor
 {
@@ -17,10 +18,10 @@ namespace Kurisu.Framework.AI.Editor
             {
                 height = EditorGUIUtility.singleLineHeight
             };
-            var isPersistent = property.FindPropertyRelative("isPersistent");
-            EditorGUI.PropertyField(rect, property.FindPropertyRelative("isPersistent"));
+            var startOnEnabled = property.FindPropertyRelative("startOnEnabled");
+            EditorGUI.PropertyField(rect, startOnEnabled);
             rect.y += rect.height + EditorGUIUtility.standardVerticalSpacing;
-            if (!isPersistent.boolValue)
+            if (!startOnEnabled.boolValue)
             {
                 EditorGUI.PropertyField(rect, property.FindPropertyRelative("taskID"));
                 rect.y += rect.height + EditorGUIUtility.standardVerticalSpacing;
@@ -30,7 +31,7 @@ namespace Kurisu.Framework.AI.Editor
             GUI.enabled = Application.isPlaying;
             var task = ReflectionUtility.GetTargetObjectWithProperty(property) as BehaviorTask;
             var color = GUI.backgroundColor;
-            GUI.backgroundColor = GetStatusColor(task.Status);
+            GUI.backgroundColor = GetStatusColor(task.GetStatus());
             if (GUI.Button(rect, "Debug Task Behavior"))
             {
                 GraphEditorWindow.Show(task);
@@ -48,8 +49,8 @@ namespace Kurisu.Framework.AI.Editor
         }
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            var isPersistent = property.FindPropertyRelative("isPersistent").boolValue;
-            return EditorGUIUtility.singleLineHeight * (isPersistent ? 3 : 4) + EditorGUIUtility.standardVerticalSpacing * (isPersistent ? 2 : 3);
+            var startOnEnabled = property.FindPropertyRelative("startOnEnabled").boolValue;
+            return EditorGUIUtility.singleLineHeight * (startOnEnabled ? 3 : 4) + EditorGUIUtility.standardVerticalSpacing * (startOnEnabled ? 2 : 3);
         }
     }
 }

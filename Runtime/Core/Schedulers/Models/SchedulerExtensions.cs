@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 namespace Kurisu.Framework.Schedulers
@@ -18,14 +17,10 @@ namespace Kurisu.Framework.Schedulers
                 handle.AddTo(cancellationToken);
             return UniTask.WaitUntil(() => handle.IsDone, cancellationToken: cancellationToken);
         }
-        internal static SchedulerHandle CreateHandle(this IScheduled scheduled)
-        {
-            return SchedulerRunner.Instance.CreateHandle(scheduled);
-        }
-        internal static void OverwriteHandle(this IScheduled scheduled, ref SchedulerHandle handle)
+        internal static void Assign(this IScheduled scheduled, ref SchedulerHandle handle)
         {
             handle.Dispose();
-            handle = SchedulerRunner.Instance.CreateHandle(scheduled);
+            handle = scheduled.Handle;
         }
     }
 }

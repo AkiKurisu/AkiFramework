@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System;
 using Kurisu.AkiBT;
+using Kurisu.Framework.Tasks;
 namespace Kurisu.Framework.AI
 {
     [RequireComponent(typeof(BlackBoardComponent))]
@@ -9,10 +9,8 @@ namespace Kurisu.Framework.AI
     {
         [SerializeField]
         private BehaviorTask[] behaviorTasks;
-        protected Dictionary<string, IAITask> TaskMap { get; } = new();
+        protected Dictionary<string, TaskBase> TaskMap { get; } = new();
         public bool IsAIEnabled { get; protected set; }
-        public virtual Transform Transform => transform;
-        public virtual GameObject Object => gameObject;
         public BlackBoard BlackBoard { get; private set; }
         protected virtual void Awake()
         {
@@ -30,24 +28,12 @@ namespace Kurisu.Framework.AI
                 AddTask(task);
             }
         }
-        protected virtual void Update()
-        {
-            if (!IsAIEnabled) return;
-            TickTasks();
-        }
         protected virtual void OnDestroy()
         {
             foreach (var task in TaskMap.Values)
             {
-                if (task is IDisposable disposable)
-                    disposable.Dispose();
-            }
-        }
-        protected void TickTasks()
-        {
-            foreach (var task in TaskMap.Values)
-            {
-                if (task.Status == TaskStatus.Enabled) task.Tick();
+                task.Stop();
+                task.Dispose();
             }
         }
         public void EnableAI()
@@ -55,7 +41,7 @@ namespace Kurisu.Framework.AI
             IsAIEnabled = true;
             foreach (var task in TaskMap.Values)
             {
-                if (task.IsPersistent || task.Status == TaskStatus.Pending)
+                if (((IAITask)task).IsStartOnEnabled())
                     task.Start();
             }
         }
@@ -64,9 +50,7 @@ namespace Kurisu.Framework.AI
             IsAIEnabled = false;
             foreach (var task in TaskMap.Values)
             {
-                //Pend running tasks
-                if (task.Status == TaskStatus.Enabled)
-                    task.Pause();
+                task.Stop();
             }
         }
         protected virtual void OnEnable()
@@ -77,25 +61,28 @@ namespace Kurisu.Framework.AI
         {
             DisableAI();
         }
-        public IAITask GetTask(string taskID)
+        public TaskBase GetTask(string taskID)
         {
             return TaskMap[taskID];
         }
-        public void AddTask(IAITask task)
+        public void AddTask<T>(T task) where T : TaskBase, IAITask
         {
-            if (!task.IsPersistent && TaskMap.ContainsKey(task.TaskID))
+            string id = task.GetTaskID();
+            if (TaskMap.ContainsKey(id))
             {
-                Debug.LogWarning($"Already contained task with same id: {task.TaskID}");
+                Debug.LogWarning($"Already contained task with same id: {id}");
                 return;
             }
-            task.Init(this);
-            TaskMap.Add(task.TaskID, task);
-            if (task.IsPersistent && IsAIEnabled)
+            task.SetController(this);
+            task.Acquire();
+            TaskMap.Add(id, task);
+            TaskRunner.RegisterTask(task);
+            if (IsAIEnabled && task.IsStartOnEnabled())
             {
                 task.Start();
             }
         }
-        public IEnumerable<IAITask> GetAllTasks()
+        public IEnumerable<TaskBase> GetAllTasks()
         {
             return TaskMap.Values;
         }
@@ -106,8 +93,12 @@ namespace Kurisu.Framework.AI
     /// <typeparam name="T"></typeparam>
     public abstract class AIController<T> : AIController where T : Actor, IAIPawn
     {
-        public T Pawn { get; protected set; }
+        protected T Pawn { get; set; }
         public sealed override IAIPawn GetAIPawn()
+        {
+            return Pawn;
+        }
+        public T GetPawn()
         {
             return Pawn;
         }

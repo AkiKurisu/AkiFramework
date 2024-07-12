@@ -7,6 +7,7 @@ namespace Kurisu.Framework.Schedulers
     {
         private static readonly _ObjectPool<FrameCounter> pool = new(() => new());
         #region Public Properties/Fields
+        public SchedulerHandle Handle { get; private set; }
         /// <summary>
         /// How many frame the counter takes to complete from start to finish.
         /// </summary>
@@ -49,12 +50,12 @@ namespace Kurisu.Framework.Schedulers
         /// Register a new counter that should fire an event after a certain amount of frame
         /// has elapsed.
         /// </summary>
-        internal static FrameCounter Register(int frame, Action onComplete, Action<int> onUpdate = null,
+        internal static FrameCounter Register(int frame, SchedulerUnsafeBinding onComplete, SchedulerUnsafeBinding<int> onUpdate,
             bool isLooped = false)
         {
             FrameCounter timer = pool.Get();
-            timer.Init(frame, onComplete, onUpdate, isLooped);
-            SchedulerRunner.Instance.Register(timer, onComplete == null ? onUpdate : onComplete);
+            timer.Init(SchedulerRunner.Instance.NewHandle(), frame, ref onComplete, ref onUpdate, isLooped);
+            SchedulerRunner.Instance.Register(timer, onComplete.IsValid() ? onComplete.GetDelegate() : onUpdate.GetDelegate());
             return timer;
         }
         #endregion
@@ -70,9 +71,9 @@ namespace Kurisu.Framework.Schedulers
         }
         public void Dispose()
         {
-            SchedulerRunner.Instance.Unregister(this, OnComplete == null ? _onUpdate : OnComplete);
-            _onUpdate = null;
-            OnComplete = null;
+            SchedulerRunner.Instance.Unregister(this, _onComplete.IsValid() ? _onComplete.GetDelegate() : _onUpdate.GetDelegate());
+            _onUpdate = default;
+            _onComplete = default;
             pool.Release(this);
         }
         /// <summary>
@@ -112,16 +113,17 @@ namespace Kurisu.Framework.Schedulers
 
         #endregion
         #region Private Properties/Fields
-        private Action OnComplete;
-        private Action<int> _onUpdate;
+        private SchedulerUnsafeBinding _onComplete;
+        private SchedulerUnsafeBinding<int> _onUpdate;
         private float? _timeElapsedBeforeCancel;
         private float? _timeElapsedBeforePause;
         #endregion
         #region Private Constructor
-        private void Init(int frame, Action onComplete, Action<int> onUpdate, bool isLooped)
+        private void Init(SchedulerHandle handle, int frame, ref SchedulerUnsafeBinding onComplete, ref SchedulerUnsafeBinding<int> onUpdate, bool isLooped)
         {
+            Handle = handle;
             Frame = frame;
-            OnComplete = onComplete;
+            _onComplete = onComplete;
             _onUpdate = onUpdate;
 
             IsLooped = isLooped;
@@ -149,12 +151,11 @@ namespace Kurisu.Framework.Schedulers
 
             ++count;
 
-            _onUpdate?.Invoke(count);
+            _onUpdate.Invoke(count);
 
             if (count >= Frame)
             {
-                SchedulerRunner.Instance.Unregister(this, OnComplete == null ? _onUpdate : OnComplete);
-                OnComplete?.Invoke();
+                _onComplete.Invoke();
 
                 if (IsLooped)
                 {

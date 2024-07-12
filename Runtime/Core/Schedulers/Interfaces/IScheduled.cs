@@ -6,6 +6,7 @@ namespace Kurisu.Framework.Schedulers
     /// </summary>
     internal interface IScheduled : IDisposable
     {
+        SchedulerHandle Handle { get; }
         /// <summary>
         /// Get whether or not the scheduler has finished running for any reason.
         /// </summary>

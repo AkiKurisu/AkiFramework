@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
-namespace Kurisu.Framework.AI
+namespace Kurisu.Framework.Tasks
 {
     internal class TaskRunner : MonoBehaviour
     {
-        private readonly List<ITask> _tasks = new();
-        private readonly List<ITask> _tasksToAdd = new();
+        private readonly List<TaskBase> _tasks = new();
+        private readonly List<TaskBase> _tasksToAdd = new();
         private static TaskRunner instance;
         private static TaskRunner GetInstance()
         {
@@ -19,12 +19,13 @@ namespace Kurisu.Framework.AI
             }
             return instance;
         }
-        public static void RegisterTask(ITask task)
+        public static void RegisterTask(TaskBase task)
         {
             var instance = GetInstance();
             if (instance)
             {
                 if (instance._tasks.Contains(task)) return;
+                task.Acquire();
                 instance._tasksToAdd.Add(task);
             }
         }
@@ -43,9 +44,9 @@ namespace Kurisu.Framework.AI
                 _tasksToAdd.Clear();
             }
 
-            foreach (ITask task in _tasks)
+            foreach (TaskBase task in _tasks)
             {
-                if (task.Status != TaskStatus.Disabled)
+                if (task.GetStatus() == TaskStatus.Enabled)
                     task.Tick();
             }
         }
@@ -53,8 +54,9 @@ namespace Kurisu.Framework.AI
         {
             for (int i = _tasks.Count - 1; i >= 0; i--)
             {
-                if (_tasks[i].Status != TaskStatus.Disabled) continue;
-                _tasks.Remove(_tasks[i]);
+                if (_tasks[i].GetStatus() != TaskStatus.Disabled) continue;
+                _tasks[i].Dispose();
+                _tasks.RemoveAt(i);
             }
         }
     }

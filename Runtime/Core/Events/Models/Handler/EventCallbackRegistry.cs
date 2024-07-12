@@ -410,8 +410,7 @@ namespace Kurisu.Framework.Events
                     s_Listeners.Remove(eventRegistrationListener.Key);
             }
         }
-
-        public static void RegisterListeners<TEventType>(CallbackEventHandler ceh, Delegate callback, TrickleDown useTrickleDown, int skipFrame = 2)
+        public static void RegisterListeners<TEventType>(CallbackEventHandler ceh, Delegate callback, TrickleDown useTrickleDown)
         {
             if (!IsEventDebuggerConnected)
                 return;
@@ -421,9 +420,7 @@ namespace Kurisu.Framework.Events
                 s_Listeners.Add(ceh, dict);
             }
 
-            var declType = callback.Method.DeclaringType?.Name ?? string.Empty;
-            string objectName = callback.Target.ToString();
-            string itemName = declType + "." + callback.Method.Name + " > " + useTrickleDown + " [" + objectName + "]";
+            string itemName = Utils.GetDelegatePath(callback);
 
             if (!dict.TryGetValue(typeof(TEventType), out List<ListenerRecord> callbackRecords))
             {
@@ -431,13 +428,14 @@ namespace Kurisu.Framework.Events
                 dict.Add(typeof(TEventType), callbackRecords);
             }
 
-            StackFrame callStack = new(skipFrame, true);
+            StackFrame frame = Utils.GetCurrentStackFrame();
+
             callbackRecords.Add(new ListenerRecord
             {
                 hashCode = callback.GetHashCode(),
                 name = itemName,
-                fileName = callStack.GetFileName(),
-                lineNumber = callStack.GetFileLineNumber()
+                fileName = frame.GetFileName(),
+                lineNumber = frame.GetFileLineNumber()
             });
         }
 
@@ -448,8 +446,7 @@ namespace Kurisu.Framework.Events
             if (!s_Listeners.TryGetValue(ceh, out Dictionary<Type, List<ListenerRecord>> dict))
                 return;
 
-            var declType = callback.Method.DeclaringType?.Name ?? string.Empty;
-            var itemName = declType + "." + callback.Method.Name + ">";
+            string itemName = Utils.GetDelegatePath(callback);
 
             if (!dict.TryGetValue(typeof(TEventType), out List<ListenerRecord> callbackRecords))
                 return;
@@ -457,7 +454,7 @@ namespace Kurisu.Framework.Events
             for (var i = callbackRecords.Count - 1; i >= 0; i--)
             {
                 var callbackRecord = callbackRecords[i];
-                if (callbackRecord.name.StartsWith(itemName))
+                if (callbackRecord.name == itemName)
                 {
                     callbackRecords.RemoveAt(i);
                 }

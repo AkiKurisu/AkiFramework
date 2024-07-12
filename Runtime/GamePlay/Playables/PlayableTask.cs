@@ -1,28 +1,35 @@
+using Kurisu.Framework.Tasks;
 using UnityEngine;
 using UnityEngine.Playables;
-namespace Kurisu.Framework.AI.Playables
+namespace Kurisu.Framework.Playables.Tasks
 {
     /// <summary>
     /// A task to fade in playable according to playable's duration
     /// </summary>
-    public class FadeInPlayableTask : ITask
+    public class FadeInPlayableTask : PooledTaskBase<FadeInPlayableTask>
     {
-        public TaskStatus Status { get; private set; } = TaskStatus.Enabled;
-        private readonly Playable clipPlayable;
+        private Playable clipPlayable;
         private Playable mixerPlayable;
-        private readonly float fadeInTime;
-        public FadeInPlayableTask(Playable mixerPlayable, Playable clipPlayable, float fadeInTime)
+        private float fadeInTime;
+        public static FadeInPlayableTask GetPooled(Playable mixerPlayable, Playable clipPlayable, float fadeInTime)
         {
-            this.clipPlayable = clipPlayable;
-            this.mixerPlayable = mixerPlayable;
-            this.fadeInTime = fadeInTime;
+            var task = GetPooled();
+            task.clipPlayable = clipPlayable;
+            task.mixerPlayable = mixerPlayable;
+            task.fadeInTime = fadeInTime;
+            return task;
         }
-        public void Tick()
+        protected override void Init()
+        {
+            base.Init();
+            mStatus = TaskStatus.Enabled;
+        }
+        public override void Tick()
         {
             if (!mixerPlayable.IsValid())
             {
                 Debug.LogWarning("Playable is already destroyed");
-                Status = TaskStatus.Disabled;
+                mStatus = TaskStatus.Disabled;
                 return;
             }
             clipPlayable.SetSpeed(1d);
@@ -31,7 +38,7 @@ namespace Kurisu.Framework.AI.Playables
             {
                 mixerPlayable.SetInputWeight(0, 0);
                 mixerPlayable.SetInputWeight(1, 1);
-                Status = TaskStatus.Disabled;
+                mStatus = TaskStatus.Disabled;
             }
             else
             {
@@ -44,26 +51,32 @@ namespace Kurisu.Framework.AI.Playables
     /// <summary>
     /// A task to fade out playable according to playable's duration
     /// </summary>
-    public class FadeOutPlayableTask : ITask
+    public class FadeOutPlayableTask : PooledTaskBase<FadeOutPlayableTask>
     {
-        public TaskStatus Status { get; private set; } = TaskStatus.Enabled;
-        private readonly Playable clipPlayable;
+        private Playable clipPlayable;
         private Playable mixerPlayable;
-        private readonly float fadeOutTime;
-        private readonly double duration;
-        public FadeOutPlayableTask(Playable mixerPlayable, Playable clipPlayable, float fadeOutTime)
+        private float fadeOutTime;
+        private double duration;
+        public static FadeOutPlayableTask GetPooled(Playable mixerPlayable, Playable clipPlayable, float fadeOutTime)
         {
-            this.clipPlayable = clipPlayable;
-            this.mixerPlayable = mixerPlayable;
-            this.fadeOutTime = fadeOutTime;
-            duration = clipPlayable.GetDuration();
+            var task = GetPooled();
+            task.clipPlayable = clipPlayable;
+            task.mixerPlayable = mixerPlayable;
+            task.fadeOutTime = fadeOutTime;
+            task.duration = clipPlayable.GetDuration();
+            return task;
         }
-        public void Tick()
+        protected override void Init()
+        {
+            base.Init();
+            mStatus = TaskStatus.Enabled;
+        }
+        public override void Tick()
         {
             if (!mixerPlayable.IsValid())
             {
                 Debug.LogWarning("Playable is already destroyed");
-                Status = TaskStatus.Disabled;
+                mStatus = TaskStatus.Disabled;
                 return;
             }
             double current = clipPlayable.GetTime();
@@ -71,7 +84,7 @@ namespace Kurisu.Framework.AI.Playables
             {
                 mixerPlayable.SetInputWeight(0, 1);
                 mixerPlayable.SetInputWeight(1, 0);
-                Status = TaskStatus.Disabled;
+                mStatus = TaskStatus.Disabled;
             }
             else
             {
@@ -84,24 +97,30 @@ namespace Kurisu.Framework.AI.Playables
     /// <summary>
     /// A task to fade out playable according to fadeOutTime 
     /// </summary>
-    public class AbsolutelyFadeOutPlayableTask : ITask
+    public class AbsolutelyFadeOutPlayableTask : PooledTaskBase<AbsolutelyFadeOutPlayableTask>
     {
-        public TaskStatus Status { get; private set; } = TaskStatus.Enabled;
         private Playable mixerPlayable;
-        private readonly float fadeOutTime;
+        private float fadeOutTime;
         private float timer;
-        public AbsolutelyFadeOutPlayableTask(Playable mixerPlayable, float fadeOutTime)
+        public static AbsolutelyFadeOutPlayableTask GetPooled(Playable mixerPlayable, float fadeOutTime)
         {
-            this.mixerPlayable = mixerPlayable;
-            this.fadeOutTime = fadeOutTime;
-            timer = 0;
+            var task = GetPooled();
+            task.mixerPlayable = mixerPlayable;
+            task.fadeOutTime = fadeOutTime;
+            task.timer = 0;
+            return task;
         }
-        public void Tick()
+        protected override void Init()
+        {
+            base.Init();
+            mStatus = TaskStatus.Enabled;
+        }
+        public override void Tick()
         {
             if (!mixerPlayable.IsValid())
             {
                 Debug.LogWarning("Playable is already destroyed");
-                Status = TaskStatus.Disabled;
+                mStatus = TaskStatus.Disabled;
                 return;
             }
             timer += Time.deltaTime;
@@ -109,7 +128,7 @@ namespace Kurisu.Framework.AI.Playables
             {
                 mixerPlayable.SetInputWeight(0, 1);
                 mixerPlayable.SetInputWeight(1, 0);
-                Status = TaskStatus.Disabled;
+                mStatus = TaskStatus.Disabled;
             }
             else
             {
@@ -119,27 +138,33 @@ namespace Kurisu.Framework.AI.Playables
             }
         }
     }
-    public class WaitPlayableTask : ITask
+    public class WaitPlayableTask : PooledTaskBase<WaitPlayableTask>
     {
-        public TaskStatus Status { get; private set; } = TaskStatus.Enabled;
-        private readonly Playable clipPlayable;
-        private readonly double waitTime;
-        public WaitPlayableTask(Playable clipPlayable, double waitTime)
+        private Playable clipPlayable;
+        private double waitTime;
+        public static WaitPlayableTask GetPooled(Playable clipPlayable, double waitTime)
         {
-            this.clipPlayable = clipPlayable;
-            this.waitTime = waitTime;
+            var task = GetPooled();
+            task.clipPlayable = clipPlayable;
+            task.waitTime = waitTime;
+            return task;
         }
-        public void Tick()
+        protected override void Init()
+        {
+            base.Init();
+            mStatus = TaskStatus.Enabled;
+        }
+        public override void Tick()
         {
             if (!clipPlayable.IsValid())
             {
                 Debug.LogWarning("Playable is already destroyed");
-                Status = TaskStatus.Disabled;
+                mStatus = TaskStatus.Disabled;
                 return;
             }
             if (clipPlayable.GetTime() >= waitTime)
             {
-                Status = TaskStatus.Disabled;
+                mStatus = TaskStatus.Disabled;
             }
         }
     }

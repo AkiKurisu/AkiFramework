@@ -15,19 +15,22 @@ namespace Kurisu.Framework.Schedulers
     [DefaultExecutionOrder(-100)]
     internal class SchedulerRunner : MonoBehaviour
     {
+        // not use struct for easier dispose control
         internal class ScheduledItem : IDisposable
         {
             private static readonly _ObjectPool<ScheduledItem> pool = new(() => new());
-            public uint Id { get; private set; }
+#if UNITY_EDITOR
             public double Timestamp { get; private set; }
+#endif
             public IScheduled Value { get; private set; }
             private bool delay;
-            public static ScheduledItem GetPooled(uint id, IScheduled scheduled, bool delay)
+            public static ScheduledItem GetPooled(IScheduled scheduled, bool delay)
             {
                 var item = pool.Get();
-                item.Id = id;
                 item.Value = scheduled;
+#if UNITY_EDITOR
                 item.Timestamp = Time.timeSinceLevelLoadAsDouble;
+#endif
                 item.delay = delay;
                 return item;
             }
@@ -50,15 +53,16 @@ namespace Kurisu.Framework.Schedulers
             {
                 Value?.Dispose();
                 Value = default;
-                Id = default;
+#if UNITY_EDITOR
                 Timestamp = default;
+#endif
                 delay = default;
                 pool.Release(this);
             }
         }
         private const int ManagedCapacity = 200;
         private const int RunningCapacity = 100;
-        internal readonly Dictionary<IScheduled, ScheduledItem> managedScheduled = new(ManagedCapacity);
+        internal readonly Dictionary<uint, ScheduledItem> managedScheduled = new(ManagedCapacity);
         internal List<ScheduledItem> scheduledRunning = new(RunningCapacity);
         // start from id = 1, should not be 0 since it roles as default/invalid task symbol
         private uint taskId = 1;
@@ -105,22 +109,24 @@ namespace Kurisu.Framework.Schedulers
                 scheduled.Dispose();
                 return;
             }
-            if (taskId == uint.MaxValue) taskId = 1;
             // schedule one frame if register before runner update
             bool needDelayFrame = lastFrame < Time.frameCount;
-            managedScheduled.Add(scheduled, ScheduledItem.GetPooled(taskId++, scheduled, needDelayFrame));
-            (isGateOpen ? scheduledRunning : scheduledToAdd).Add(managedScheduled[scheduled]);
+            uint id = scheduled.Handle.Handle;
+            var item = ScheduledItem.GetPooled(scheduled, needDelayFrame);
+            managedScheduled.Add(id, item);
+            (isGateOpen ? scheduledRunning : scheduledToAdd).Add(item);
 #if UNITY_EDITOR
             SchedulerRegistry.RegisterListener(scheduled, @delegate);
 #endif
         }
+        public SchedulerHandle NewHandle() => new(taskId++);
         /// <summary>
         ///  Unregister scheduled task from managed
         /// </summary>
         /// <param name="scheduled"></param>
         public void Unregister(IScheduled scheduled, Delegate @delegate)
         {
-            managedScheduled.Remove(scheduled);
+            managedScheduled.Remove(scheduled.Handle.Handle);
 #if UNITY_EDITOR
             SchedulerRegistry.UnregisterListener(scheduled, @delegate);
 #endif
@@ -208,10 +214,6 @@ namespace Kurisu.Framework.Schedulers
                 scheduledRunning.RemoveAt(i);
             }
         }
-        public SchedulerHandle CreateHandle(IScheduled task)
-        {
-            return new SchedulerHandle(managedScheduled[task].Id);
-        }
         /// <summary>
         /// Whether scheduled task is valid
         /// </summary>
@@ -219,11 +221,7 @@ namespace Kurisu.Framework.Schedulers
         /// <returns></returns>
         public bool IsValid(uint taskId)
         {
-            foreach (var value in managedScheduled.Values)
-            {
-                if (value.Id == taskId) return true;
-            }
-            return false;
+            return managedScheduled.ContainsKey(taskId);
         }
         /// <summary>
         /// Get internal scheduled task by <see cref="taskId"/>
@@ -233,28 +231,12 @@ namespace Kurisu.Framework.Schedulers
         /// <returns></returns>
         public bool TryGet(uint taskId, out IScheduled task)
         {
-            foreach (var value in managedScheduled.Values)
+            if (managedScheduled.TryGetValue(taskId, out var item))
             {
-                if (value.Id == taskId)
-                {
-                    task = value.Value;
-                    return true;
-                }
+                task = item.Value;
+                return true;
             }
             task = null;
-            return false;
-        }
-        private bool TryGetItem(uint taskId, out ScheduledItem item)
-        {
-            foreach (var value in managedScheduled.Values)
-            {
-                if (value.Id == taskId)
-                {
-                    item = value;
-                    return true;
-                }
-            }
-            item = null;
             return false;
         }
         /// <summary>
@@ -263,13 +245,19 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="taskId"></param>
         public void Cancel(uint taskId)
         {
-            if (!TryGetItem(taskId, out ScheduledItem item)) return;
+            if (!managedScheduled.TryGetValue(taskId, out var item)) return;
             item.Cancel();
-            if (isGateOpen)
+            // ensure add buffer also remove task
+            if (scheduledToAdd.Remove(item))
+            {
+                item.Dispose();
+            }
+            else if (isGateOpen)
             {
                 scheduledRunning.Remove(item);
                 item.Dispose();
             }
+
         }
     }
 }

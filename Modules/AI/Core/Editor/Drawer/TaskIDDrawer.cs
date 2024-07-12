@@ -9,10 +9,10 @@ namespace Kurisu.Framework.AI
     [CustomPropertyDrawer(typeof(TaskIDAttribute), true)]
     public class TaskIDDrawer : PropertyDrawer
     {
-        private class AITasks
+        private class TaskIDRegistry
         {
-            public readonly string[] Values;
-            public AITasks()
+            public static readonly string[] Values;
+            static TaskIDRegistry()
             {
                 var hosts = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes())
                 .Where(x => x.GetCustomAttribute<TaskIDHostAttribute>() != null);
@@ -28,10 +28,8 @@ namespace Kurisu.Framework.AI
             }
         }
         private static readonly GUIContent k_IsNotStringLabel = new("The property type is not string.");
-        private static AITasks tasks;
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            tasks ??= new();
             EditorGUI.BeginProperty(position, label, property);
             if (property.propertyType == SerializedPropertyType.String)
             {
@@ -39,10 +37,10 @@ namespace Kurisu.Framework.AI
                 {
                     height = EditorGUIUtility.singleLineHeight
                 };
-                int index = EditorGUI.Popup(position: popupPosition, label.text, selectedIndex: Array.IndexOf(tasks.Values, property.stringValue), displayedOptions: tasks.Values);
+                int index = EditorGUI.Popup(position: popupPosition, label.text, selectedIndex: Array.IndexOf(TaskIDRegistry.Values, property.stringValue), displayedOptions: TaskIDRegistry.Values);
                 if (index >= 0)
                 {
-                    property.stringValue = tasks.Values[index];
+                    property.stringValue = TaskIDRegistry.Values[index];
                 }
             }
             else

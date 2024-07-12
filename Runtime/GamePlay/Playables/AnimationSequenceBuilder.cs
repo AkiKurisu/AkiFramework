@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
+using Kurisu.Framework.Tasks;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
-namespace Kurisu.Framework.AI.Playables
+namespace Kurisu.Framework.Playables.Tasks
 {
     /// <summary>
     /// Provide an animation sequence using UnityEngine.Playables API
@@ -12,7 +13,7 @@ namespace Kurisu.Framework.AI.Playables
     {
         private readonly PlayableGraph playableGraph;
         private AnimationPlayableOutput playableOutput;
-        private readonly List<ITask> taskBuffer = new();
+        private readonly List<TaskBase> taskBuffer = new();
         private Playable rootMixer;
         private Playable mixerPointer;
         private SequenceTask sequence;
@@ -61,7 +62,7 @@ namespace Kurisu.Framework.AI.Playables
                 // Layout as a binary tree
                 var newMixer = AnimationMixerPlayable.Create(playableGraph, 2);
                 var right = mixerPointer.GetInput(1);
-                taskBuffer.Add(new WaitPlayableTask(right, right.GetDuration() - fadeIn));
+                taskBuffer.Add(WaitPlayableTask.GetPooled(right, right.GetDuration() - fadeIn));
                 //Disconnect leaf
                 playableGraph.Disconnect(mixerPointer, 1);
                 //Right=>left
@@ -75,7 +76,7 @@ namespace Kurisu.Framework.AI.Playables
             }
             mixerPointer.SetInputWeight(0, 1);
             mixerPointer.SetInputWeight(1, 0);
-            taskBuffer.Add(new FadeInPlayableTask(mixerPointer, clipPlayable, fadeIn));
+            taskBuffer.Add(FadeInPlayableTask.GetPooled(mixerPointer, clipPlayable, fadeIn));
             return this;
         }
         /// <summary>
@@ -103,7 +104,7 @@ namespace Kurisu.Framework.AI.Playables
                 Debug.LogWarning("Graph is already destroyed before build");
                 return sequence;
             }
-            return BuildInternal(new SequenceTask(Dispose));
+            return BuildInternal(SequenceTask.GetPooled(Dispose));
         }
         /// <summary>
         /// Append animation sequence after an existed sequence
@@ -122,7 +123,7 @@ namespace Kurisu.Framework.AI.Playables
                 return;
             }
             BuildInternal(sequenceTask);
-            sequenceTask.Append(new CallBackTask(Dispose));
+            sequenceTask.AppendCallBack(Dispose);
         }
         private SequenceTask BuildInternal(SequenceTask sequenceTask)
         {
@@ -134,13 +135,14 @@ namespace Kurisu.Framework.AI.Playables
             foreach (var task in taskBuffer)
                 sequenceTask.Append(task);
             var right = (AnimationClipPlayable)mixerPointer.GetInput(1);
-            sequenceTask.Append(new WaitPlayableTask(right, right.GetAnimationClip().length - fadeOutTime));
+            sequenceTask.Append(WaitPlayableTask.GetPooled(right, right.GetAnimationClip().length - fadeOutTime));
             if (fadeOutTime > 0)
             {
-                sequenceTask.Append(new FadeOutPlayableTask(rootMixer, right, fadeOutTime));
+                sequenceTask.Append(FadeOutPlayableTask.GetPooled(rootMixer, right, fadeOutTime));
             }
             sequence = sequenceTask;
             taskBuffer.Clear();
+            sequence.Acquire();
             return sequence;
         }
         /// <summary>
@@ -150,7 +152,7 @@ namespace Kurisu.Framework.AI.Playables
         /// <returns></returns>
         public SequenceTask BuildFadeOut(Action callBack)
         {
-            return new SequenceTask(new AbsolutelyFadeOutPlayableTask(rootMixer, fadeOutTime), callBack);
+            return SequenceTask.GetPooled(AbsolutelyFadeOutPlayableTask.GetPooled(rootMixer, fadeOutTime), callBack);
         }
         /// <summary>
         /// Set animation sequence fadeOut time, default is 0
@@ -184,6 +186,7 @@ namespace Kurisu.Framework.AI.Playables
         /// </summary> <summary>
         public void Dispose()
         {
+            sequence?.Dispose();
             sequence = null;
             if (playableGraph.IsValid())
             {
