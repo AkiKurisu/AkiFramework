@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using UnityEngine.Profiling;
 namespace Kurisu.Framework.Schedulers
 {
     internal static class SchedulerRegistry
@@ -20,6 +21,7 @@ namespace Kurisu.Framework.Schedulers
         }
         public static void RegisterListener(IScheduled scheduled, Delegate callback)
         {
+            Profiler.BeginSample("SchedulerRegistry::RegisterListener");
             int hashCode = default;
             string itemName;
             if (callback == null)
@@ -29,9 +31,7 @@ namespace Kurisu.Framework.Schedulers
             else
             {
                 hashCode = callback.GetHashCode();
-                var declType = callback.Method.DeclaringType?.Name ?? string.Empty;
-                string objectName = callback.Target.ToString();
-                itemName = declType + "." + callback.Method.Name + " > " + " [" + objectName + "]";
+                itemName = Utils.GetDelegatePath(callback);
             }
 
             StackFrame frame = Utils.GetCurrentStackFrame();
@@ -43,6 +43,7 @@ namespace Kurisu.Framework.Schedulers
                 fileName = frame.GetFileName(),
                 lineNumber = frame.GetFileLineNumber()
             });
+            Profiler.EndSample();
         }
         public static bool TryGetListener(IScheduled scheduled, out ListenerRecord record)
         {
@@ -50,6 +51,7 @@ namespace Kurisu.Framework.Schedulers
         }
         public static void UnregisterListener(IScheduled scheduled, Delegate callback)
         {
+            Profiler.BeginSample("SchedulerRegistry::UnregisterListener");
             if (!s_Listeners.TryGetValue(scheduled, out ListenerRecord record))
                 return;
 
@@ -58,14 +60,13 @@ namespace Kurisu.Framework.Schedulers
                 s_Listeners.Remove(scheduled);
                 return;
             }
-            var declType = callback.Method.DeclaringType?.Name ?? string.Empty;
-            string objectName = callback.Target.ToString();
-            var itemName = declType + "." + callback.Method.Name + " > " + " [" + objectName + "]";
 
-            if (record.name == itemName)
+            if (record.name == Utils.GetDelegatePath(callback))
             {
                 s_Listeners.Remove(scheduled);
             }
+            Profiler.EndSample();
         }
+
     }
 }

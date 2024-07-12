@@ -35,9 +35,9 @@ namespace Kurisu.Framework.Schedulers.Editor
             foreach (var scheduled in Manager.scheduledRunning)
             {
                 double elapsedTime = Time.timeSinceLevelLoadAsDouble - scheduled.Timestamp;
-                GUILayout.Label($"Task Id {scheduled.Id}, elapsed time: {elapsedTime}s.");
                 if (SchedulerRegistry.TryGetListener(scheduled.Value, out var listener))
                 {
+                    GUILayout.Label($"Id {scheduled.Value.Handle.Handle}, {listener.name}, elapsed time: {elapsedTime}s.");
                     EditorGUI.indentLevel++;
                     if (GUILayout.Button($"{listener.fileName} {listener.lineNumber}", stackTraceButtonStyle))
                     {

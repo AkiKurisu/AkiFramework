@@ -13,6 +13,7 @@ namespace Kurisu.Framework.Schedulers
     {
         private static readonly _ObjectPool<Timer> pool = new(() => new());
         #region Public Properties/Fields
+        public SchedulerHandle Handle { get; private set; }
         /// <summary>
         /// How long the timer takes to complete from start to finish.
         /// </summary>
@@ -71,12 +72,12 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="useRealTime">Whether the timer uses real-time(i.e. not affected by pauses,
         /// slow/fast motion) or game-time(will be affected by pauses and slow/fast-motion).</param>
         /// <returns>A timer object that allows you to examine stats and stop/resume progress.</returns>
-        internal static Timer Register(float duration, Action onComplete, Action<float> onUpdate = null,
+        internal static Timer Register(float duration, SchedulerUnsafeBinding onComplete, SchedulerUnsafeBinding<float> onUpdate,
             bool isLooped = false, bool useRealTime = false)
         {
             Timer timer = pool.Get();
-            timer.Init(duration, onComplete, onUpdate, isLooped, useRealTime);
-            SchedulerRunner.Instance.Register(timer, onComplete == null ? onUpdate : onComplete);
+            timer.Init(SchedulerRunner.Instance.NewHandle(), duration, ref onComplete, ref onUpdate, isLooped, useRealTime);
+            SchedulerRunner.Instance.Register(timer, onComplete.IsValid() ? onComplete.GetDelegate() : onUpdate.GetDelegate());
             return timer;
         }
         #endregion
@@ -92,9 +93,9 @@ namespace Kurisu.Framework.Schedulers
         }
         public void Dispose()
         {
-            SchedulerRunner.Instance.Unregister(this, OnComplete == null ? _onUpdate : OnComplete);
-            _onUpdate = null;
-            OnComplete = null;
+            SchedulerRunner.Instance.Unregister(this, _onComplete.IsValid() ? _onComplete.GetDelegate() : _onUpdate.GetDelegate());
+            _onUpdate = default;
+            _onComplete = default;
             pool.Release(this);
         }
         /// <summary>
@@ -176,8 +177,8 @@ namespace Kurisu.Framework.Schedulers
 
         #endregion
         #region Private Properties/Fields
-        private Action OnComplete;
-        private Action<float> _onUpdate;
+        private SchedulerUnsafeBinding _onComplete;
+        private SchedulerUnsafeBinding<float> _onUpdate;
         private float _startTime;
         private float _lastUpdateTime;
 
@@ -191,11 +192,12 @@ namespace Kurisu.Framework.Schedulers
         #endregion
         #region Private Constructor (use static Register method to create new timer)
 
-        private void Init(float duration, Action onComplete, Action<float> onUpdate,
+        private void Init(SchedulerHandle handle, float duration, ref SchedulerUnsafeBinding onComplete, ref SchedulerUnsafeBinding<float> onUpdate,
             bool isLooped, bool usesRealTime)
         {
+            Handle = handle;
             Duration = duration;
-            OnComplete = onComplete;
+            _onComplete = onComplete;
             _onUpdate = onUpdate;
 
             IsLooped = isLooped;
@@ -242,11 +244,11 @@ namespace Kurisu.Framework.Schedulers
 
             _lastUpdateTime = GetWorldTime();
 
-            _onUpdate?.Invoke(GetTimeElapsed());
+            _onUpdate.Invoke(GetTimeElapsed());
 
             if (GetWorldTime() >= GetFireTime())
             {
-                OnComplete?.Invoke();
+                _onComplete.Invoke();
 
                 if (IsLooped)
                 {
