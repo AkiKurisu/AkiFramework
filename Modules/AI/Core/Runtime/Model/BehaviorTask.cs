@@ -21,6 +21,11 @@ namespace Kurisu.Framework.AI
         public BehaviorTree InstanceTree { get; private set; }
         public Object Object => host;
         private AIController host;
+        public BehaviorTask() : base()
+        {
+            // pause on cctor, manually start by controller
+            mStatus = TaskStatus.Paused;
+        }
         public void SetController(AIController host)
         {
             this.host = host;

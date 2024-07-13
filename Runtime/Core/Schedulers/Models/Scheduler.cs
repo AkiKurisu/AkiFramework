@@ -1,6 +1,9 @@
 using System;
 namespace Kurisu.Framework.Schedulers
 {
+    /// <summary>
+    /// Unsafe binding to provide zero-allocation delegate
+    /// </summary>
     public readonly unsafe struct SchedulerUnsafeBinding
     {
         private const byte Ptr = 0;
@@ -64,6 +67,9 @@ namespace Kurisu.Framework.Schedulers
             return new SchedulerUnsafeBinding(ptr);
         }
     }
+    /// <summary>
+    /// Unsafe binding to provide zero-allocation delegate
+    /// </summary>
     public readonly unsafe struct SchedulerUnsafeBinding<T>
     {
         private const byte Ptr = 0;
