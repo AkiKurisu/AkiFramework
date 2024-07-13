@@ -71,7 +71,7 @@ namespace Kurisu.Framework.Pool
         public Transform Transform { get; protected set; }
         public bool IsDisposed { get; protected set; }
         protected readonly DisposableBag disposableBag = new();
-        public PooledKey Name { get; protected set; }
+        public PoolKey Name { get; protected set; }
         public static void SetMaxSize(int size)
         {
             pool.MaxSize = size;
@@ -121,12 +121,16 @@ namespace Kurisu.Framework.Pool
             IsDisposed = true;
             pool.Release(this);
         }
-        public void Destroy(float t = 0f)
+        public unsafe void Destroy(float t = 0f)
         {
             if (t >= 0f)
-                Scheduler.Delay(t, Dispose).AddTo(this);
+                Scheduler.DelayUnsafe(t, new SchedulerUnsafeBinding(this, &DisposeSelf)).AddTo(this);
             else
                 Dispose();
+        }
+        private static void DisposeSelf(object @object)
+        {
+            ((IDisposable)@object).Dispose();
         }
     }
     public class PooledComponent<T, K> : PooledGameObject where K : Component where T : PooledComponent<T, K>, new()
@@ -140,7 +144,7 @@ namespace Kurisu.Framework.Pool
         }
         public K Component => Cache.component;
         protected ComponentCache Cache { get; set; }
-        private static readonly PooledKey componentName;
+        private static readonly PoolKey componentName;
         static PooledComponent()
         {
             componentName = new(typeof(T).FullName);
@@ -167,10 +171,10 @@ namespace Kurisu.Framework.Pool
         }
         private const string Prefix = "Prefab";
         private static IPooledMetaData metaData;
-        public static PooledKey GetPooledKey(GameObject prefab)
+        public static PoolKey GetPooledKey(GameObject prefab)
         {
             // append instance id since prefabs may have same name
-            return new PooledKey(Prefix, prefab.GetInstanceID());
+            return new PoolKey(Prefix, prefab.GetInstanceID());
         }
         /// <summary>
         /// Instantiate pooled component by prefab, optimized version of <see cref="Object.Instantiate(Object, Transform)"/> 
@@ -184,7 +188,7 @@ namespace Kurisu.Framework.Pool
             UnityEngine.Profiling.Profiler.BeginSample(nameof(Instantiate));
 #endif
             var pooledComponent = pool.Get();
-            PooledKey key = GetPooledKey(prefab);
+            PoolKey key = GetPooledKey(prefab);
             pooledComponent.Name = key;
             var @object = GameObjectPoolManager.Get(key, out metaData, parent, createEmptyIfNotExist: false);
             if (!@object)
@@ -247,26 +251,26 @@ namespace Kurisu.Framework.Pool
     }
     public interface IPooledMetaData { }
     /// <summary>
-    /// Struct based pooled key without allocation
+    /// Struct based pool key without allocation
     /// </summary>
-    public readonly struct PooledKey
+    public readonly struct PoolKey
     {
         public readonly string key;
         public readonly string subKey;
         public readonly int id;
-        public PooledKey(string key)
+        public PoolKey(string key)
         {
             this.key = key;
             subKey = null;
             id = 0;
         }
-        public PooledKey(string key, string subKey)
+        public PoolKey(string key, string subKey)
         {
             this.key = key;
             this.subKey = subKey;
             id = 0;
         }
-        public PooledKey(string key, int id)
+        public PoolKey(string key, int id)
         {
             this.key = key;
             subKey = null;
@@ -293,14 +297,14 @@ namespace Kurisu.Framework.Pool
                 return $"{key} {subKey} {id}";
             return $"{key} {subKey}";
         }
-        public class Comparer : IEqualityComparer<PooledKey>
+        public class Comparer : IEqualityComparer<PoolKey>
         {
-            public bool Equals(PooledKey x, PooledKey y)
+            public bool Equals(PoolKey x, PoolKey y)
             {
                 return x.id == y.id && x.key == y.key && x.subKey == y.subKey;
             }
 
-            public int GetHashCode(PooledKey key)
+            public int GetHashCode(PoolKey key)
             {
                 return HashCode.Combine(key.id, key.key, key.subKey);
             }
@@ -323,7 +327,7 @@ namespace Kurisu.Framework.Pool
         }
         public static bool IsInstantiated => instance != null;
         private static GameObjectPoolManager instance;
-        private readonly Dictionary<PooledKey, GameObjectPool> poolDic = new(new PooledKey.Comparer());
+        private readonly Dictionary<PoolKey, GameObjectPool> poolDic = new(new PoolKey.Comparer());
         private void OnDestroy()
         {
             if (instance == this) instance = null;
@@ -337,7 +341,7 @@ namespace Kurisu.Framework.Pool
         /// <param name="parent"></param>
         /// <param name="createEmptyIfNotExist"></param>
         /// <returns></returns>
-        public static GameObject Get(PooledKey address, out IPooledMetaData pooledMetaData, Transform parent = null, bool createEmptyIfNotExist = true)
+        public static GameObject Get(PoolKey address, out IPooledMetaData pooledMetaData, Transform parent = null, bool createEmptyIfNotExist = true)
         {
             GameObject obj = null;
             pooledMetaData = null;
@@ -357,7 +361,7 @@ namespace Kurisu.Framework.Pool
         /// <param name="obj"></param>
         /// <param name="address"></param>
         /// <param name="pooledMetaData"></param>
-        public static void Release(GameObject obj, PooledKey address = default, IPooledMetaData pooledMetaData = null)
+        public static void Release(GameObject obj, PoolKey address = default, IPooledMetaData pooledMetaData = null)
         {
             if (address.IsNull())
                 address = new(obj.name);
@@ -371,7 +375,7 @@ namespace Kurisu.Framework.Pool
         /// Release addressable gameObject pool
         /// </summary>
         /// <param name="address"></param>
-        public static void ReleasePool(PooledKey address)
+        public static void ReleasePool(PoolKey address)
         {
             if (Instance.poolDic.TryGetValue(address, out var pool))
             {
@@ -396,11 +400,11 @@ namespace Kurisu.Framework.Pool
         }
         private class GameObjectPool
         {
-            public readonly PooledKey key;
+            public readonly PoolKey key;
             public readonly GameObject fatherObj;
             public readonly Queue<GameObject> poolQueue = new();
             private readonly Dictionary<GameObject, IPooledMetaData> metaData = new();
-            public GameObjectPool(PooledKey address, Transform poolRoot)
+            public GameObjectPool(PoolKey address, Transform poolRoot)
             {
                 fatherObj = new GameObject((key = address).ToString());
                 fatherObj.transform.SetParent(poolRoot);

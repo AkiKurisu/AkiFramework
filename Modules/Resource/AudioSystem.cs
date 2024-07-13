@@ -123,15 +123,23 @@ namespace Kurisu.Framework.Resource
         {
             return clip.length * ((Time.timeScale < 0.01f) ? 0.01f : Time.timeScale);
         }
-        private static void PlayClipAtPoint(AudioClip clip, PooledAudioSource audioObject, Vector3 position)
+        private unsafe static void PlayClipAtPoint(AudioClip clip, PooledAudioSource audioObject, Vector3 position)
         {
             var gameObject = audioObject.GameObject;
             gameObject.transform.position = position;
             audioObject.Component.clip = clip;
             audioObject.Component.Play();
-            Scheduler.Delay(GetDuration(clip), audioObject.Dispose);
+            Scheduler.DelayUnsafe(GetDuration(clip), new SchedulerUnsafeBinding(audioObject, &DisposeAudioObject));
         }
-        private static void ScheduleClipAtPoint(AudioClip clip, PooledAudioSource audioObject, Vector3 position, float scheduleTime, bool appendClipDuration)
+        private static void DisposeAudioObject(object @object)
+        {
+            ((PooledAudioSource)@object).Dispose();
+        }
+        private static void PlayAudioObject(object @object)
+        {
+            ((PooledAudioSource)@object).Component.Play();
+        }
+        private unsafe static void ScheduleClipAtPoint(AudioClip clip, PooledAudioSource audioObject, Vector3 position, float scheduleTime, bool appendClipDuration)
         {
             var gameObject = audioObject.GameObject;
             gameObject.transform.position = position;
@@ -139,7 +147,7 @@ namespace Kurisu.Framework.Resource
             audioObject.Component.Play();
             if (appendClipDuration)
                 scheduleTime += GetDuration(clip);
-            Scheduler.Delay(scheduleTime, audioObject.Component.Play, isLooped: true).AddTo(audioObject);
+            Scheduler.DelayUnsafe(scheduleTime, new SchedulerUnsafeBinding(audioObject, &PlayAudioObject), isLooped: true).AddTo(audioObject);
         }
         private sealed class PooledAudioSource : PooledComponent<PooledAudioSource, AudioSource>
         {

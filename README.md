@@ -8,19 +8,28 @@ I supposed these code are useful but also not-must-be-included, which is my pers
 
 </div>
 
-## Features
+## Core Features
 
 [Events](./Docs/Events.md) 
 > A powerful event solution for dynamic and contextual event handling ported from UIElement.
 
-[Mod](./Docs/Mod.md) 
-> Simple mod system based on Addressables. 
-
 [Pool](./Docs/Pool.md) 
 > Zero allocation GameObject/Component pooling. 
 
+[Scheduler](./Docs/Resource.md) 
+> Zero allocation timer/frame counter. 
+
+## Modules
+
+Modules are based on core features.
+
+[Mod](./Docs/Mod.md) 
+> Simple mod system based on Addressables. 
+
+
 [Resource](./Docs/Resource.md) 
-> Resource loading system based on Addressables. 
+> Resource loading system, effect system based on Addressables. 
+
 
 ## Reference
 

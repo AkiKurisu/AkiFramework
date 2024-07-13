@@ -124,16 +124,23 @@ namespace Kurisu.Framework.Resource
         }
         public sealed class PooledParticleSystem : PooledComponent<PooledParticleSystem, ParticleSystem>
         {
+            public new class ComponentCache : PooledComponent<PooledParticleSystem, ParticleSystem>.ComponentCache
+            {
+                /// <summary>
+                /// Particle system total duration
+                /// </summary>
+                public float duration;
+            }
             private const string key = "FX";
-            public static PooledKey GetPooledKey(string address)
+            public static PoolKey GetPooledKey(string address)
             {
                 // append prefix since different type UObjects can have same address
-                return new PooledKey(key, address);
+                return new PoolKey(key, address);
             }
             public static async UniTask<PooledParticleSystem> InstantiateAsync(string address, Transform parent)
             {
                 var pooledParticleSystem = pool.Get();
-                PooledKey key = GetPooledKey(address);
+                PoolKey key = GetPooledKey(address);
                 pooledParticleSystem.Name = key;
                 var fxObject = GameObjectPoolManager.Get(key, out var metaData, parent, createEmptyIfNotExist: false);
                 if (!fxObject)
@@ -169,9 +176,9 @@ namespace Kurisu.Framework.Resource
                 Cache ??= new ComponentCache();
                 if (!Cache.component)
                 {
-                    // Allow add a pivot
-                    // allocate few to get component from gameObject
-                    Cache.component = GameObject.GetComponentInChildren<ParticleSystem>();
+                    var particles = GameObject.GetComponentsInChildren<ParticleSystem>();
+                    Cache.component = particles[0];
+                    ((ComponentCache)Cache).duration = particles.GetDuration();
                 }
                 Assert.IsNotNull(Component);
             }
@@ -180,29 +187,10 @@ namespace Kurisu.Framework.Resource
                 if (releaseOnEnd && !Component.main.loop)
                 {
                     // Push particle system to pool manager after particle system end
-                    Destroy(GetDuration());
+                    Destroy(((ComponentCache)Cache).duration);
                 }
                 if (Component.isPlaying) Component.Stop();
                 Component.Play();
-            }
-            /// <summary>
-            /// Get accurate duration compared to main.duration
-            /// </summary>
-            /// <returns></returns>
-            public float GetDuration()
-            {
-                var particles = GameObject.GetComponentsInChildren<ParticleSystem>();
-                var duration = -1f;
-                for (var i = 0; i < particles.Length; i++)
-                {
-                    var ps = particles[i];
-                    var time = ps.GetDuration(false);
-                    if (time > duration)
-                    {
-                        duration = time;
-                    }
-                }
-                return duration;
             }
             public void Stop(bool release = true)
             {
@@ -214,6 +202,25 @@ namespace Kurisu.Framework.Resource
     // Reference: https://blog.csdn.net/ls9512/article/details/103815387
     public static class ParticleSystemExtension
     {
+        /// <summary>
+        /// Get accurate duration compared to main.duration
+        /// </summary>
+        /// <param name="particles"></param>
+        /// <returns></returns>
+        public static float GetDuration(this ParticleSystem[] particles)
+        {
+            var duration = -1f;
+            for (var i = 0; i < particles.Length; i++)
+            {
+                var ps = particles[i];
+                var time = ps.GetDuration(false);
+                if (time > duration)
+                {
+                    duration = time;
+                }
+            }
+            return duration;
+        }
         private static float GetMaxValue(this ParticleSystem.MinMaxCurve minMaxCurve)
         {
             switch (minMaxCurve.mode)
