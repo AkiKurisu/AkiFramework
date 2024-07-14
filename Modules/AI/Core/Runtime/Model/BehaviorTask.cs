@@ -19,7 +19,7 @@ namespace Kurisu.Framework.AI
         [SerializeField]
         private BehaviorTreeAsset behaviorTreeAsset;
         public BehaviorTree InstanceTree { get; private set; }
-        public Object Object => host;
+        Object IBehaviorTreeContainer.Object => host;
         private AIController host;
         public BehaviorTask() : base()
         {
@@ -49,6 +49,11 @@ namespace Kurisu.Framework.AI
         {
             base.Pause();
             InstanceTree.Abort();
+        }
+        public override void Dispose()
+        {
+            base.Dispose();
+            InstanceTree.Dispose();
         }
         public BehaviorTree GetBehaviorTree()
         {

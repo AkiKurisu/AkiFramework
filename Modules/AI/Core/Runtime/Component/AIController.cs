@@ -50,7 +50,7 @@ namespace Kurisu.Framework.AI
             IsAIEnabled = false;
             foreach (var task in TaskMap.Values)
             {
-                task.Stop();
+                task.Pause();
             }
         }
         protected virtual void OnEnable()
