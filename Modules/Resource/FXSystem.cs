@@ -141,7 +141,7 @@ namespace Kurisu.Framework.Resource
             {
                 var pooledParticleSystem = pool.Get();
                 PoolKey key = GetPooledKey(address);
-                pooledParticleSystem.Name = key;
+                pooledParticleSystem.PoolKey = key;
                 var fxObject = GameObjectPoolManager.Get(key, out var metaData, parent, createEmptyIfNotExist: false);
                 if (!fxObject)
                 {
@@ -166,17 +166,14 @@ namespace Kurisu.Framework.Resource
             }
             protected sealed override void Init()
             {
-                LocalInit();
-            }
-            private void LocalInit()
-            {
                 IsDisposed = false;
-                disposableBag.Clear();
+                InitDisposables();
                 Transform = GameObject.transform;
                 Cache ??= new ComponentCache();
                 if (!Cache.component)
                 {
                     var particles = GameObject.GetComponentsInChildren<ParticleSystem>();
+                    Assert.IsTrue(particles.Length > 0);
                     Cache.component = particles[0];
                     ((ComponentCache)Cache).duration = particles.GetDuration();
                 }

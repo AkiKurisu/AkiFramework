@@ -129,15 +129,7 @@ namespace Kurisu.Framework.Resource
             gameObject.transform.position = position;
             audioObject.Component.clip = clip;
             audioObject.Component.Play();
-            Scheduler.DelayUnsafe(GetDuration(clip), new SchedulerUnsafeBinding(audioObject, &DisposeAudioObject));
-        }
-        private static void DisposeAudioObject(object @object)
-        {
-            ((PooledAudioSource)@object).Dispose();
-        }
-        private static void PlayAudioObject(object @object)
-        {
-            ((PooledAudioSource)@object).Component.Play();
+            audioObject.Destroy(GetDuration(clip));
         }
         private unsafe static void ScheduleClipAtPoint(AudioClip clip, PooledAudioSource audioObject, Vector3 position, float scheduleTime, bool appendClipDuration)
         {
@@ -147,7 +139,7 @@ namespace Kurisu.Framework.Resource
             audioObject.Component.Play();
             if (appendClipDuration)
                 scheduleTime += GetDuration(clip);
-            Scheduler.DelayUnsafe(scheduleTime, new SchedulerUnsafeBinding(audioObject, &PlayAudioObject), isLooped: true).AddTo(audioObject);
+            audioObject.SchedulePlay(scheduleTime);
         }
         private sealed class PooledAudioSource : PooledComponent<PooledAudioSource, AudioSource>
         {
@@ -159,6 +151,16 @@ namespace Kurisu.Framework.Resource
                 pooledAudioSource.Component.spatialBlend = spatialBlend;
                 pooledAudioSource.Component.minDistance = minDistance;
                 return pooledAudioSource;
+            }
+            public unsafe void SchedulePlay(float scheduleTime)
+            {
+                // notify boxing cause allocation here
+                var handle = Scheduler.DelayUnsafe(scheduleTime, new SchedulerUnsafeBinding(this, &Play_Imp), isLooped: true);
+                Add(handle);
+            }
+            private static void Play_Imp(object @object)
+            {
+                ((PooledAudioSource)@object).Component.Play();
             }
         }
     }

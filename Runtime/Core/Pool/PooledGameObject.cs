@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using Kurisu.Framework.React;
 using Kurisu.Framework.Schedulers;
-using R3;
 using UnityEngine;
+using UnityEngine.Pool;
 using UnityEngine.SceneManagement;
-using Object = UnityEngine.Object;
 namespace Kurisu.Framework.Pool
 {
     /// <summary>
@@ -14,64 +12,22 @@ namespace Kurisu.Framework.Pool
     /// </summary>
     public class PooledGameObject : IDisposable, IUnRegister
     {
-        public class DisposableBag : IDisposable
-        {
-            private IDisposable[] items;
-            private bool isDisposed;
-            private int count;
-            public DisposableBag() { }
-            public DisposableBag(int capacity)
-            {
-                isDisposed = false;
-                count = 0;
-                items = new IDisposable[capacity];
-            }
-            public void Add(IDisposable item)
-            {
-                if (isDisposed)
-                {
-                    item.Dispose();
-                    return;
-                }
-
-                if (items == null)
-                {
-                    items = new IDisposable[4];
-                }
-                else if (count == items.Length)
-                {
-                    Array.Resize(ref items, count * 2);
-                }
-
-                items[count++] = item;
-            }
-            public void Clear()
-            {
-                if (items != null)
-                {
-                    for (int i = 0; i < count; i++)
-                    {
-                        items[i]?.Dispose();
-                    }
-
-                    items = null;
-                    count = 0;
-                }
-                isDisposed = false;
-            }
-            public void Dispose()
-            {
-                Clear();
-                isDisposed = true;
-            }
-        }
         public PooledGameObject() { }
         private readonly static _ObjectPool<PooledGameObject> pool = new(() => new());
         public GameObject GameObject { get; protected set; }
         public Transform Transform { get; protected set; }
         public bool IsDisposed { get; protected set; }
-        protected readonly DisposableBag disposableBag = new();
-        public PoolKey Name { get; protected set; }
+        /// <summary>
+        /// Disposable managed by pooling scope
+        /// </summary>
+        /// <returns></returns>
+        private readonly List<IDisposable> disposables = new();
+        private List<SchedulerHandle> schedulerHandles;
+        /// <summary>
+        /// Key to GameObject pool
+        /// </summary>
+        /// <value></value>
+        public PoolKey PoolKey { get; protected set; }
         public static void SetMaxSize(int size)
         {
             pool.MaxSize = size;
@@ -85,8 +41,8 @@ namespace Kurisu.Framework.Pool
         public static PooledGameObject Get(string address, Transform parent = null)
         {
             var pooledObject = pool.Get();
-            pooledObject.Name = new(address);
-            pooledObject.GameObject = GameObjectPoolManager.Get(pooledObject.Name, out _, parent);
+            pooledObject.PoolKey = new(address);
+            pooledObject.GameObject = GameObjectPoolManager.Get(pooledObject.PoolKey, out _, parent);
             pooledObject.Init();
             return pooledObject;
         }
@@ -100,7 +56,16 @@ namespace Kurisu.Framework.Pool
         /// </remarks>
         void IUnRegister.Add(IDisposable disposable)
         {
-            disposableBag.Add(disposable);
+            disposables.Add(disposable);
+        }
+        /// <summary>
+        /// Add <see cref="SchedulerHandle"/> manually to reduce allocation
+        /// </summary>
+        /// <param name="handle"></param>
+        public void Add(SchedulerHandle handle)
+        {
+            schedulerHandles ??= ListPool<SchedulerHandle>.Get();
+            schedulerHandles.Add(handle);
         }
         protected virtual void Init()
         {
@@ -110,144 +75,43 @@ namespace Kurisu.Framework.Pool
         {
             IsDisposed = false;
             Transform = GameObject.transform;
-            disposableBag.Clear();
+            InitDisposables();
         }
         public virtual void Dispose()
         {
             if (IsDisposed) return;
-            disposableBag.Dispose();
+            ReleaseDisposables();
             if (GameObjectPoolManager.IsInstantiated)
-                GameObjectPoolManager.Release(GameObject, Name);
+                GameObjectPoolManager.Release(GameObject, PoolKey);
             IsDisposed = true;
             pool.Release(this);
+        }
+        protected void InitDisposables()
+        {
+            disposables.Clear();
+        }
+        protected void ReleaseDisposables()
+        {
+            foreach (var disposable in disposables)
+                disposable.Dispose();
+            disposables.Clear();
+            if (schedulerHandles == null) return;
+            foreach (var schedulerHandle in schedulerHandles)
+                schedulerHandle.Cancel();
+            ListPool<SchedulerHandle>.Release(schedulerHandles);
+            schedulerHandles = null;
         }
         public unsafe void Destroy(float t = 0f)
         {
             if (t >= 0f)
-                Scheduler.DelayUnsafe(t, new SchedulerUnsafeBinding(this, &DisposeSelf)).AddTo(this);
+                Add(Scheduler.DelayUnsafe(t, new SchedulerUnsafeBinding(this, &Dispose_Imp)));
             else
                 Dispose();
         }
-        private static void DisposeSelf(object @object)
+        private static void Dispose_Imp(object @object)
         {
             ((IDisposable)@object).Dispose();
         }
-    }
-    public class PooledComponent<T, K> : PooledGameObject where K : Component where T : PooledComponent<T, K>, new()
-    {
-        /// <summary>
-        /// Cache component as meta data to reduce allocation
-        /// </summary>
-        public class ComponentCache : IPooledMetaData
-        {
-            public K component;
-        }
-        public K Component => Cache.component;
-        protected ComponentCache Cache { get; set; }
-        private static readonly PoolKey componentName;
-        static PooledComponent()
-        {
-            componentName = new(typeof(T).FullName);
-        }
-        internal readonly static _ObjectPool<T> pool = new(() => new());
-        public new static void SetMaxSize(int size)
-        {
-            pool.MaxSize = size;
-        }
-        /// <summary>
-        /// Get or create empty pooled component
-        /// </summary>
-        /// <param name="address"></param>
-        /// <param name="parent"></param>
-        /// <returns></returns>
-        public static T Get(Transform parent = null)
-        {
-            var pooledComponent = pool.Get();
-            pooledComponent.Name = componentName;
-            pooledComponent.GameObject = GameObjectPoolManager.Get(componentName, out var metaData, parent);
-            pooledComponent.Cache = metaData as ComponentCache;
-            pooledComponent.Init();
-            return pooledComponent;
-        }
-        private const string Prefix = "Prefab";
-        private static IPooledMetaData metaData;
-        public static PoolKey GetPooledKey(GameObject prefab)
-        {
-            // append instance id since prefabs may have same name
-            return new PoolKey(Prefix, prefab.GetInstanceID());
-        }
-        /// <summary>
-        /// Instantiate pooled component by prefab, optimized version of <see cref="Object.Instantiate(Object, Transform)"/> 
-        /// </summary>
-        /// <param name="prefab"></param>
-        /// <param name="parent"></param>
-        /// <returns></returns>
-        public static T Instantiate(GameObject prefab, Transform parent = null)
-        {
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.BeginSample(nameof(Instantiate));
-#endif
-            var pooledComponent = pool.Get();
-            PoolKey key = GetPooledKey(prefab);
-            pooledComponent.Name = key;
-            var @object = GameObjectPoolManager.Get(key, out metaData, parent, createEmptyIfNotExist: false);
-            if (!@object)
-            {
-                @object = Object.Instantiate(prefab, parent);
-            }
-            pooledComponent.Cache = metaData as ComponentCache;
-            pooledComponent.GameObject = @object;
-            pooledComponent.Init();
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.EndSample();
-#endif
-            return pooledComponent;
-        }
-        /// <summary>
-        /// Instantiate pooled component by prefab, optimized version of <see cref="Object.Instantiate(Object, Vector3, Quaternion, Transform)"/> 
-        /// </summary>
-        /// <param name="prefab"></param>
-        /// <param name="position"></param>
-        /// <param name="rotation"></param>
-        /// <param name="parent">The parent attached to. If parent exists, it will use prefab's scale as local scale instead of lossy scale</param>
-        /// <param name="useLocalPosition">Whether use local position instead of world position, default is false</param>
-        /// <returns></returns>
-        public static T Instantiate(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null, bool useLocalPosition = false)
-        {
-            var pooledComponent = Instantiate(prefab, parent);
-            if (useLocalPosition)
-                pooledComponent.GameObject.transform.SetLocalPositionAndRotation(position, rotation);
-            else
-                pooledComponent.GameObject.transform.SetPositionAndRotation(position, rotation);
-            return pooledComponent;
-        }
-        protected override void Init()
-        {
-            LocalInit();
-        }
-        private void LocalInit()
-        {
-            IsDisposed = false;
-            disposableBag.Clear();
-            Transform = GameObject.transform;
-            Cache ??= new ComponentCache();
-            if (!Cache.component)
-            {
-                // allocate few to get component from gameObject
-                Cache.component = GameObject.GetOrAddComponent<K>();
-            }
-        }
-        public sealed override void Dispose()
-        {
-            if (IsDisposed) return;
-            OnDispose();
-            disposableBag.Dispose();
-            if (GameObjectPoolManager.IsInstantiated)
-                GameObjectPoolManager.Release(GameObject, Name, Cache);
-            IsDisposed = true;
-            pool.Release((T)this);
-        }
-        protected virtual void OnDispose() { }
     }
     public interface IPooledMetaData { }
     /// <summary>
