@@ -42,6 +42,10 @@ namespace Kurisu.Framework
         {
             subsystemCollection.Init();
         }
+        private void Update()
+        {
+            subsystemCollection.Tick();
+        }
         private void FixedUpdate()
         {
             subsystemCollection.FixedTick();

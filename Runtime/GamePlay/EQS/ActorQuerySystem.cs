@@ -18,6 +18,10 @@ namespace Kurisu.Framework
     public class ActorQuerySystem : WorldSubsystem
     {
         private NativeArray<ActorData> _actorData = default;
+        public override void Init()
+        {
+            _actorData = new NativeArray<ActorData>(GetActorsInWorld().Length, Allocator.Persistent);
+        }
         public override void FixedTick()
         {
             var actorsInWorld = GetActorsInWorld();
