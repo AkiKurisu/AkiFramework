@@ -5,7 +5,7 @@ namespace Kurisu.Framework.AI.GOAP
 {
     [RequireComponent(typeof(WorldState))]
     [RequireComponent(typeof(GOAPPlanner))]
-    public abstract class GOAPAIController<TPawn> : AIController<TPawn> where TPawn : Actor, IAIPawn
+    public abstract class GOAPAIController : AIController
     {
         [SerializeField]
         private GOAPSet dataSet;
@@ -37,12 +37,12 @@ namespace Kurisu.Framework.AI.GOAP
         private void SetupGOAP()
         {
             var goals = DataSet.GetGoals();
-            foreach (var goal in goals.OfType<AIGoal<TPawn>>())
+            foreach (var goal in goals.OfType<AIGoal>())
             {
                 goal.Setup(this);
             }
             var actions = DataSet.GetActions();
-            foreach (var action in actions.OfType<AIAction<TPawn>>())
+            foreach (var action in actions.OfType<AIAction>())
             {
                 action.Setup(this);
             }

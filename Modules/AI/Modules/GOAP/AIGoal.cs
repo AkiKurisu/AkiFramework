@@ -1,10 +1,10 @@
 using Kurisu.GOAP;
 namespace Kurisu.Framework.AI.GOAP
 {
-    public abstract class AIGoal<TPawn> : GOAPGoal where TPawn : Actor, IAIPawn
+    public abstract class AIGoal : GOAPGoal
     {
-        protected AIController<TPawn> Controller { get; private set; }
-        public void Setup(AIController<TPawn> controller)
+        protected GOAPAIController Controller { get; private set; }
+        public void Setup(GOAPAIController controller)
         {
             Controller = controller;
             OnSetup();

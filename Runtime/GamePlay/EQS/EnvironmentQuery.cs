@@ -7,76 +7,8 @@ using UnityEngine;
 namespace Kurisu.Framework.EQS
 {
     /// <summary>
-    /// Actor world data
+    /// API for query actors
     /// </summary>
-    public struct ActorData
-    {
-        public int instanceId;
-        public int layer;
-        public float3 position;
-    }
-    /// <summary>
-    /// Represent a DOP world query system.
-    /// </summary>
-    public class ActorWorld : MonoBehaviour
-    {
-        private Actor[] actorsInWorld;
-        private NativeArray<ActorData> actorData;
-        private static ActorWorld current;
-        public static ActorWorld Current
-        {
-            get
-            {
-                if (!current)
-                {
-                    // Must add in scene
-                    current = FindAnyObjectByType<ActorWorld>();
-                }
-                return current;
-            }
-        }
-        private void Awake()
-        {
-            if (current != null && current != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            current = this;
-        }
-        private void Start()
-        {
-            actorsInWorld = FindObjectsByType<Actor>(FindObjectsSortMode.InstanceID);
-            actorData = new NativeArray<ActorData>(actorsInWorld.Length, Allocator.Persistent);
-        }
-        private void FixedUpdate()
-        {
-            for (int i = 0; i < actorData.Length; ++i)
-            {
-                actorData[i] = new ActorData()
-                {
-                    instanceId = actorsInWorld[i].GetInstanceID(),
-                    layer = actorsInWorld[i].gameObject.layer,
-                    position = actorsInWorld[i].transform.position
-                };
-            }
-        }
-        public NativeArray<ActorData> GetAllActors(Allocator allocator)
-        {
-            return new NativeArray<ActorData>(actorData, allocator);
-        }
-        public Actor GetActor(int index)
-        {
-            if (index >= 0 && index < actorsInWorld.Length)
-                return actorsInWorld[index];
-            return null;
-        }
-        private void OnDestroy()
-        {
-            if (current == this) current = null;
-            if (actorData.IsCreated) actorData.Dispose();
-        }
-    }
     public static class EnvironmentQuery
     {
         [BurstCompile]
@@ -152,7 +84,7 @@ namespace Kurisu.Framework.EQS
         public static void OverlapFieldView(List<Actor> actors, Vector3 position, Vector3 forward, float radius, float angle, LayerMask targetMask, Actor ignoredActor = null)
         {
             var resultActors = new NativeList<int>(Allocator.TempJob);
-            var actorData = ActorWorld.Current.GetAllActors(Allocator.TempJob);
+            var actorData = ActorWorld.Current.GetSubsystem<ActorQuerySystem>().GetAllActors(Allocator.TempJob);
             var job = new OverlapFieldViewJob()
             {
                 center = position,

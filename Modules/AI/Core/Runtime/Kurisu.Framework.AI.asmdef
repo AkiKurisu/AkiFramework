@@ -11,7 +11,15 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
+    "defineConstraints": [
+        "AF_AKIBT_INSTALL"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.kurisu.akibt",
+            "expression": "1.4.9",
+            "define": "AF_AKIBT_INSTALL"
+        }
+    ],
     "noEngineReferences": false
 }

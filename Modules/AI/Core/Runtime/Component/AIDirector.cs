@@ -34,18 +34,12 @@ namespace Kurisu.Framework.AI
             callBack = proxyContext.callBack;
             controller = proxyContext.controller;
             tasks = proxyContext.tasks;
-#if UNITY_EDITOR
-            Debug.Log($"Director play: {GetType().Name}");
-#endif
             OnPlayDirector();
             OnPlay?.Invoke();
         }
         protected virtual void OnPlayDirector() { }
         protected void RunDirectorTasks()
         {
-#if UNITY_EDITOR
-            Debug.Log($"Create task sequence: {GetType().Name}");
-#endif
             sequenceTask?.Dispose();
             sequenceTask = SequenceTask.GetPooled(tasks, OnPlayEnd);
             sequenceTask.Acquire();
@@ -60,9 +54,6 @@ namespace Kurisu.Framework.AI
         {
             sequenceTask?.Dispose();
             sequenceTask = null;
-#if UNITY_EDITOR
-            Debug.Log($"Director stop: {GetType().Name}");
-#endif
             callBack = null;
             controller = null;
             OnStop?.Invoke();

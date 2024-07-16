@@ -5,7 +5,7 @@ using Kurisu.Framework.Tasks;
 namespace Kurisu.Framework.AI
 {
     [RequireComponent(typeof(BlackBoardComponent))]
-    public abstract class AIController : MonoBehaviour
+    public abstract class AIController : Controller
     {
         [SerializeField]
         private BehaviorTask[] behaviorTasks;
@@ -20,7 +20,18 @@ namespace Kurisu.Framework.AI
         {
             SetupBehaviorTree();
         }
-        public abstract IAIPawn GetAIPawn();
+        public sealed override bool IsBot()
+        {
+            return true;
+        }
+        public IAIPawn GetAIPawn()
+        {
+            return GetActor() as IAIPawn;
+        }
+        public TPawn GetPawn<TPawn>() where TPawn : Actor, IAIPawn
+        {
+            return GetActor() as TPawn;
+        }
         private void SetupBehaviorTree()
         {
             foreach (var task in behaviorTasks)
@@ -28,13 +39,14 @@ namespace Kurisu.Framework.AI
                 AddTask(task);
             }
         }
-        protected virtual void OnDestroy()
+        protected override void OnDestroy()
         {
             foreach (var task in TaskMap.Values)
             {
                 task.Stop();
                 task.Dispose();
             }
+            base.OnDestroy();
         }
         public void EnableAI()
         {
@@ -85,22 +97,6 @@ namespace Kurisu.Framework.AI
         public IEnumerable<TaskBase> GetAllTasks()
         {
             return TaskMap.Values;
-        }
-    }
-    /// <summary>
-    /// AI Controller for <see cref="T"/>
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public abstract class AIController<T> : AIController where T : Actor, IAIPawn
-    {
-        protected T Pawn { get; set; }
-        public sealed override IAIPawn GetAIPawn()
-        {
-            return Pawn;
-        }
-        public T GetPawn()
-        {
-            return Pawn;
         }
     }
 }
