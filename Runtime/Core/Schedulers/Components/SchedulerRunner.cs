@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Kurisu.Framework.Collections;
 using Kurisu.Framework.Pool;
 using UnityEngine;
+using UnityEngine.Pool;
 namespace Kurisu.Framework.Schedulers
 {
     /// <summary>
@@ -60,14 +62,11 @@ namespace Kurisu.Framework.Schedulers
                 pool.Release(this);
             }
         }
-        private const int ManagedCapacity = 200;
-        private const int RunningCapacity = 100;
-        internal readonly Dictionary<uint, ScheduledItem> managedScheduled = new(ManagedCapacity);
-        internal List<ScheduledItem> scheduledRunning = new(RunningCapacity);
-        // start from id = 1, should not be 0 since it roles as default/invalid task symbol
-        private uint taskId = 1;
+        private const int InitialCapacity = 100;
+        internal SparseList<ScheduledItem> scheduledItems = new(InitialCapacity, SchedulerHandle.MaxIndex + 1);
+        private uint serialNum = 0;
         // buffer adding tasks so we don't edit a collection during iteration
-        private readonly List<ScheduledItem> scheduledToAdd = new(RunningCapacity);
+        private readonly List<ScheduledItem> scheduledToAdd = new(InitialCapacity);
         private bool isDestroyed;
         private bool isGateOpen;
         private int lastFrame;
@@ -79,7 +78,7 @@ namespace Kurisu.Framework.Schedulers
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                Debug.LogError("Scheduler can not be used in Editor Mode.");
+                Debug.LogError("[Scheduler] Scheduler can not be used in Editor Mode.");
                 return null;
             }
 #endif
@@ -97,80 +96,6 @@ namespace Kurisu.Framework.Schedulers
             }
             return instance;
         }
-        /// <summary>
-        /// Register scheduled task to managed
-        /// </summary>
-        /// <param name="scheduled"></param>
-        public void Register(IScheduled scheduled, Delegate @delegate)
-        {
-            if (isDestroyed)
-            {
-                Debug.LogWarning("Can not schedule task when scene is destroying.");
-                scheduled.Dispose();
-                return;
-            }
-            // schedule one frame if register before runner update
-            bool needDelayFrame = lastFrame < Time.frameCount;
-            uint id = scheduled.Handle.Handle;
-            var item = ScheduledItem.GetPooled(scheduled, needDelayFrame);
-            managedScheduled.Add(id, item);
-            (isGateOpen ? scheduledRunning : scheduledToAdd).Add(item);
-#if UNITY_EDITOR
-            SchedulerRegistry.RegisterListener(scheduled, @delegate);
-#endif
-        }
-        public SchedulerHandle NewHandle() => new(taskId++);
-        /// <summary>
-        ///  Unregister scheduled task from managed
-        /// </summary>
-        /// <param name="scheduled"></param>
-        public void Unregister(IScheduled scheduled, Delegate @delegate)
-        {
-            managedScheduled.Remove(scheduled.Handle.Handle);
-#if UNITY_EDITOR
-            SchedulerRegistry.UnregisterListener(scheduled, @delegate);
-#endif
-        }
-        /// <summary>
-        /// Cancel all scheduled task
-        /// </summary>
-        public void CancelAll()
-        {
-            foreach (ScheduledItem scheduled in scheduledRunning)
-            {
-                scheduled.Cancel();
-                if (isGateOpen)
-                {
-                    scheduled.Dispose();
-                }
-            }
-            if (isGateOpen)
-            {
-                scheduledRunning.Clear();
-            }
-            scheduledToAdd.Clear();
-        }
-        /// <summary>
-        /// Pause all scheduled task
-        /// </summary>
-        public void PauseAll()
-        {
-            foreach (ScheduledItem scheduled in scheduledRunning)
-            {
-                scheduled.Value.Pause();
-            }
-        }
-        /// <summary>
-        /// Resume all scheduled task
-        /// </summary>
-        public void ResumeAll()
-        {
-            foreach (ScheduledItem scheduled in scheduledRunning)
-            {
-                scheduled.Value.Resume();
-            }
-        }
-
         private void Update()
         {
             isGateOpen = false;
@@ -181,83 +106,189 @@ namespace Kurisu.Framework.Schedulers
         private void OnDestroy()
         {
             isDestroyed = true;
-            foreach (ScheduledItem scheduled in scheduledRunning)
+            foreach (ScheduledItem scheduled in scheduledItems)
             {
                 scheduled.Cancel();
                 scheduled.Dispose();
             }
             SchedulerRegistry.CleanListeners();
-            managedScheduled.Clear();
-            scheduledRunning.Clear();
+            scheduledItems.Clear();
             scheduledToAdd.Clear();
         }
-
+        /// <summary>
+        /// Register scheduled task to managed
+        /// </summary>
+        /// <param name="scheduled"></param>
+        public void Register(IScheduled scheduled, Delegate @delegate)
+        {
+            if (isDestroyed)
+            {
+                Debug.LogWarning("[Scheduler] Can not schedule task when scene is destroying.");
+                scheduled.Dispose();
+                return;
+            }
+            // schedule one frame if register before runner update
+            bool needDelayFrame = lastFrame < Time.frameCount;
+            int index = scheduled.Handle.GetIndex();
+            var item = ScheduledItem.GetPooled(scheduled, needDelayFrame);
+            if (isGateOpen)
+            {
+                scheduledItems[index] = item;
+            }
+            else
+            {
+                scheduledToAdd.Add(item);
+            }
+#if UNITY_EDITOR
+            SchedulerRegistry.RegisterListener(scheduled, @delegate);
+#endif
+        }
+        public SchedulerHandle NewHandle()
+        {
+            // Allocate placement, not really add
+            return new SchedulerHandle(scheduledItems.AddUninitialized(), serialNum);
+        }
+        /// <summary>
+        ///  Unregister scheduled task from managed
+        /// </summary>
+        /// <param name="scheduled"></param>
+        public void Unregister(IScheduled scheduled, Delegate @delegate)
+        {
+            scheduledItems.RemoveAt(scheduled.Handle.GetIndex());
+#if UNITY_EDITOR
+            SchedulerRegistry.UnregisterListener(scheduled, @delegate);
+#endif
+        }
+        /// <summary>
+        /// Cancel all scheduled task
+        /// </summary>
+        public void CancelAll()
+        {
+            foreach (ScheduledItem scheduled in scheduledItems)
+            {
+                scheduled.Cancel();
+                if (isGateOpen)
+                {
+                    scheduled.Dispose();
+                }
+            }
+            if (isGateOpen)
+            {
+                scheduledItems.Clear();
+            }
+            scheduledToAdd.Clear();
+        }
+        /// <summary>
+        /// Pause all scheduled task
+        /// </summary>
+        public void PauseAll()
+        {
+            foreach (ScheduledItem scheduled in scheduledItems)
+            {
+                scheduled.Value.Pause();
+            }
+        }
+        /// <summary>
+        /// Resume all scheduled task
+        /// </summary>
+        public void ResumeAll()
+        {
+            foreach (ScheduledItem scheduled in scheduledItems)
+            {
+                scheduled.Value.Resume();
+            }
+        }
         private void UpdateAll()
         {
             // Add
             if (scheduledToAdd.Count > 0)
             {
                 foreach (var scheduled in scheduledToAdd)
-                    scheduledRunning.Add(scheduled);
+                {
+                    // Assign value
+                    scheduledItems[scheduled.Value.Handle.GetIndex()] = scheduled;
+                }
                 scheduledToAdd.Clear();
             }
+
+            // increase serial
+            serialNum++;
+
             // Update
-            foreach (ScheduledItem item in scheduledRunning)
+            var releaseIndex = ListPool<int>.Get();
+            foreach (ScheduledItem item in scheduledItems)
             {
                 item.Update();
+                if (item.IsDone())
+                {
+                    releaseIndex.Add(item.Value.Handle.GetIndex());
+                }
             }
+
             // Release
-            for (int i = scheduledRunning.Count - 1; i >= 0; i--)
+            foreach (int index in releaseIndex)
             {
-                if (!scheduledRunning[i].IsDone()) continue;
-                scheduledRunning[i].Dispose();
-                scheduledRunning.RemoveAt(i);
+                var item = scheduledItems[index];
+                scheduledItems.RemoveAt(index);
+                item.Dispose();
             }
+            ListPool<int>.Release(releaseIndex);
         }
         /// <summary>
         /// Whether scheduled task is valid
         /// </summary>
-        /// <param name="taskId"></param>
+        /// <param name="handle"></param>
         /// <returns></returns>
-        public bool IsValid(uint taskId)
+        public bool IsValid(SchedulerHandle handle)
         {
-            return managedScheduled.ContainsKey(taskId);
+            return GetScheduledItem(handle) != null;
+        }
+        private ScheduledItem GetScheduledItem(SchedulerHandle handle)
+        {
+            int handleIndex = handle.GetIndex();
+            int handleSerial = handle.GetSerialNumber();
+            // if is current serial which means create and cancel scheduled task in same frame
+            if (handleSerial == serialNum)
+            {
+                // lookup add buffer
+                foreach (var item in scheduledToAdd)
+                {
+                    if (item.Value.Handle == handle) return item;
+                }
+                return null;
+            }
+            var scheduledItem = scheduledItems[handleIndex];
+            if (scheduledItem == null || scheduledItem.Value.Handle.GetSerialNumber() != handleSerial) return null;
+            return scheduledItem;
         }
         /// <summary>
-        /// Get internal scheduled task by <see cref="taskId"/>
+        /// Whether internal scheduled task is done
         /// </summary>
-        /// <param name="taskId"></param>
-        /// <param name="task"></param>
+        /// <param name="handle"></param>
         /// <returns></returns>
-        public bool TryGet(uint taskId, out IScheduled task)
+        public bool IsDone(SchedulerHandle handle)
         {
-            if (managedScheduled.TryGetValue(taskId, out var item))
-            {
-                task = item.Value;
-                return true;
-            }
-            task = null;
-            return false;
+            var item = GetScheduledItem(handle);
+            if (item == null) return true;
+            return item.IsDone();
         }
         /// <summary>
         /// Cancel target scheduled task
         /// </summary>
-        /// <param name="taskId"></param>
-        public void Cancel(uint taskId)
+        /// <param name="handle"></param>
+        public void Cancel(SchedulerHandle handle)
         {
-            if (!managedScheduled.TryGetValue(taskId, out var item)) return;
+            var item = scheduledItems[handle.GetIndex()];
+            if (item == null) return;
             item.Cancel();
+            int index = item.Value.Handle.GetIndex();
             // ensure add buffer also remove task
-            if (scheduledToAdd.Remove(item))
+            if (scheduledToAdd.Remove(item) || isGateOpen)
             {
+                // need clear allocation though not really add yet
+                scheduledItems.RemoveAt(index);
                 item.Dispose();
             }
-            else if (isGateOpen)
-            {
-                scheduledRunning.Remove(item);
-                item.Dispose();
-            }
-
         }
     }
 }
