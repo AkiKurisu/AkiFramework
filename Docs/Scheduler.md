@@ -37,7 +37,7 @@ public class SchedulerTest : MonoBehaviour
 
     public void UnsafeAPIWithObject()
     {
-        Scheduler.DelayUnsafe(1, new SchedulerUnsafeBinding(this, &Log));
+        Scheduler.DelayUnsafe(1, new SchedulerUnsafeBinding(this, &LogWithObject));
     }
 
     private static void Log()
