@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Assertions;
 namespace Kurisu.Framework.Schedulers
 {
     /// <summary>
@@ -7,10 +8,16 @@ namespace Kurisu.Framework.Schedulers
     public readonly struct SchedulerHandle : IDisposable
     {
         /// <summary>
-        /// Unique id for scheduled task
+        /// Handle id for scheduled task
         /// </summary>
         /// <value></value>
-        public uint Handle { get; }
+        public ulong Handle { get; }
+        public const int IndexBits = 24;
+        public const int SerialNumberBits = 40;
+        public const int MaxIndex = 1 << IndexBits;
+        public const ulong MaxSerialNumber = (ulong)1 << SerialNumberBits;
+        public int GetIndex() => (int)(Handle & MaxIndex - 1);
+        public ulong GetSerialNumber() => Handle >> IndexBits;
         /// <summary>
         /// Get scheduled task whether is valid
         /// </summary>
@@ -20,7 +27,7 @@ namespace Kurisu.Framework.Schedulers
             get
             {
                 if (!SchedulerRunner.IsInitialized) return default;
-                return SchedulerRunner.Instance.IsValid(Handle);
+                return Handle != 0;
             }
         }
         /// <summary>
@@ -32,32 +39,16 @@ namespace Kurisu.Framework.Schedulers
             get
             {
                 if (!SchedulerRunner.IsInitialized) return default;
-                if (SchedulerRunner.Instance.TryGet(Handle, out IScheduled task))
-                {
-                    return task.IsDone;
-                }
-                return true;
+                return SchedulerRunner.Instance.IsDone(this);
             }
         }
-        /// <summary>
-        /// Get scheduler if scheduler is valid
-        /// </summary>
-        /// <value></value>
-        internal readonly IScheduled Task
+        public SchedulerHandle(ulong serialNum, int index)
         {
-            get
-            {
-                if (!SchedulerRunner.IsInitialized) return default;
-                if (SchedulerRunner.Instance.TryGet(Handle, out IScheduled task))
-                {
-                    return task;
-                }
-                return null;
-            }
-        }
-        public SchedulerHandle(uint taskId)
-        {
-            Handle = taskId;
+            Assert.IsTrue(index >= 0 && index < MaxIndex);
+            Assert.IsTrue(serialNum < MaxSerialNumber);
+#pragma warning disable CS0675
+            Handle = (serialNum << IndexBits) | (ulong)index;
+#pragma warning restore CS0675
         }
         /// <summary>
         /// Cancel a scheduler if scheduler is valid
@@ -67,12 +58,29 @@ namespace Kurisu.Framework.Schedulers
         {
             if (!SchedulerRunner.IsInitialized) return;
             if (!IsValid) return;
-            SchedulerRunner.Instance.Cancel(Handle);
+            SchedulerRunner.Instance.Cancel(this);
         }
 
         public void Dispose()
         {
             Cancel();
+        }
+        public static bool operator ==(SchedulerHandle left, SchedulerHandle right)
+        {
+            return left.Handle == right.Handle;
+        }
+        public static bool operator !=(SchedulerHandle left, SchedulerHandle right)
+        {
+            return left.Handle != right.Handle;
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj is not SchedulerHandle handle) return false;
+            return handle.Handle == Handle;
+        }
+        public override int GetHashCode()
+        {
+            return Handle.GetHashCode();
         }
     }
 }

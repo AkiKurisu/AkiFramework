@@ -7,7 +7,7 @@ namespace Kurisu.Framework.Schedulers.Editor
     public class SchedulerRunnerEditor : UnityEditor.Editor
     {
         private SchedulerRunner Manager => target as SchedulerRunner;
-        private int ManagedScheduledCount => Manager.managedScheduled.Count;
+        private int ManagedScheduledCount => Manager.scheduledItems.Count;
         private void OnEnable()
         {
             if (!Application.isPlaying) return;
@@ -32,7 +32,7 @@ namespace Kurisu.Framework.Schedulers.Editor
             };
             GUILayout.BeginVertical(GUI.skin.box);
             GUILayout.Label($"Managed scheduled task count: {ManagedScheduledCount}");
-            foreach (var scheduled in Manager.scheduledRunning)
+            foreach (var scheduled in Manager.scheduledItems)
             {
                 double elapsedTime = Time.timeSinceLevelLoadAsDouble - scheduled.Timestamp;
                 if (SchedulerRegistry.TryGetListener(scheduled.Value, out var listener))
