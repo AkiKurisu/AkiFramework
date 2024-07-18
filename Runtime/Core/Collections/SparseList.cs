@@ -47,7 +47,12 @@ namespace Kurisu.Framework.Collections
             allocationFlags = new List<bool>(length);
             for (int i = 0; i < length; ++i)
             {
-                data.Add(new FreeListLink() { last = i - 1, next = (i + 1) >= length ? -1 : (i + 1) });
+                data.Add(new FreeListLink()
+                {
+                    last = i - 1,
+                    value = default,
+                    next = ((i + 1) >= length) ? -1 : (i + 1)
+                });
                 allocationFlags.Add(false);
             }
             firstFreeIndex = 0;
@@ -87,7 +92,7 @@ namespace Kurisu.Framework.Collections
                     last = -1,
                     next = -1
                 });
-                allocationFlags.Add(false);
+                allocationFlags.Add(true);
             }
         }
         public int AddUninitialized()
@@ -127,7 +132,7 @@ namespace Kurisu.Framework.Collections
                     last = -1,
                     next = -1
                 });
-                allocationFlags.Add(false);
+                allocationFlags.Add(true);
             }
             return index;
         }
@@ -148,7 +153,7 @@ namespace Kurisu.Framework.Collections
                 var headerLink = data[firstFreeIndex];
                 headerLink.last = index;
                 data[firstFreeIndex] = headerLink;
-                link.last = firstFreeIndex;
+                link.next = firstFreeIndex;
             }
             // update removed link
             firstFreeIndex = index;
@@ -160,7 +165,11 @@ namespace Kurisu.Framework.Collections
             numFreeIndices = data.Count;
             for (int i = 0; i < numFreeIndices; ++i)
             {
-                data[i] = new FreeListLink() { last = i - 1, next = (i + 1) >= numFreeIndices ? -1 : (i + 1) };
+                data[i] = new FreeListLink()
+                {
+                    last = i - 1,
+                    next = ((i + 1) >= numFreeIndices) ? -1 : (i + 1)
+                };
                 allocationFlags[i] = false;
             }
             firstFreeIndex = 0;

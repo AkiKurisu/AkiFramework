@@ -24,7 +24,6 @@ namespace Kurisu.Framework
                 else systems[type].SetWorld(world);
             }
             subsystems = systems.Values.ToArray();
-            Debug.Log(subsystems.Length);
         }
         public T GetSubsystem<T>() where T : WorldSubsystem
         {

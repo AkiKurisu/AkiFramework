@@ -17,7 +17,9 @@ namespace Kurisu.Framework.Schedulers
     [DefaultExecutionOrder(-100)]
     internal class SchedulerRunner : MonoBehaviour
     {
-        // not use struct for easier dispose control
+        /// <summary>
+        /// Class for easier dispose control
+        /// </summary>
         internal class ScheduledItem : IDisposable
         {
             private static readonly _ObjectPool<ScheduledItem> pool = new(() => new());
@@ -36,6 +38,10 @@ namespace Kurisu.Framework.Schedulers
                 item.delay = delay;
                 return item;
             }
+            /// <summary>
+            /// Whether internal scheduled task is done
+            /// </summary>
+            /// <returns></returns>
             public bool IsDone() => Value.IsDone;
             public void Update()
             {
@@ -47,10 +53,16 @@ namespace Kurisu.Framework.Schedulers
                 }
                 Value.Update();
             }
+            /// <summary>
+            /// Cancel internal scheduled task
+            /// </summary>
             public void Cancel()
             {
                 if (!Value.IsDone) Value.Cancel();
             }
+            /// <summary>
+            /// Dispose self and internal scheduled task
+            /// </summary>
             public void Dispose()
             {
                 Value?.Dispose();
@@ -64,9 +76,11 @@ namespace Kurisu.Framework.Schedulers
         }
         private const int InitialCapacity = 100;
         internal SparseList<ScheduledItem> scheduledItems = new(InitialCapacity, SchedulerHandle.MaxIndex + 1);
-        private uint serialNum = 0;
+        private ulong serialNum = 1;
         // buffer adding tasks so we don't edit a collection during iteration
-        private readonly List<ScheduledItem> scheduledToAdd = new(InitialCapacity);
+        private readonly List<SchedulerHandle> pendingHandles = new(InitialCapacity);
+        private readonly List<SchedulerHandle> activeHandles = new(InitialCapacity);
+        private readonly List<SchedulerHandle> releaseHandles = new(InitialCapacity);
         private bool isDestroyed;
         private bool isGateOpen;
         private int lastFrame;
@@ -113,7 +127,7 @@ namespace Kurisu.Framework.Schedulers
             }
             SchedulerRegistry.CleanListeners();
             scheduledItems.Clear();
-            scheduledToAdd.Clear();
+            pendingHandles.Clear();
         }
         /// <summary>
         /// Register scheduled task to managed
@@ -131,14 +145,9 @@ namespace Kurisu.Framework.Schedulers
             bool needDelayFrame = lastFrame < Time.frameCount;
             int index = scheduled.Handle.GetIndex();
             var item = ScheduledItem.GetPooled(scheduled, needDelayFrame);
-            if (isGateOpen)
-            {
-                scheduledItems[index] = item;
-            }
-            else
-            {
-                scheduledToAdd.Add(item);
-            }
+            // Assign item
+            scheduledItems[index] = item;
+            pendingHandles.Add(scheduled.Handle);
 #if UNITY_EDITOR
             SchedulerRegistry.RegisterListener(scheduled, @delegate);
 #endif
@@ -146,7 +155,7 @@ namespace Kurisu.Framework.Schedulers
         public SchedulerHandle NewHandle()
         {
             // Allocate placement, not really add
-            return new SchedulerHandle(scheduledItems.AddUninitialized(), serialNum);
+            return new SchedulerHandle(serialNum, scheduledItems.AddUninitialized());
         }
         /// <summary>
         ///  Unregister scheduled task from managed
@@ -164,28 +173,30 @@ namespace Kurisu.Framework.Schedulers
         /// </summary>
         public void CancelAll()
         {
-            foreach (ScheduledItem scheduled in scheduledItems)
+            foreach (var handle in activeHandles)
             {
-                scheduled.Cancel();
+                var item = FindItem(handle);
+                item.Cancel();
                 if (isGateOpen)
                 {
-                    scheduled.Dispose();
+                    item.Dispose();
                 }
             }
             if (isGateOpen)
             {
-                scheduledItems.Clear();
+                activeHandles.Clear();
             }
-            scheduledToAdd.Clear();
+            pendingHandles.Clear();
         }
         /// <summary>
         /// Pause all scheduled task
         /// </summary>
         public void PauseAll()
         {
-            foreach (ScheduledItem scheduled in scheduledItems)
+            foreach (var handle in activeHandles)
             {
-                scheduled.Value.Pause();
+                var item = FindItem(handle);
+                item.Value.Pause();
             }
         }
         /// <summary>
@@ -193,70 +204,50 @@ namespace Kurisu.Framework.Schedulers
         /// </summary>
         public void ResumeAll()
         {
-            foreach (ScheduledItem scheduled in scheduledItems)
+            foreach (var handle in activeHandles)
             {
-                scheduled.Value.Resume();
+                var item = FindItem(handle);
+                item.Value.Resume();
             }
         }
         private void UpdateAll()
         {
             // Add
-            if (scheduledToAdd.Count > 0)
+            if (pendingHandles.Count > 0)
             {
-                foreach (var scheduled in scheduledToAdd)
+                foreach (var handle in pendingHandles)
                 {
-                    // Assign value
-                    scheduledItems[scheduled.Value.Handle.GetIndex()] = scheduled;
+                    activeHandles.Add(handle);
                 }
-                scheduledToAdd.Clear();
+                pendingHandles.Clear();
+                // increase serial
+                serialNum++;
             }
 
-            // increase serial
-            serialNum++;
-
             // Update
-            var releaseIndex = ListPool<int>.Get();
-            foreach (ScheduledItem item in scheduledItems)
+            foreach (var handle in activeHandles)
             {
+                var item = FindItem(handle);
                 item.Update();
                 if (item.IsDone())
                 {
-                    releaseIndex.Add(item.Value.Handle.GetIndex());
+                    releaseHandles.Add(handle);
                 }
             }
 
             // Release
-            foreach (int index in releaseIndex)
+            foreach (var handle in releaseHandles)
             {
-                var item = scheduledItems[index];
-                scheduledItems.RemoveAt(index);
+                var item = FindItem(handle);
+                activeHandles.Remove(handle);
                 item.Dispose();
             }
-            ListPool<int>.Release(releaseIndex);
+            releaseHandles.Clear();
         }
-        /// <summary>
-        /// Whether scheduled task is valid
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        public bool IsValid(SchedulerHandle handle)
-        {
-            return GetScheduledItem(handle) != null;
-        }
-        private ScheduledItem GetScheduledItem(SchedulerHandle handle)
+        private ScheduledItem FindItem(SchedulerHandle handle)
         {
             int handleIndex = handle.GetIndex();
-            int handleSerial = handle.GetSerialNumber();
-            // if is current serial which means create and cancel scheduled task in same frame
-            if (handleSerial == serialNum)
-            {
-                // lookup add buffer
-                foreach (var item in scheduledToAdd)
-                {
-                    if (item.Value.Handle == handle) return item;
-                }
-                return null;
-            }
+            ulong handleSerial = handle.GetSerialNumber();
             var scheduledItem = scheduledItems[handleIndex];
             if (scheduledItem == null || scheduledItem.Value.Handle.GetSerialNumber() != handleSerial) return null;
             return scheduledItem;
@@ -268,7 +259,7 @@ namespace Kurisu.Framework.Schedulers
         /// <returns></returns>
         public bool IsDone(SchedulerHandle handle)
         {
-            var item = GetScheduledItem(handle);
+            var item = FindItem(handle);
             if (item == null) return true;
             return item.IsDone();
         }
@@ -278,15 +269,17 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="handle"></param>
         public void Cancel(SchedulerHandle handle)
         {
-            var item = scheduledItems[handle.GetIndex()];
+            var item = FindItem(handle);
             if (item == null) return;
             item.Cancel();
-            int index = item.Value.Handle.GetIndex();
-            // ensure add buffer also remove task
-            if (scheduledToAdd.Remove(item) || isGateOpen)
+            // ensure pending buffer also remove task
+            if (pendingHandles.Remove(handle))
             {
-                // need clear allocation though not really add yet
-                scheduledItems.RemoveAt(index);
+                item.Dispose();
+            }
+            else if (isGateOpen)
+            {
+                activeHandles.Remove(handle);
                 item.Dispose();
             }
         }

@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Assertions;
 namespace Kurisu.Framework.Schedulers
 {
     /// <summary>
@@ -10,13 +11,13 @@ namespace Kurisu.Framework.Schedulers
         /// Handle id for scheduled task
         /// </summary>
         /// <value></value>
-        public long Handle { get; }
+        public ulong Handle { get; }
         public const int IndexBits = 24;
         public const int SerialNumberBits = 40;
         public const int MaxIndex = 1 << IndexBits;
-        public const uint MaxSerialNumber = (uint)1 << SerialNumberBits;
-        public int GetIndex() => (int)(Handle >> 40);
-        public int GetSerialNumber() => (int)(Handle & 0xFFFFFFFFFF);
+        public const ulong MaxSerialNumber = (ulong)1 << SerialNumberBits;
+        public int GetIndex() => (int)(Handle & MaxIndex - 1);
+        public ulong GetSerialNumber() => Handle >> IndexBits;
         /// <summary>
         /// Get scheduled task whether is valid
         /// </summary>
@@ -26,7 +27,7 @@ namespace Kurisu.Framework.Schedulers
             get
             {
                 if (!SchedulerRunner.IsInitialized) return default;
-                return SchedulerRunner.Instance.IsValid(this);
+                return Handle != 0;
             }
         }
         /// <summary>
@@ -41,9 +42,13 @@ namespace Kurisu.Framework.Schedulers
                 return SchedulerRunner.Instance.IsDone(this);
             }
         }
-        public SchedulerHandle(int index, uint serialNum)
+        public SchedulerHandle(ulong serialNum, int index)
         {
-            Handle = ((long)index << 40) | serialNum;
+            Assert.IsTrue(index >= 0 && index < MaxIndex);
+            Assert.IsTrue(serialNum < MaxSerialNumber);
+#pragma warning disable CS0675
+            Handle = (serialNum << IndexBits) | (ulong)index;
+#pragma warning restore CS0675
         }
         /// <summary>
         /// Cancel a scheduler if scheduler is valid
