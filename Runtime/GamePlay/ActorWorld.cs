@@ -28,6 +28,8 @@ namespace Kurisu.Framework
                 return current;
             }
         }
+        private bool isSystemDirty = false;
+        private bool isDestroyed;
         private void Awake()
         {
             if (current != null && current != this)
@@ -45,14 +47,25 @@ namespace Kurisu.Framework
         private void Update()
         {
             subsystemCollection.Tick();
+            if (isSystemDirty)
+            {
+                subsystemCollection.Rebuild();
+                isSystemDirty = false;
+            }
         }
         private void FixedUpdate()
         {
             subsystemCollection.FixedTick();
+            if (isSystemDirty)
+            {
+                subsystemCollection.Rebuild();
+                isSystemDirty = false;
+            }
         }
         private void OnDestroy()
         {
             if (current == this) current = null;
+            isDestroyed = true;
             subsystemCollection.Dispose();
             onActorsUpdate.Dispose();
         }
@@ -74,19 +87,31 @@ namespace Kurisu.Framework
                 onActorsUpdate.OnNext(Unit.Default);
             }
         }
-        public Actor GetActor(int index)
+        public Actor GetActor(int id)
         {
-            if (index >= 0 && index < actorsInWorld.Length)
-                return actorsInWorld[index];
+            for (int i = 0; i < actorsInWorld.Length; ++i)
+            {
+                if (actorsInWorld[i].GetActorId() == id) return actorsInWorld[i];
+            }
             return null;
         }
-        public T GetSubsystem<T>() where T : WorldSubsystem
+        public T GetSubsystem<T>() where T : SubsystemBase
         {
             return subsystemCollection.GetSubsystem<T>();
         }
-        public WorldSubsystem GetSubsystem(Type type)
+        public SubsystemBase GetSubsystem(Type type)
         {
             return subsystemCollection.GetSubsystem(type);
+        }
+        internal void RegisterSubsystem<T>(T subsystem) where T : SubsystemBase
+        {
+            if (isDestroyed)
+            {
+                Debug.LogError($"[ActorWorld] World is already destroyed!");
+                return;
+            }
+            subsystemCollection.RegisterSubsystem(subsystem);
+            isSystemDirty = true;
         }
     }
 }

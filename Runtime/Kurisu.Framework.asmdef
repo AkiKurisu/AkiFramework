@@ -15,6 +15,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.collections",
+            "expression": "2.2.1",
+            "define": "AF_COLLECTTIONS_INSTALL"
+        }
+    ],
     "noEngineReferences": false
 }

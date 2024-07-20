@@ -3,11 +3,14 @@
     "rootNamespace": "Kurisu.Framework.AI",
     "references": [
         "GUID:bf89a8bf6625fad4eb6879c01e73541d",
-        "GUID:e61a2a07ba2680848ad23eef5b7c024b"
+        "GUID:e61a2a07ba2680848ad23eef5b7c024b",
+        "GUID:d8b63aba1907145bea998dd612889d6b",
+        "GUID:e0cd26848372d4e5c891c569017e11f1",
+        "GUID:2665a8d13d1b3f18800f46e256720795"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,

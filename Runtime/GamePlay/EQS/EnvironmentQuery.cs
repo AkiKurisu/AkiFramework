@@ -40,7 +40,7 @@ namespace Kurisu.Framework.EQS
                     && math.distance(center, actor.position) <= radius
                     && InViewAngle(center, actor.position, forward, angle))
                     {
-                        resultActors.Add(i);
+                        resultActors.Add(actor.instanceId);
                     }
                 }
             }

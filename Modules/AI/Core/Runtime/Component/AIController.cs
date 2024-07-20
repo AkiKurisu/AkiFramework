@@ -5,7 +5,7 @@ using Kurisu.Framework.Tasks;
 namespace Kurisu.Framework.AI
 {
     [RequireComponent(typeof(BlackBoardComponent))]
-    public abstract class AIController : Controller
+    public abstract class AIController : ActorController
     {
         [SerializeField]
         private BehaviorTask[] behaviorTasks;

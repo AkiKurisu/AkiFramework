@@ -2,6 +2,15 @@ using System;
 namespace Kurisu.Framework.Schedulers
 {
     /// <summary>
+    /// Scheduler tick frame type
+    /// </summary>
+    public enum TickFrame
+    {
+        FixedUpdate,
+        Update,
+        LateUpdate,
+    }
+    /// <summary>
     /// Unsafe binding to provide zero-allocation delegate
     /// </summary>
     public readonly unsafe struct SchedulerUnsafeBinding
@@ -147,9 +156,9 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle DelayUnsafe(float delay, SchedulerUnsafeBinding callBack, bool isLooped = false, bool ignoreTimeScale = false)
+        public static SchedulerHandle DelayUnsafe(float delay, SchedulerUnsafeBinding callBack, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            return Timer.Register(delay, callBack, default, isLooped, ignoreTimeScale).Handle;
+            return Timer.Register(delay, callBack, default, tickFrame, isLooped, ignoreTimeScale).Handle;
         }
         /// <summary>
         /// Delay some time and invoke callBack
@@ -160,9 +169,9 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle DelayUnsafe(float delay, SchedulerUnsafeBinding<float> onUpdate, bool isLooped = false, bool ignoreTimeScale = false)
+        public static SchedulerHandle DelayUnsafe(float delay, SchedulerUnsafeBinding<float> onUpdate, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            return Timer.Register(delay, default, onUpdate, isLooped, ignoreTimeScale).Handle;
+            return Timer.Register(delay, default, onUpdate, tickFrame, isLooped, ignoreTimeScale).Handle;
         }
         /// <summary>
         /// Delay some time and invoke callBack
@@ -172,9 +181,9 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="delay"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle DelayUnsafe(float delay, SchedulerUnsafeBinding callBack, SchedulerUnsafeBinding<float> onUpdate, bool isLooped = false, bool ignoreTimeScale = false)
+        public static SchedulerHandle DelayUnsafe(float delay, SchedulerUnsafeBinding callBack, SchedulerUnsafeBinding<float> onUpdate, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            return Timer.Register(delay, callBack, onUpdate, isLooped, ignoreTimeScale).Handle;
+            return Timer.Register(delay, callBack, onUpdate, tickFrame, isLooped, ignoreTimeScale).Handle;
         }
         /// <summary>
         /// Delay some time and invoke callBack
@@ -185,9 +194,9 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle Delay(float delay, Action callBack, bool isLooped = false, bool ignoreTimeScale = false)
+        public static SchedulerHandle Delay(float delay, Action callBack, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            return Timer.Register(delay, callBack, default, isLooped, ignoreTimeScale).Handle;
+            return Timer.Register(delay, callBack, default, tickFrame, isLooped, ignoreTimeScale).Handle;
         }
         /// <summary>
         /// Delay some time and invoke callBack
@@ -198,9 +207,9 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle Delay(float delay, Action<float> onUpdate, bool isLooped = false, bool ignoreTimeScale = false)
+        public static SchedulerHandle Delay(float delay, Action<float> onUpdate, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            return Timer.Register(delay, default, onUpdate, isLooped, ignoreTimeScale).Handle;
+            return Timer.Register(delay, default, onUpdate, tickFrame, isLooped, ignoreTimeScale).Handle;
         }
         /// <summary>
         /// Delay some time and invoke callBack
@@ -210,9 +219,10 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="delay"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle Delay(float delay, Action callBack, Action<float> onUpdate, bool isLooped = false, bool ignoreTimeScale = false)
+        public static SchedulerHandle Delay(float delay, Action callBack, Action<float> onUpdate,
+        TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            return Timer.Register(delay, callBack, onUpdate, isLooped, ignoreTimeScale).Handle;
+            return Timer.Register(delay, callBack, onUpdate, tickFrame, isLooped, ignoreTimeScale).Handle;
         }
         /// <summary>
         /// Wait some frames and invoke callBack
@@ -221,9 +231,10 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="frame"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle WaitFrameUnsafe(int frame, SchedulerUnsafeBinding callBack, bool isLooped = false)
+        public static SchedulerHandle WaitFrameUnsafe(int frame, SchedulerUnsafeBinding callBack,
+         TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            return FrameCounter.Register(frame, callBack, default, isLooped).Handle;
+            return FrameCounter.Register(frame, callBack, default, tickFrame, isLooped).Handle;
         }
         /// <summary>
         /// Wait some frames and invoke callBack
@@ -232,43 +243,10 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="frame"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle WaitFrameUnsafe(int frame, SchedulerUnsafeBinding<int> onUpdate, bool isLooped = false)
+        public static SchedulerHandle WaitFrameUnsafe(int frame, SchedulerUnsafeBinding<int> onUpdate,
+        TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            return FrameCounter.Register(frame, default, onUpdate, isLooped).Handle;
-        }
-        /// <summary>
-        /// Wait some frames and invoke callBack
-        /// </summary>
-        /// <param name="callBack"></param>
-        /// <param name="onUpdate"></param>
-        /// <param name="frame"></param>
-        /// <returns></returns>
-        [StackTraceFrame]
-        public static SchedulerHandle WaitFrameUnsafe(int frame, SchedulerUnsafeBinding callBack, SchedulerUnsafeBinding<int> onUpdate, bool isLooped = false)
-        {
-            return FrameCounter.Register(frame, callBack, onUpdate, isLooped).Handle;
-        }
-        /// <summary>
-        /// Wait some frames and invoke callBack
-        /// </summary>
-        /// <param name="callBack"></param>
-        /// <param name="frame"></param>
-        /// <returns></returns>
-        [StackTraceFrame]
-        public static SchedulerHandle WaitFrame(int frame, Action callBack, bool isLooped = false)
-        {
-            return FrameCounter.Register(frame, callBack, default, isLooped).Handle;
-        }
-        /// <summary>
-        /// Wait some frames and invoke callBack
-        /// </summary>
-        /// <param name="onUpdate"></param>
-        /// <param name="frame"></param>
-        /// <returns></returns>
-        [StackTraceFrame]
-        public static SchedulerHandle WaitFrame(int frame, Action<int> onUpdate, bool isLooped = false)
-        {
-            return FrameCounter.Register(frame, default, onUpdate, isLooped).Handle;
+            return FrameCounter.Register(frame, default, onUpdate, tickFrame, isLooped).Handle;
         }
         /// <summary>
         /// Wait some frames and invoke callBack
@@ -278,9 +256,45 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="frame"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle WaitFrame(int frame, Action callBack, Action<int> onUpdate, bool isLooped = false)
+        public static SchedulerHandle WaitFrameUnsafe(int frame, SchedulerUnsafeBinding callBack, SchedulerUnsafeBinding<int> onUpdate,
+         TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            return FrameCounter.Register(frame, callBack, onUpdate, isLooped).Handle;
+            return FrameCounter.Register(frame, callBack, onUpdate, tickFrame, isLooped).Handle;
+        }
+        /// <summary>
+        /// Wait some frames and invoke callBack
+        /// </summary>
+        /// <param name="callBack"></param>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        [StackTraceFrame]
+        public static SchedulerHandle WaitFrame(int frame, Action callBack, TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
+        {
+            return FrameCounter.Register(frame, callBack, default, tickFrame, isLooped).Handle;
+        }
+        /// <summary>
+        /// Wait some frames and invoke callBack
+        /// </summary>
+        /// <param name="onUpdate"></param>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        [StackTraceFrame]
+        public static SchedulerHandle WaitFrame(int frame, Action<int> onUpdate, TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
+        {
+            return FrameCounter.Register(frame, default, onUpdate, tickFrame, isLooped).Handle;
+        }
+        /// <summary>
+        /// Wait some frames and invoke callBack
+        /// </summary>
+        /// <param name="callBack"></param>
+        /// <param name="onUpdate"></param>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        [StackTraceFrame]
+        public static SchedulerHandle WaitFrame(int frame, Action callBack, Action<int> onUpdate,
+         TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
+        {
+            return FrameCounter.Register(frame, callBack, onUpdate, tickFrame, isLooped).Handle;
         }
         #region Unreal Style
         /// <summary>
@@ -292,9 +306,10 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="isLooped"></param>
         /// <param name="ignoreTimeScale"></param>
         [StackTraceFrame]
-        public static void DelayUnsafe(ref SchedulerHandle handle, float delay, SchedulerUnsafeBinding callBack, bool isLooped = false, bool ignoreTimeScale = false)
+        public static void DelayUnsafe(ref SchedulerHandle handle, float delay, SchedulerUnsafeBinding callBack,
+         TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            Timer.Register(delay, callBack, default, isLooped, ignoreTimeScale).Assign(ref handle);
+            Timer.Register(delay, callBack, default, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
         }
         /// <summary>
         /// Delay some time and invoke callBack
@@ -306,9 +321,10 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static void DelayUnsafe(ref SchedulerHandle handle, float delay, SchedulerUnsafeBinding<float> onUpdate, bool isLooped = false, bool ignoreTimeScale = false)
+        public static void DelayUnsafe(ref SchedulerHandle handle, float delay, SchedulerUnsafeBinding<float> onUpdate,
+        TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            Timer.Register(delay, default, onUpdate, isLooped, ignoreTimeScale).Assign(ref handle);
+            Timer.Register(delay, default, onUpdate, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
         }
         /// <summary>
         /// Delay some time and invoke callBack
@@ -319,9 +335,10 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="onUpdate"></param>
         /// <param name="ignoreTimeScale"></param>
         [StackTraceFrame]
-        public static void DelayUnsafe(ref SchedulerHandle handle, float delay, SchedulerUnsafeBinding callBack, SchedulerUnsafeBinding<float> onUpdate, bool isLooped = false, bool ignoreTimeScale = false)
+        public static void DelayUnsafe(ref SchedulerHandle handle, float delay, SchedulerUnsafeBinding callBack,
+         SchedulerUnsafeBinding<float> onUpdate, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            Timer.Register(delay, callBack, onUpdate, isLooped, ignoreTimeScale).Assign(ref handle);
+            Timer.Register(delay, callBack, onUpdate, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
         }
         /// <summary>
         /// Delay some time and invoke callBack
@@ -332,9 +349,10 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="isLooped"></param>
         /// <param name="ignoreTimeScale"></param>
         [StackTraceFrame]
-        public static void Delay(ref SchedulerHandle handle, float delay, Action callBack, bool isLooped = false, bool ignoreTimeScale = false)
+        public static void Delay(ref SchedulerHandle handle, float delay, Action callBack, bool isLooped = false,
+         TickFrame tickFrame = TickFrame.Update, bool ignoreTimeScale = false)
         {
-            Timer.Register(delay, callBack, default, isLooped, ignoreTimeScale).Assign(ref handle);
+            Timer.Register(delay, callBack, default, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
         }
         /// <summary>
         /// Delay some time and invoke callBack
@@ -346,9 +364,10 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static void Delay(ref SchedulerHandle handle, float delay, Action<float> onUpdate, bool isLooped = false, bool ignoreTimeScale = false)
+        public static void Delay(ref SchedulerHandle handle, float delay, Action<float> onUpdate,
+        TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            Timer.Register(delay, default, onUpdate, isLooped, ignoreTimeScale).Assign(ref handle);
+            Timer.Register(delay, default, onUpdate, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
         }
         /// <summary>
         /// Delay some time and invoke callBack
@@ -359,9 +378,10 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="onUpdate"></param>
         /// <param name="ignoreTimeScale"></param>
         [StackTraceFrame]
-        public static void Delay(ref SchedulerHandle handle, float delay, Action callBack, Action<float> onUpdate, bool isLooped = false, bool ignoreTimeScale = false)
+        public static void Delay(ref SchedulerHandle handle, float delay, Action callBack, Action<float> onUpdate,
+        TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            Timer.Register(delay, callBack, onUpdate, isLooped, ignoreTimeScale).Assign(ref handle);
+            Timer.Register(delay, callBack, onUpdate, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
         }
         /// <summary>
         /// Wait some frames and invoke callBack
@@ -370,9 +390,10 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="frame"></param>
         /// <param name="callBack"></param>
         [StackTraceFrame]
-        public static void WaitFrameUnsafe(ref SchedulerHandle handle, int frame, SchedulerUnsafeBinding callBack, bool isLooped = false)
+        public static void WaitFrameUnsafe(ref SchedulerHandle handle, int frame, SchedulerUnsafeBinding callBack,
+         TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            FrameCounter.Register(frame, callBack, default, isLooped).Assign(ref handle);
+            FrameCounter.Register(frame, callBack, default, tickFrame, isLooped).Assign(ref handle);
         }
         /// <summary>
         /// Wait some frames and invoke callBack
@@ -381,43 +402,10 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="frame"></param>
         /// <param name="onUpdate"></param>
         [StackTraceFrame]
-        public static void WaitFrameUnsafe(ref SchedulerHandle handle, int frame, SchedulerUnsafeBinding<int> onUpdate, bool isLooped = false)
+        public static void WaitFrameUnsafe(ref SchedulerHandle handle, int frame, SchedulerUnsafeBinding<int> onUpdate,
+          TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            FrameCounter.Register(frame, default, onUpdate, isLooped).Assign(ref handle);
-        }
-        /// <summary>
-        /// Wait some frames and invoke callBack
-        /// </summary>
-        /// <param name="handle">Handle to overwrite</param>
-        /// <param name="frame"></param>
-        /// <param name="callBack"></param>
-        /// <param name="onUpdate"></param>
-        [StackTraceFrame]
-        public static void WaitFrameUnsafe(ref SchedulerHandle handle, int frame, SchedulerUnsafeBinding callBack, SchedulerUnsafeBinding<int> onUpdate, bool isLooped = false)
-        {
-            FrameCounter.Register(frame, callBack, onUpdate, isLooped).Assign(ref handle);
-        }
-        /// <summary>
-        /// Wait some frames and invoke callBack
-        /// </summary>
-        /// <param name="handle">Handle to overwrite</param>
-        /// <param name="frame"></param>
-        /// <param name="callBack"></param>
-        [StackTraceFrame]
-        public static void WaitFrame(ref SchedulerHandle handle, int frame, Action callBack, bool isLooped = false)
-        {
-            FrameCounter.Register(frame, callBack, default, isLooped).Assign(ref handle);
-        }
-        /// <summary>
-        /// Wait some frames and invoke callBack
-        /// </summary>
-        /// <param name="handle">Handle to overwrite</param>
-        /// <param name="frame"></param>
-        /// <param name="onUpdate"></param>
-        [StackTraceFrame]
-        public static void WaitFrame(ref SchedulerHandle handle, int frame, Action<int> onUpdate, bool isLooped = false)
-        {
-            FrameCounter.Register(frame, default, onUpdate, isLooped).Assign(ref handle);
+            FrameCounter.Register(frame, default, onUpdate, tickFrame, isLooped).Assign(ref handle);
         }
         /// <summary>
         /// Wait some frames and invoke callBack
@@ -427,9 +415,47 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="callBack"></param>
         /// <param name="onUpdate"></param>
         [StackTraceFrame]
-        public static void WaitFrame(ref SchedulerHandle handle, int frame, Action callBack, Action<int> onUpdate, bool isLooped = false)
+        public static void WaitFrameUnsafe(ref SchedulerHandle handle, int frame, SchedulerUnsafeBinding callBack,
+         SchedulerUnsafeBinding<int> onUpdate, TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            FrameCounter.Register(frame, callBack, onUpdate, isLooped).Assign(ref handle);
+            FrameCounter.Register(frame, callBack, onUpdate, tickFrame, isLooped).Assign(ref handle);
+        }
+        /// <summary>
+        /// Wait some frames and invoke callBack
+        /// </summary>
+        /// <param name="handle">Handle to overwrite</param>
+        /// <param name="frame"></param>
+        /// <param name="callBack"></param>
+        [StackTraceFrame]
+        public static void WaitFrame(ref SchedulerHandle handle, int frame, Action callBack,
+         TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
+        {
+            FrameCounter.Register(frame, callBack, default, tickFrame, isLooped).Assign(ref handle);
+        }
+        /// <summary>
+        /// Wait some frames and invoke callBack
+        /// </summary>
+        /// <param name="handle">Handle to overwrite</param>
+        /// <param name="frame"></param>
+        /// <param name="onUpdate"></param>
+        [StackTraceFrame]
+        public static void WaitFrame(ref SchedulerHandle handle, int frame, Action<int> onUpdate,
+        TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
+        {
+            FrameCounter.Register(frame, default, onUpdate, tickFrame, isLooped).Assign(ref handle);
+        }
+        /// <summary>
+        /// Wait some frames and invoke callBack
+        /// </summary>
+        /// <param name="handle">Handle to overwrite</param>
+        /// <param name="frame"></param>
+        /// <param name="callBack"></param>
+        /// <param name="onUpdate"></param>
+        [StackTraceFrame]
+        public static void WaitFrame(ref SchedulerHandle handle, int frame, Action callBack, Action<int> onUpdate,
+        TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
+        {
+            FrameCounter.Register(frame, callBack, onUpdate, tickFrame, isLooped).Assign(ref handle);
         }
         #endregion
     }

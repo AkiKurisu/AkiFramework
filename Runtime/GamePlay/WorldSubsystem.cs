@@ -7,8 +7,8 @@ namespace Kurisu.Framework
 {
     internal class WorldSubsystemCollection : IDisposable
     {
-        private readonly Dictionary<Type, WorldSubsystem> systems = new();
-        private WorldSubsystem[] subsystems;
+        private readonly Dictionary<Type, SubsystemBase> systems = new();
+        private SubsystemBase[] subsystems;
         public WorldSubsystemCollection(ActorWorld world)
         {
             var types = AppDomain.CurrentDomain
@@ -17,7 +17,7 @@ namespace Kurisu.Framework
                     .SelectMany(x => x)
                     .Where(x => x.IsSubclassOf(typeof(WorldSubsystem)) && !x.IsAbstract)
                     .ToList();
-            systems = types.ToDictionary(x => x, x => Activator.CreateInstance(x) as WorldSubsystem);
+            systems = types.ToDictionary(x => x, x => Activator.CreateInstance(x) as SubsystemBase);
             foreach (var type in types)
             {
                 if (!systems[type].CanCreate(world)) systems.Remove(type);
@@ -25,19 +25,32 @@ namespace Kurisu.Framework
             }
             subsystems = systems.Values.ToArray();
         }
-        public T GetSubsystem<T>() where T : WorldSubsystem
+        internal void RegisterSubsystem<T>(T subsystem) where T : SubsystemBase
         {
-            return (T)systems[typeof(T)];
+            systems.Add(typeof(T), subsystem);
+            subsystem.InternalInit();
         }
-        public WorldSubsystem GetSubsystem(Type type)
+        internal void Rebuild()
         {
-            return systems[type];
+            subsystems = systems.Values.ToArray();
+            Init();
+        }
+        public T GetSubsystem<T>() where T : SubsystemBase
+        {
+            if (systems.TryGetValue(typeof(T), out var subsystem))
+                return (T)subsystem;
+            return null;
+        }
+        public SubsystemBase GetSubsystem(Type type)
+        {
+            if (systems.TryGetValue(type, out var subsystem))
+                return subsystem;
+            return null;
         }
         public void Init()
         {
             for (int i = 0; i < subsystems.Length; ++i)
             {
-                subsystems[i].Init();
                 subsystems[i].InternalInit();
             }
         }
@@ -59,18 +72,20 @@ namespace Kurisu.Framework
         {
             for (int i = 0; i < subsystems.Length; ++i)
             {
-                subsystems[i].Dispose();
-                subsystems[i].InternalDispose();
+                subsystems[i].InternalRelease();
             }
             subsystems = null;
         }
     }
-    public abstract class WorldSubsystem : IDisposable
+    public abstract class SubsystemBase
     {
+
         /// <summary>
         /// Buffered dirty flag when world actors changed
         /// </summary>
         protected bool IsActorsDirty { get; set; }
+        private bool isInitialized;
+        private bool isDestroyed;
         private IDisposable actorsUpdateSubscription;
         private ActorWorld world;
         /// <summary>
@@ -79,13 +94,19 @@ namespace Kurisu.Framework
         /// <param name="world"></param>
         /// <returns></returns>
         public virtual bool CanCreate(ActorWorld world) => true;
-        public virtual void Init()
+        /// <summary>
+        /// Subsystem initialize phase, should bind callbacks and collect references in this phase
+        /// </summary>
+        protected virtual void Initialize()
         {
 
         }
-        internal void InternalInit()
+        internal virtual void InternalInit()
         {
+            if (isInitialized) return;
+            isInitialized = true;
             actorsUpdateSubscription = world.onActorsUpdate.Subscribe(OnActorsUpdate);
+            Initialize();
         }
         private void OnActorsUpdate(Unit _)
         {
@@ -99,14 +120,20 @@ namespace Kurisu.Framework
         {
 
         }
-        public virtual void Dispose()
+        /// <summary>
+        /// Subsystem release phase, should unbind callbacks and release references in this phase
+        /// </summary>
+        protected virtual void Release()
         {
 
         }
-        internal virtual void InternalDispose()
+        internal virtual void InternalRelease()
         {
+            if (isDestroyed) return;
             world = null;
+            isDestroyed = true;
             actorsUpdateSubscription.Dispose();
+            Release();
         }
         internal void SetWorld(ActorWorld world)
         {
@@ -129,6 +156,36 @@ namespace Kurisu.Framework
                 return default;
             }
             return new(world.actorsInWorld);
+        }
+    }
+    /// <summary>
+    /// Subsystem always bound to an actor world.
+    /// </summary>
+    public abstract class WorldSubsystem : SubsystemBase
+    {
+    }
+    /// <summary>
+    /// Subsystem dynamically created during game
+    /// </summary>
+    public abstract class DynamicSubsystem : SubsystemBase
+    {
+        /// <summary>
+        /// Dynamically create system if not registered.
+        /// </summary>
+        /// <param name="world"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static T Get<T>(ActorWorld world) where T : DynamicSubsystem, new()
+        {
+            var system = world.GetSubsystem<T>();
+            if (system == null)
+            {
+                system = new();
+                if (!system.CanCreate(world)) return null;
+                system.SetWorld(world);
+                world.RegisterSubsystem(system);
+            }
+            return system;
         }
     }
 }

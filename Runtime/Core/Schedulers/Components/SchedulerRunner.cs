@@ -28,7 +28,8 @@ namespace Kurisu.Framework.Schedulers
 #endif
             public IScheduled Value { get; private set; }
             private bool delay;
-            public static ScheduledItem GetPooled(IScheduled scheduled, bool delay)
+            private TickFrame tickFrame;
+            public static ScheduledItem GetPooled(IScheduled scheduled, TickFrame tickFrame, bool delay)
             {
                 var item = pool.Get();
                 item.Value = scheduled;
@@ -36,6 +37,7 @@ namespace Kurisu.Framework.Schedulers
                 item.Timestamp = Time.timeSinceLevelLoadAsDouble;
 #endif
                 item.delay = delay;
+                item.tickFrame = tickFrame;
                 return item;
             }
             /// <summary>
@@ -43,9 +45,10 @@ namespace Kurisu.Framework.Schedulers
             /// </summary>
             /// <returns></returns>
             public bool IsDone() => Value.IsDone;
-            public void Update()
+            public void Update(TickFrame tickFrame)
             {
                 if (Value.IsDone) return;
+                if (this.tickFrame != tickFrame) return;
                 if (delay)
                 {
                     delay = false;
@@ -112,11 +115,20 @@ namespace Kurisu.Framework.Schedulers
         }
         private void Update()
         {
-            isGateOpen = false;
-            UpdateAll();
-            isGateOpen = true;
+            UpdateAll(TickFrame.Update);
+
+        }
+        private void FixedUpdate()
+        {
+            UpdateAll(TickFrame.FixedUpdate);
+        }
+
+        private void LateUpdate()
+        {
+            UpdateAll(TickFrame.LateUpdate);
             lastFrame = Time.frameCount;
         }
+
         private void OnDestroy()
         {
             isDestroyed = true;
@@ -133,7 +145,7 @@ namespace Kurisu.Framework.Schedulers
         /// Register scheduled task to managed
         /// </summary>
         /// <param name="scheduled"></param>
-        public void Register(IScheduled scheduled, Delegate @delegate)
+        public void Register(IScheduled scheduled, TickFrame tickFrame, Delegate @delegate)
         {
             if (isDestroyed)
             {
@@ -144,7 +156,7 @@ namespace Kurisu.Framework.Schedulers
             // schedule one frame if register before runner update
             bool needDelayFrame = lastFrame < Time.frameCount;
             int index = scheduled.Handle.GetIndex();
-            var item = ScheduledItem.GetPooled(scheduled, needDelayFrame);
+            var item = ScheduledItem.GetPooled(scheduled, tickFrame, needDelayFrame);
             // Assign item
             scheduledItems[index] = item;
             pendingHandles.Add(scheduled.Handle);
@@ -210,8 +222,9 @@ namespace Kurisu.Framework.Schedulers
                 item.Value.Resume();
             }
         }
-        private void UpdateAll()
+        private void UpdateAll(TickFrame tickFrame)
         {
+            isGateOpen = false;
             // Add
             if (pendingHandles.Count > 0)
             {
@@ -228,7 +241,7 @@ namespace Kurisu.Framework.Schedulers
             foreach (var handle in activeHandles)
             {
                 var item = FindItem(handle);
-                item.Update();
+                item.Update(tickFrame);
                 if (item.IsDone())
                 {
                     releaseHandles.Add(handle);
@@ -243,6 +256,7 @@ namespace Kurisu.Framework.Schedulers
                 item.Dispose();
             }
             releaseHandles.Clear();
+            isGateOpen = true;
         }
         private ScheduledItem FindItem(SchedulerHandle handle)
         {

@@ -10,6 +10,7 @@ namespace Kurisu.Framework
         public int instanceId;
         public int layer;
         public byte active;
+        public quaternion rotation;
         public float3 position;
     }
     /// <summary>
@@ -18,7 +19,7 @@ namespace Kurisu.Framework
     public class ActorQuerySystem : WorldSubsystem
     {
         private NativeArray<ActorData> _actorData = default;
-        public override void Init()
+        protected override void Initialize()
         {
             _actorData = new NativeArray<ActorData>(GetActorsInWorld().Length, Allocator.Persistent);
         }
@@ -37,7 +38,8 @@ namespace Kurisu.Framework
                     instanceId = actorsInWorld[i].GetInstanceID(),
                     active = (byte)(actorsInWorld[i].isActiveAndEnabled ? 0 : 1),
                     layer = actorsInWorld[i].gameObject.layer,
-                    position = actorsInWorld[i].transform.position
+                    position = actorsInWorld[i].transform.position,
+                    rotation = actorsInWorld[i].transform.rotation
                 };
             }
         }
@@ -54,7 +56,7 @@ namespace Kurisu.Framework
             }
             return new NativeArray<ActorData>(_actorData, allocator);
         }
-        public override void Dispose()
+        protected override void Release()
         {
             _actorData.DisposeSafe();
         }

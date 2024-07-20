@@ -6,8 +6,7 @@ using UnityEngine.Pool;
 namespace Kurisu.Framework.AI
 {
     /// <summary>
-    /// Represents an advanced field of view for AI. 
-    /// Reference article: 《Naughty Dog-Human Enemy AI In Last of The Us》.
+    /// Represents a field of view for AI. 
     /// </summary>
     [Serializable]
     public struct FieldView

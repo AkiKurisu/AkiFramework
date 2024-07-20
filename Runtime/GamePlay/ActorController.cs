@@ -1,7 +1,7 @@
 using UnityEngine;
 namespace Kurisu.Framework
 {
-    public class Controller : MonoBehaviour
+    public class ActorController : MonoBehaviour
     {
         private Actor actor;
         public virtual bool IsBot()
@@ -16,7 +16,10 @@ namespace Kurisu.Framework
                 this.actor = null;
             }
             this.actor = actor;
-            actor.BindController(this);
+            if (actor)
+            {
+                actor.BindController(this);
+            }
         }
         protected virtual void OnDestroy()
         {

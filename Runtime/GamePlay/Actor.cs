@@ -9,7 +9,7 @@ namespace Kurisu.Framework
     public abstract class Actor : MonoBehaviour
     {
         private ActorWorld world;
-        private Controller controller;
+        private ActorController controller;
         private int id = UnmanagedActorId;
         private const int UnmanagedActorId = 0;
         private readonly HashSet<ActorComponent> actorComponents = new();
@@ -53,11 +53,11 @@ namespace Kurisu.Framework
             actor.world = null;
             actor.id = UnmanagedActorId;
         }
-        public TController GetTController<TController>() where TController : Controller
+        public TController GetTController<TController>() where TController : ActorController
         {
             return controller as TController;
         }
-        public Controller GetController()
+        public ActorController GetController()
         {
             return controller;
         }
@@ -87,7 +87,7 @@ namespace Kurisu.Framework
 #endif
             actor.actorComponents.Remove(component);
         }
-        internal void BindController(Controller controller)
+        internal void BindController(ActorController controller)
         {
             if (this.controller != null)
             {
@@ -96,7 +96,7 @@ namespace Kurisu.Framework
             }
             this.controller = controller;
         }
-        internal void UnbindController(Controller controller)
+        internal void UnbindController(ActorController controller)
         {
             if (this.controller == controller)
             {

@@ -50,12 +50,18 @@ namespace Kurisu.Framework.Schedulers
         /// Register a new counter that should fire an event after a certain amount of frame
         /// has elapsed.
         /// </summary>
+        /// <param name="frame"></param>
+        /// <param name="onComplete"></param>
+        /// <param name="onUpdate"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
+        /// <returns></returns>
         internal static FrameCounter Register(int frame, SchedulerUnsafeBinding onComplete, SchedulerUnsafeBinding<int> onUpdate,
-            bool isLooped = false)
+         TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
             FrameCounter timer = pool.Get();
             timer.Init(SchedulerRunner.Instance.NewHandle(), frame, ref onComplete, ref onUpdate, isLooped);
-            SchedulerRunner.Instance.Register(timer, onComplete.IsValid() ? onComplete.GetDelegate() : onUpdate.GetDelegate());
+            SchedulerRunner.Instance.Register(timer, tickFrame, onComplete.IsValid() ? onComplete.GetDelegate() : onUpdate.GetDelegate());
             return timer;
         }
         #endregion

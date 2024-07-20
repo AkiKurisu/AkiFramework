@@ -68,16 +68,17 @@ namespace Kurisu.Framework.Schedulers
         /// <param name="onComplete">An action to fire when the timer completes.</param>
         /// <param name="onUpdate">An action that should fire each time the timer is updated. Takes the amount
         /// of time passed in seconds since the start of the timer's current loop.</param>
+        /// <param name="tickFrame">Whether the timer tick on which frame.</param>
         /// <param name="isLooped">Whether the timer should repeat after executing.</param>
         /// <param name="useRealTime">Whether the timer uses real-time(i.e. not affected by pauses,
         /// slow/fast motion) or game-time(will be affected by pauses and slow/fast-motion).</param>
         /// <returns>A timer object that allows you to examine stats and stop/resume progress.</returns>
         internal static Timer Register(float duration, SchedulerUnsafeBinding onComplete, SchedulerUnsafeBinding<float> onUpdate,
-            bool isLooped = false, bool useRealTime = false)
+           TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool useRealTime = false)
         {
             Timer timer = pool.Get();
             timer.Init(SchedulerRunner.Instance.NewHandle(), duration, ref onComplete, ref onUpdate, isLooped, useRealTime);
-            SchedulerRunner.Instance.Register(timer, onComplete.IsValid() ? onComplete.GetDelegate() : onUpdate.GetDelegate());
+            SchedulerRunner.Instance.Register(timer, tickFrame, onComplete.IsValid() ? onComplete.GetDelegate() : onUpdate.GetDelegate());
             return timer;
         }
         #endregion
