@@ -7,7 +7,7 @@ namespace Kurisu.Framework.Tasks
 {
     internal class TaskRunner : MonoBehaviour
     {
-        private readonly List<TaskBase> _tasks = new();
+        internal readonly List<TaskBase> _tasks = new();
         private readonly List<TaskBase> _tasksToAdd = new();
         private static TaskRunner instance;
         private static TaskRunner GetInstance()

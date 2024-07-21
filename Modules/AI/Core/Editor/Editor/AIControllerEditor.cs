@@ -1,5 +1,5 @@
 using System.Linq;
-using Kurisu.Framework.Tasks;
+using Kurisu.Framework.Tasks.Editor;
 using UnityEditor;
 using UnityEngine;
 namespace Kurisu.Framework.AI.Editor
@@ -27,7 +27,7 @@ namespace Kurisu.Framework.AI.Editor
                     GUILayout.Label($"{task.GetTaskID()}");
                     var rect = GUILayoutUtility.GetLastRect();
                     rect.x += 200;
-                    GUI.Label(rect, $"Status    {StatusToString(task.GetStatus())}", new GUIStyle(GUI.skin.label) { richText = true });
+                    GUI.Label(rect, $"Status    {TaskEditorUtils.StatusToString(task.GetStatus())}", new GUIStyle(GUI.skin.label) { richText = true });
                     GUILayout.EndHorizontal();
                 }
             }
@@ -43,21 +43,6 @@ namespace Kurisu.Framework.AI.Editor
             }
             serializedObject.ApplyModifiedProperties();
             EditorGUI.EndChangeCheck();
-        }
-        private string StatusToString(TaskStatus status)
-        {
-            if (status == TaskStatus.Running)
-            {
-                return "<color=#92F2FF>Running</color>";
-            }
-            else if (status == TaskStatus.Paused)
-            {
-                return "<color=#FFF892>Paused</color>";
-            }
-            else
-            {
-                return "<color=#FF787E>Disabled</color>";
-            }
         }
     }
 }
