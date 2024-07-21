@@ -143,6 +143,7 @@ namespace Kurisu.Framework.Collections
         }
         public bool IsValidIndex(int index)
         {
+            if (index < 0 || index >= allocationFlags.Count) return false;
             return allocationFlags[index];
         }
 
