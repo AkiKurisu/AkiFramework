@@ -18,7 +18,6 @@ namespace Kurisu.Framework.Tasks
         {
             base.Init();
             handle = default;
-            mStatus = TaskStatus.Enabled;
         }
         protected override void Reset()
         {
@@ -28,7 +27,7 @@ namespace Kurisu.Framework.Tasks
         }
         private static void StopDelayTask(object instance)
         {
-            ((DelayTask)instance).mStatus = TaskStatus.Disabled;
+            ((DelayTask)instance).mStatus = TaskStatus.Completed;
         }
     }
 }

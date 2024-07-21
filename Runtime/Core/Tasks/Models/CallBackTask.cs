@@ -7,11 +7,6 @@ namespace Kurisu.Framework.Tasks
     public class CallBackTask : PooledTaskBase<CallBackTask>
     {
         private Action callBack;
-        protected override void Init()
-        {
-            base.Init();
-            mStatus = TaskStatus.Enabled;
-        }
         public static CallBackTask GetPooled(Action callBack)
         {
             var task = GetPooled();
@@ -21,7 +16,7 @@ namespace Kurisu.Framework.Tasks
         public override void Tick()
         {
             callBack?.Invoke();
-            mStatus = TaskStatus.Disabled;
+            mStatus = TaskStatus.Completed;
         }
         protected override void Reset()
         {

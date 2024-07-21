@@ -1,5 +1,8 @@
 using System.Collections.Generic;
+using Kurisu.Framework.Events;
+using Kurisu.Framework.React;
 using UnityEngine;
+using R3;
 namespace Kurisu.Framework.Tasks
 {
     internal class TaskRunner : MonoBehaviour
@@ -24,18 +27,25 @@ namespace Kurisu.Framework.Tasks
             var instance = GetInstance();
             if (instance)
             {
-                if (instance._tasks.Contains(task)) return;
+                if (instance._tasks.Contains(task))
+                {
+                    Debug.LogWarning($"[TaskRunner] Duplicate register task {task}.");
+                    return;
+                }
                 task.Acquire();
                 instance._tasksToAdd.Add(task);
             }
         }
-
+        private void Awake()
+        {
+            EventSystem.EventHandler.AsObservable<TaskCompleteEvent>()
+                                    .SubscribeSafe(OnTaskComplete)
+                                    .RegisterTo(destroyCancellationToken);
+        }
         private void Update()
         {
             UpdateAllTasks();
-            ReleaseTasks();
         }
-
         private void UpdateAllTasks()
         {
             if (_tasksToAdd.Count > 0)
@@ -46,17 +56,33 @@ namespace Kurisu.Framework.Tasks
 
             foreach (TaskBase task in _tasks)
             {
-                if (task.GetStatus() == TaskStatus.Enabled)
+                if (task.GetStatus() == TaskStatus.Running)
+                {
                     task.Tick();
+                }
             }
-        }
-        private void ReleaseTasks()
-        {
+
             for (int i = _tasks.Count - 1; i >= 0; i--)
             {
-                if (_tasks[i].GetStatus() != TaskStatus.Disabled) continue;
-                _tasks[i].Dispose();
-                _tasks.RemoveAt(i);
+                var status = _tasks[i].GetStatus();
+                if (status is TaskStatus.Completed or TaskStatus.Stopped)
+                {
+                    if (status == TaskStatus.Completed)
+                        _tasks[i].PostComplete();
+                    _tasks[i].Dispose();
+                    _tasks.RemoveAt(i);
+                }
+            }
+        }
+        private void OnTaskComplete(TaskCompleteEvent evt)
+        {
+            foreach (var task in evt.Listeners)
+            {
+                task.ReleasePrerequistite();
+                if (!task.HasPrerequistites())
+                {
+                    task.Run();
+                }
             }
         }
     }

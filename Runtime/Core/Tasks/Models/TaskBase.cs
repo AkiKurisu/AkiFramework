@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Kurisu.Framework.Events;
 using Kurisu.Framework.Pool;
 using UnityEngine;
 namespace Kurisu.Framework.Tasks
@@ -6,17 +8,37 @@ namespace Kurisu.Framework.Tasks
     public enum TaskStatus
     {
         /// <summary>
-        /// Task is enabled and can be updated
+        /// Task is enabled to run and can be updated
         /// </summary>
-        Enabled,
+        Running,
         /// <summary>
         /// Task is paused and will be ignored
         /// </summary>
         Paused,
         /// <summary>
-        /// Task is disabled and can not be updated
+        /// Task is completed and can not be updated any longer
         /// </summary>
-        Disabled
+        Completed,
+        /// <summary>
+        /// Task is not completed but is stopped externally
+        /// </summary>
+        Stopped
+    }
+    public class TaskCompleteEvent : EventBase<TaskCompleteEvent>
+    {
+        public TaskBase Task { get; private set; }
+        public readonly List<TaskBase> Listeners = new();
+        public static TaskCompleteEvent GetPooled(TaskBase task)
+        {
+            var evt = GetPooled();
+            evt.Task = task;
+            evt.Listeners.Clear();
+            return evt;
+        }
+        public void AddListenerTask(TaskBase taskBase)
+        {
+            Listeners.Add(taskBase);
+        }
     }
     /// <summary>
     /// Base class for framework task
@@ -32,16 +54,16 @@ namespace Kurisu.Framework.Tasks
 
         protected virtual void Init()
         {
-
+            mStatus = TaskStatus.Stopped;
         }
 
         public virtual void Stop()
         {
-            mStatus = TaskStatus.Disabled;
+            mStatus = TaskStatus.Stopped;
         }
         public virtual void Start()
         {
-            mStatus = TaskStatus.Enabled;
+            mStatus = TaskStatus.Running;
         }
         public virtual void Pause()
         {
@@ -54,15 +76,46 @@ namespace Kurisu.Framework.Tasks
         }
         protected virtual void Reset()
         {
-            mStatus = TaskStatus.Disabled;
+            mStatus = TaskStatus.Stopped;
         }
         public virtual void Dispose()
         {
-
+            if (completeEvent != null)
+            {
+                completeEvent.Dispose();
+                completeEvent = null;
+            }
         }
         public virtual void Acquire()
         {
 
+        }
+        private TaskCompleteEvent completeEvent;
+        private int prerequisiteCount;
+        internal void PostComplete()
+        {
+            if (completeEvent == null) return;
+            EventSystem.EventHandler.SendEvent(completeEvent);
+            completeEvent.Dispose();
+            completeEvent = null;
+        }
+        internal void ReleasePrerequistite()
+        {
+            prerequisiteCount--;
+        }
+        internal bool HasPrerequistites()
+        {
+            return prerequisiteCount > 0;
+        }
+        private TaskCompleteEvent GetCompleteEvent()
+        {
+            completeEvent ??= TaskCompleteEvent.GetPooled(this);
+            return completeEvent;
+        }
+        public void RegisterPrerequisite(TaskBase taskBase)
+        {
+            taskBase.GetCompleteEvent().AddListenerTask(this);
+            prerequisiteCount++;
         }
     }
     public abstract class PooledTaskBase<T> : TaskBase where T : PooledTaskBase<T>, new()
@@ -83,6 +136,7 @@ namespace Kurisu.Framework.Tasks
         {
             if (--m_RefCount == 0)
             {
+                base.Dispose();
                 ReleasePooled((T)this);
             }
         }

@@ -46,7 +46,7 @@ namespace Kurisu.Framework.AI.Editor
         }
         private string StatusToString(TaskStatus status)
         {
-            if (status == TaskStatus.Enabled)
+            if (status == TaskStatus.Running)
             {
                 return "<color=#92F2FF>Running</color>";
             }

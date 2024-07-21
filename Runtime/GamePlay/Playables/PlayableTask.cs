@@ -19,17 +19,12 @@ namespace Kurisu.Framework.Playables.Tasks
             task.fadeInTime = fadeInTime;
             return task;
         }
-        protected override void Init()
-        {
-            base.Init();
-            mStatus = TaskStatus.Enabled;
-        }
         public override void Tick()
         {
             if (!mixerPlayable.IsValid())
             {
                 Debug.LogWarning("Playable is already destroyed");
-                mStatus = TaskStatus.Disabled;
+                mStatus = TaskStatus.Completed;
                 return;
             }
             clipPlayable.SetSpeed(1d);
@@ -38,7 +33,7 @@ namespace Kurisu.Framework.Playables.Tasks
             {
                 mixerPlayable.SetInputWeight(0, 0);
                 mixerPlayable.SetInputWeight(1, 1);
-                mStatus = TaskStatus.Disabled;
+                mStatus = TaskStatus.Completed;
             }
             else
             {
@@ -66,17 +61,12 @@ namespace Kurisu.Framework.Playables.Tasks
             task.duration = clipPlayable.GetDuration();
             return task;
         }
-        protected override void Init()
-        {
-            base.Init();
-            mStatus = TaskStatus.Enabled;
-        }
         public override void Tick()
         {
             if (!mixerPlayable.IsValid())
             {
                 Debug.LogWarning("Playable is already destroyed");
-                mStatus = TaskStatus.Disabled;
+                mStatus = TaskStatus.Completed;
                 return;
             }
             double current = clipPlayable.GetTime();
@@ -84,7 +74,7 @@ namespace Kurisu.Framework.Playables.Tasks
             {
                 mixerPlayable.SetInputWeight(0, 1);
                 mixerPlayable.SetInputWeight(1, 0);
-                mStatus = TaskStatus.Disabled;
+                mStatus = TaskStatus.Completed;
             }
             else
             {
@@ -110,17 +100,12 @@ namespace Kurisu.Framework.Playables.Tasks
             task.timer = 0;
             return task;
         }
-        protected override void Init()
-        {
-            base.Init();
-            mStatus = TaskStatus.Enabled;
-        }
         public override void Tick()
         {
             if (!mixerPlayable.IsValid())
             {
                 Debug.LogWarning("Playable is already destroyed");
-                mStatus = TaskStatus.Disabled;
+                mStatus = TaskStatus.Completed;
                 return;
             }
             timer += Time.deltaTime;
@@ -128,7 +113,7 @@ namespace Kurisu.Framework.Playables.Tasks
             {
                 mixerPlayable.SetInputWeight(0, 1);
                 mixerPlayable.SetInputWeight(1, 0);
-                mStatus = TaskStatus.Disabled;
+                mStatus = TaskStatus.Completed;
             }
             else
             {
@@ -149,22 +134,17 @@ namespace Kurisu.Framework.Playables.Tasks
             task.waitTime = waitTime;
             return task;
         }
-        protected override void Init()
-        {
-            base.Init();
-            mStatus = TaskStatus.Enabled;
-        }
         public override void Tick()
         {
             if (!clipPlayable.IsValid())
             {
                 Debug.LogWarning("Playable is already destroyed");
-                mStatus = TaskStatus.Disabled;
+                mStatus = TaskStatus.Completed;
                 return;
             }
             if (clipPlayable.GetTime() >= waitTime)
             {
-                mStatus = TaskStatus.Disabled;
+                mStatus = TaskStatus.Completed;
             }
         }
     }

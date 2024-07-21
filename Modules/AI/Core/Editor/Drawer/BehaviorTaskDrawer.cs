@@ -43,8 +43,8 @@ namespace Kurisu.Framework.AI.Editor
         }
         private Color GetStatusColor(TaskStatus taskStatus)
         {
-            if (taskStatus == TaskStatus.Enabled) return ColorGreen;
-            if (taskStatus == TaskStatus.Disabled) return ColorBlue;
+            if (taskStatus == TaskStatus.Running) return ColorGreen;
+            if (taskStatus == TaskStatus.Completed) return ColorBlue;
             else return ColorYellow;
         }
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)

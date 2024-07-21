@@ -43,7 +43,7 @@ namespace Kurisu.Framework.AI
             sequenceTask?.Dispose();
             sequenceTask = SequenceTask.GetPooled(tasks, OnPlayEnd);
             sequenceTask.Acquire();
-            sequenceTask.Fire();
+            sequenceTask.Run();
         }
         private void OnPlayEnd()
         {

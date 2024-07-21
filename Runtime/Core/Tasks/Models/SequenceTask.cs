@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 namespace Kurisu.Framework.Tasks
 {
     /// <summary>
@@ -11,6 +10,7 @@ namespace Kurisu.Framework.Tasks
     {
         public event Action OnCompleted;
         private readonly Queue<TaskBase> tasks = new();
+        private TaskBase runningTask;
         public static SequenceTask GetPooled(Action callBack)
         {
             var task = GetPooled();
@@ -32,15 +32,11 @@ namespace Kurisu.Framework.Tasks
                 task.Append(tb);
             return task;
         }
-        protected override void Init()
-        {
-            base.Init();
-            mStatus = TaskStatus.Disabled;
-        }
         protected override void Reset()
         {
             base.Reset();
-            mStatus = TaskStatus.Disabled;
+            runningTask = null;
+            mStatus = TaskStatus.Stopped;
             OnCompleted = null;
             tasks.Clear();
         }
@@ -62,15 +58,28 @@ namespace Kurisu.Framework.Tasks
         }
         public override void Tick()
         {
-            if (tasks.TryPeek(out TaskBase first))
+            if (runningTask == null)
             {
-                first.Tick();
-                if (first.GetStatus() == TaskStatus.Disabled)
+                tasks.TryPeek(out runningTask);
+                runningTask.Start();
+            }
+
+            if (runningTask != null)
+            {
+                runningTask.Tick();
+                var status = runningTask.GetStatus();
+                if (status is TaskStatus.Completed or TaskStatus.Stopped)
                 {
+                    if (status == TaskStatus.Completed)
+                    {
+                        runningTask.PostComplete();
+                    }
                     tasks.Dequeue().Dispose();
+                    runningTask = null;
+
                     if (tasks.Count == 0)
                     {
-                        mStatus = TaskStatus.Disabled;
+                        mStatus = TaskStatus.Completed;
                         OnCompleted?.Invoke();
                         OnCompleted = null;
                     }
@@ -82,7 +91,7 @@ namespace Kurisu.Framework.Tasks
             }
             else
             {
-                mStatus = TaskStatus.Disabled;
+                mStatus = TaskStatus.Completed;
                 OnCompleted?.Invoke();
                 OnCompleted = null;
             }
@@ -103,19 +112,6 @@ namespace Kurisu.Framework.Tasks
         public SequenceTask AppendCallBack(Action callBack)
         {
             return Append(CallBackTask.GetPooled(callBack));
-        }
-        /// <summary>
-        /// Fire this task to start and run
-        /// </summary>
-        public void Fire()
-        {
-            if (mStatus == TaskStatus.Enabled)
-            {
-                Debug.LogWarning("Task is already start");
-                return;
-            }
-            Start();
-            TaskRunner.RegisterTask(this);
         }
     }
 }
