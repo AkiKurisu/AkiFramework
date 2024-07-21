@@ -178,7 +178,8 @@ namespace Kurisu.Framework.AI
                         worker = workerDic[command.selfId] = new();
                     }
                     if (worker.IsRunning)
-                        break;
+                        continue;
+
                     worker.ExecuteCommand(ref command, ref actorDatas);
                     batchActors[batchLength] = command.selfId;
                     batchLength++;
