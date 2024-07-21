@@ -12,7 +12,8 @@ namespace Kurisu.Framework.AI
         {
             Angle = 120,
             Distance = 30,
-            Step = 6
+            Step = 6,
+            Depth = 3
         };
         public LayerMask RaycastLayerMask;
         public Vector3 RaycastOffset;

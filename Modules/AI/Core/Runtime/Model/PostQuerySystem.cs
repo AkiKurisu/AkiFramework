@@ -31,16 +31,17 @@ namespace Kurisu.Framework.AI
             public ActorData source;
             [ReadOnly]
             public ActorData target;
+            [ReadOnly]
+            public int length;
             [WriteOnly, NativeDisableParallelForRestriction]
             public NativeArray<RaycastCommand> raycastCommands;
             public void Execute(int index)
             {
                 var direction = math.normalize(source.position - target.position);
 
-                float angle = command.postQuery.Angle;
-                quaternion rot = quaternion.RotateY(math.radians(math.lerp(-angle, angle, (float)index / command.postQuery.Step)));
+                float angle = command.postQuery.Angle / 2;
 
-                rot = math.mul(rot, quaternion.AxisAngle(math.up(), math.radians(angle)));
+                quaternion rot = quaternion.RotateY(math.radians(math.lerp(-angle, angle, (float)index / length)));
 
                 raycastCommands[index] = new RaycastCommand()
                 {
@@ -74,7 +75,7 @@ namespace Kurisu.Framework.AI
             {
                 IsRunning = true;
                 executeCommand = command;
-                int length = command.postQuery.Step * 2;
+                int length = command.postQuery.Step * command.postQuery.Depth;
                 raycastCommands.DisposeSafe();
                 raycastCommands = new(length, Allocator.TempJob);
                 hits.DisposeSafe();
@@ -83,6 +84,7 @@ namespace Kurisu.Framework.AI
                 {
                     command = command,
                     raycastCommands = raycastCommands,
+                    length = length,
                     source = FindActor(ref actorDatas, command.selfId),
                     target = FindActor(ref actorDatas, command.targetId)
                 };

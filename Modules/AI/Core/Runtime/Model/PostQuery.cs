@@ -16,6 +16,8 @@ namespace Kurisu.Framework.AI
         public float Distance;
         [Range(2, 36), Tooltip("Post query iterate step, decrease step to increase performance but loss diversity")]
         public int Step;
+        [Range(1, 6), Tooltip("Post query sampling depth, decrease depth to increase performance but loss precision")]
+        public int Depth;
         private struct RaycastPair
         {
             public bool isHitL;
@@ -26,7 +28,6 @@ namespace Kurisu.Framework.AI
             public Vector3 right;
             public readonly Vector3 Half => ((left + right) / 2).normalized;
         }
-        private const float minStepAngle = 8f;
         private static readonly ProfilerMarker m_ProfilerMarker = new("PostQuerier.QueryPosts");
         /// <summary>
         /// Query posts in source viuew using a Fan-Shaped Binary Search.
@@ -44,7 +45,6 @@ namespace Kurisu.Framework.AI
                 Vector3 left = Vector3.RotateTowards(direction, -source.right, angleInRadians / 2, float.MaxValue);
                 Vector3 right = Vector3.RotateTowards(direction, source.right, angleInRadians / 2, float.MaxValue);
                 float anglePerStep = angleInRadians / Step;
-                int depth = Mathf.Clamp((int)(anglePerStep / minStepAngle), 2, 4);
                 for (int i = 0; i < Step - 1; ++i)
                 {
                     RaycastPair pair = new()
@@ -54,7 +54,7 @@ namespace Kurisu.Framework.AI
                     };
                     int d = 0;
                     RaycastHit hit = default;
-                    while (d < depth)
+                    while (d < Depth)
                     {
                         int count = DoubleRaycast(source.position, layerMask, ref pair, out var newHit);
                         if (count == 1)
@@ -62,7 +62,7 @@ namespace Kurisu.Framework.AI
                             d++;
                             hit = newHit;
                             // use the most closest hit
-                            if (d == depth)
+                            if (d == Depth)
                             {
                                 posts.Add(hit.point);
                                 break;
