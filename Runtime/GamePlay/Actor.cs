@@ -44,7 +44,6 @@ namespace Kurisu.Framework
         protected static void RegisterActor(Actor actor)
         {
             actor.world = ActorWorld.Current;
-            actor.id = actor.GetInstanceID();
             actor.world.RegisterActor(actor, ref actor.id);
         }
         /// <summary>
