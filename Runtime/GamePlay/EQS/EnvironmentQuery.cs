@@ -36,11 +36,11 @@ namespace Kurisu.Framework.EQS
                 {
                     ActorData actor = actors[i];
                     if (IsInLayerMask(actor.layer, layerMask)
-                    && actor.instanceId != ignoreInstanceId
+                    && actor.id != ignoreInstanceId
                     && math.distance(center, actor.position) <= radius
                     && InViewAngle(center, actor.position, forward, angle))
                     {
-                        resultActors.Add(actor.instanceId);
+                        resultActors.Add(actor.id);
                     }
                 }
             }

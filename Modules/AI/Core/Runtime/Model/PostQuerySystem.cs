@@ -6,8 +6,20 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using Unity.Burst;
+using Unity.Profiling;
 namespace Kurisu.Framework.AI
 {
+    /// <summary>
+    /// Command for schedule post query job
+    /// </summary>
+    public struct PostQueryCommand
+    {
+        public int selfId;
+        public int targetId;
+        public float3 offset;
+        public int layerMask;
+        public PostQuery postQuery;
+    }
     public class PostQuerySystem : DynamicSubsystem
     {
         [BurstCompile]
@@ -39,7 +51,10 @@ namespace Kurisu.Framework.AI
                 };
             }
         }
-        public class PostQueryWorker
+        /// <summary>
+        /// Worker per actor
+        /// </summary>
+        private class PostQueryWorker
         {
             public PostQueryCommand executeCommand;
             public NativeList<float3> posts;
@@ -78,7 +93,7 @@ namespace Kurisu.Framework.AI
             {
                 for (int i = 0; i < actorDatas.Length; ++i)
                 {
-                    if (actorDatas[i].instanceId == id) return actorDatas[i];
+                    if (actorDatas[i].id == id) return actorDatas[i];
                 }
                 return default;
             }
@@ -113,8 +128,26 @@ namespace Kurisu.Framework.AI
         private NativeArray<int> batchActors;
         private int batchLength;
         private readonly Dictionary<int, PostQueryWorker> workerDic = new();
-        private const int MaxWorkerCount = 10;
-        private const float TickRate = 1 / 30f;
+        /// <summary>
+        /// Set system parallel workers count
+        /// </summary>
+        /// <value></value>
+        public static int MaxWorkerCount { get; set; } = DefaultWorkerCount;
+        /// <summary>
+        /// Default parallel workers count: 10
+        /// </summary>
+        public const int DefaultWorkerCount = 10;
+        /// <summary>
+        /// Set sysytem tick rate
+        /// </summary>
+        /// <value></value>
+        public static float TickRate { get; set; } = DefaultTickRate;
+        /// <summary>
+        /// Default rate: 25 fps
+        /// </summary>
+        public const float DefaultTickRate = 0.04f;
+        private static readonly ProfilerMarker ConsumeCommandsPM = new("PostQuerySystem.ConsumeCommands");
+        private static readonly ProfilerMarker CompleteCommandsPM = new("PostQuerySystem.CompleteCommands");
         public void EnqueueCommand(PostQueryCommand command)
         {
             commandBuffer.Enqueue(command);
@@ -127,32 +160,38 @@ namespace Kurisu.Framework.AI
         }
         private void ConsumeCommands(float deltaTime)
         {
-            batchLength = 0;
-            var actorDatas = GetWorld().GetSubsystem<ActorQuerySystem>().GetAllActors(Allocator.Temp);
-            while (batchLength < MaxWorkerCount)
+            using (ConsumeCommandsPM.Auto())
             {
-                if (!commandBuffer.TryDequeue(out var command))
+                batchLength = 0;
+                var actorDatas = GetWorld().GetSubsystem<ActorQuerySystem>().GetAllActors(Allocator.Temp);
+                while (batchLength < MaxWorkerCount)
                 {
-                    break;
-                }
+                    if (!commandBuffer.TryDequeue(out var command))
+                    {
+                        break;
+                    }
 
-                if (!workerDic.TryGetValue(command.selfId, out var worker))
-                {
-                    worker = workerDic[command.selfId] = new();
+                    if (!workerDic.TryGetValue(command.selfId, out var worker))
+                    {
+                        worker = workerDic[command.selfId] = new();
+                    }
+                    if (worker.IsRunning)
+                        break;
+                    worker.ExecuteCommand(ref command, ref actorDatas);
+                    batchActors[batchLength] = command.selfId;
+                    batchLength++;
                 }
-                if (worker.IsRunning)
-                    break;
-                worker.ExecuteCommand(ref command, ref actorDatas);
-                batchActors[batchLength] = command.selfId;
-                batchLength++;
+                actorDatas.Dispose();
             }
-            actorDatas.Dispose();
         }
         private void CompleteCommands(float deltaTime)
         {
-            for (int i = 0; i < batchLength; ++i)
+            using (CompleteCommandsPM.Auto())
             {
-                workerDic[batchActors[i]].Complete();
+                for (int i = 0; i < batchLength; ++i)
+                {
+                    workerDic[batchActors[i]].Complete();
+                }
             }
         }
         public ReadOnlySpan<float3> GetPosts(int actorId)

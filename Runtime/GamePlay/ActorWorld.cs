@@ -1,4 +1,5 @@
 using System;
+using Kurisu.Framework.Collections;
 using R3;
 using UnityEngine;
 namespace Kurisu.Framework
@@ -8,7 +9,13 @@ namespace Kurisu.Framework
     /// </summary>
     public class ActorWorld : MonoBehaviour
     {
-        internal Actor[] actorsInWorld = new Actor[0];
+        public static int MaxActorNum { get; set; } = DefaultMaxActorNum;
+        public const int DefaultMaxActorNum = 5000;
+        /// <summary>
+        /// Use <see cref="SparseList{T}"/> for fast look up
+        /// </summary>
+        /// <returns></returns>
+        internal SparseList<Actor> actorsInWorld = new(100, MaxActorNum);
         internal readonly Subject<Unit> onActorsUpdate = new();
         private WorldSubsystemCollection subsystemCollection;
         private static ActorWorld current;
@@ -69,31 +76,29 @@ namespace Kurisu.Framework
             subsystemCollection.Dispose();
             onActorsUpdate.Dispose();
         }
-        internal void RegisterActor(Actor actor)
+        internal void RegisterActor(Actor actor, ref int actorId)
         {
-            if (ArrayUtils.IndexOf(actorsInWorld, actor) >= 0)
+            if (actorId >= 0 && actorsInWorld.IsValidIndex(actorId))
             {
                 Debug.LogError($"[ActorWorld] {actor.gameObject.name} is already registered to world!");
                 return;
             }
-            ArrayUtils.Add(ref actorsInWorld, actor);
+            actorId = actorsInWorld.Add(actor);
             onActorsUpdate.OnNext(Unit.Default);
         }
         internal void UnregisterActor(Actor actor)
         {
-            if (ArrayUtils.IndexOf(actorsInWorld, actor) >= 0)
+            int actorId = actor.GetActorId();
+            if (actorsInWorld.IsValidIndex(actorId))
             {
-                ArrayUtils.Remove(ref actorsInWorld, actor);
+                actorsInWorld.RemoveAt(actorId);
                 onActorsUpdate.OnNext(Unit.Default);
             }
         }
         public Actor GetActor(int id)
         {
-            for (int i = 0; i < actorsInWorld.Length; ++i)
-            {
-                if (actorsInWorld[i].GetActorId() == id) return actorsInWorld[i];
-            }
-            return null;
+            // auto safe check by container
+            return actorsInWorld[id];
         }
         public T GetSubsystem<T>() where T : SubsystemBase
         {

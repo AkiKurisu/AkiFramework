@@ -58,51 +58,14 @@ namespace Kurisu.Framework.Collections
             firstFreeIndex = 0;
             numFreeIndices = length;
         }
-        public void Add(T element)
-        {
-            if (numFreeIndices > 0)
-            {
-                // update current
-                var link = data[firstFreeIndex];
-                link.value = element;
-                int next = link.next;
-                link.next = -1;
-                data[firstFreeIndex] = link;
-                // update next if exist
-                if (next != -1)
-                {
-                    var nextLink = data[next];
-                    nextLink.last = -1;
-                    data[next] = nextLink;
-                }
-                // set flag
-                allocationFlags[firstFreeIndex] = true;
-                firstFreeIndex = next;
-                numFreeIndices--;
-            }
-            else
-            {
-                if (data.Count == capacity)
-                {
-                    throw new ArgumentOutOfRangeException($"Sparse array should not exceed capacity {capacity}!");
-                }
-                data.Add(new FreeListLink()
-                {
-                    value = element,
-                    last = -1,
-                    next = -1
-                });
-                allocationFlags.Add(true);
-            }
-        }
-        public int AddUninitialized()
+        public int Add(T element)
         {
             int index;
             if (numFreeIndices > 0)
             {
                 // update current
                 var link = data[firstFreeIndex];
-                link.value = default;
+                link.value = element;
                 int next = link.next;
                 link.next = -1;
                 data[firstFreeIndex] = link;
@@ -122,19 +85,23 @@ namespace Kurisu.Framework.Collections
             else
             {
                 index = data.Count;
-                if (index == capacity)
+                if (data.Count == capacity)
                 {
                     throw new ArgumentOutOfRangeException($"Sparse array should not exceed capacity {capacity}!");
                 }
                 data.Add(new FreeListLink()
                 {
-                    value = default,
+                    value = element,
                     last = -1,
                     next = -1
                 });
                 allocationFlags.Add(true);
             }
             return index;
+        }
+        public int AddUninitialized()
+        {
+            return Add(default);
         }
         public void RemoveAt(int index)
         {

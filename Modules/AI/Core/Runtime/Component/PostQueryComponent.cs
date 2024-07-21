@@ -4,22 +4,10 @@ using UnityEngine;
 namespace Kurisu.Framework.AI
 {
     /// <summary>
-    /// Command for schedule post query job
+    /// Post Query data provider associated with an Actor as component
     /// </summary>
-    public struct PostQueryCommand
-    {
-        public int selfId;
-        public int targetId;
-        public float3 offset;
-        public int layerMask;
-        public PostQuery postQuery;
-    }
     public class PostQueryComponent : ActorComponent
     {
-        public ReadOnlySpan<float3> GetPosts()
-        {
-            return system.GetPosts(GetActor().GetActorId());
-        }
         public PostQuery PostQuery = new()
         {
             Angle = 120,
@@ -37,17 +25,27 @@ namespace Kurisu.Framework.AI
                 Debug.LogError($"[PostQueryComponent] Can not get PostQuerySystem dynamically.");
             }
         }
-        public bool RequestQueryPost(Actor target)
+        /// <summary>
+        /// Requst a new post query from target's view
+        /// </summary>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        public bool RequestPostQuery(Actor target)
         {
             if (system == null)
             {
+                return false;
+            }
+            if (target == GetActor())
+            {
+                Debug.LogWarning($"[PostQueryComponent] Can not request post query from self view.");
                 return false;
             }
             if (!system.IsComplete(GetActor().GetActorId()))
             {
                 return false;
             }
-            var command = new PostQueryCommand()
+            PostQueryCommand command = new()
             {
                 selfId = GetActor().GetActorId(),
                 targetId = target.GetActorId(),
@@ -57,6 +55,14 @@ namespace Kurisu.Framework.AI
             };
             system.EnqueueCommand(command);
             return true;
+        }
+        /// <summary>
+        /// Get current posts
+        /// </summary>
+        /// <returns></returns>
+        public ReadOnlySpan<float3> GetPosts()
+        {
+            return system.GetPosts(GetActor().GetActorId());
         }
     }
 }

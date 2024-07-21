@@ -84,8 +84,16 @@ namespace Kurisu.Framework
         /// Buffered dirty flag when world actors changed
         /// </summary>
         protected bool IsActorsDirty { get; set; }
-        private bool isInitialized;
-        private bool isDestroyed;
+        /// <summary>
+        /// Is system initialized
+        /// </summary>
+        /// <value></value>
+        protected bool IsInitialized { get; private set; }
+        /// <summary>
+        /// Is system destroyed
+        /// </summary>
+        /// <value></value>
+        protected bool IsDestroyed { get; private set; }
         private IDisposable actorsUpdateSubscription;
         private ActorWorld world;
         /// <summary>
@@ -103,8 +111,8 @@ namespace Kurisu.Framework
         }
         internal virtual void InternalInit()
         {
-            if (isInitialized) return;
-            isInitialized = true;
+            if (IsInitialized) return;
+            IsInitialized = true;
             actorsUpdateSubscription = world.onActorsUpdate.Subscribe(OnActorsUpdate);
             Initialize();
         }
@@ -129,9 +137,9 @@ namespace Kurisu.Framework
         }
         internal virtual void InternalRelease()
         {
-            if (isDestroyed) return;
+            if (IsDestroyed) return;
             world = null;
-            isDestroyed = true;
+            IsDestroyed = true;
             actorsUpdateSubscription.Dispose();
             Release();
         }
@@ -148,14 +156,26 @@ namespace Kurisu.Framework
         /// Get all actors in world, readonly
         /// </summary>
         /// <returns></returns>
-        protected ReadOnlySpan<Actor> GetActorsInWorld()
+        protected void GetActorsInWorld(List<Actor> actors)
+        {
+            if (!world)
+            {
+                Debug.LogWarning("[World Subsystem] System not bound to an actor world.");
+                return;
+            }
+            foreach (var actor in world.actorsInWorld)
+            {
+                actors.Add(actor);
+            }
+        }
+        protected int GetActorsNum()
         {
             if (!world)
             {
                 Debug.LogWarning("[World Subsystem] System not bound to an actor world.");
                 return default;
             }
-            return new(world.actorsInWorld);
+            return world.actorsInWorld.Count;
         }
     }
     /// <summary>

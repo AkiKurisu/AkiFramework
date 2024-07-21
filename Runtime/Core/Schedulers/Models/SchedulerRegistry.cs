@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using UnityEngine.Profiling;
+using Unity.Profiling;
 namespace Kurisu.Framework.Schedulers
 {
     internal static class SchedulerRegistry
@@ -14,6 +14,8 @@ namespace Kurisu.Framework.Schedulers
             public int lineNumber;
         }
         private const string Unmanaged = nameof(Unmanaged);
+        private static readonly ProfilerMarker RegisterListenerPM = new("SchedulerRegistry.RegisterListener");
+        private static readonly ProfilerMarker UnregisterListenerPM = new("SchedulerRegistry.UnregisterListener");
         internal static readonly Dictionary<IScheduled, ListenerRecord> s_Listeners = new();
         public static void CleanListeners()
         {
@@ -21,29 +23,30 @@ namespace Kurisu.Framework.Schedulers
         }
         public static void RegisterListener(IScheduled scheduled, Delegate callback)
         {
-            Profiler.BeginSample("SchedulerRegistry::RegisterListener");
-            int hashCode = default;
-            string itemName;
-            if (callback == null)
+            using (RegisterListenerPM.Auto())
             {
-                itemName = Unmanaged;
-            }
-            else
-            {
-                hashCode = callback.GetHashCode();
-                itemName = Utils.GetDelegatePath(callback);
-            }
+                int hashCode = default;
+                string itemName;
+                if (callback == null)
+                {
+                    itemName = Unmanaged;
+                }
+                else
+                {
+                    hashCode = callback.GetHashCode();
+                    itemName = Utils.GetDelegatePath(callback);
+                }
 
-            StackFrame frame = Utils.GetCurrentStackFrame();
+                StackFrame frame = Utils.GetCurrentStackFrame();
 
-            s_Listeners.Add(scheduled, new ListenerRecord
-            {
-                hashCode = hashCode,
-                name = itemName,
-                fileName = frame.GetFileName(),
-                lineNumber = frame.GetFileLineNumber()
-            });
-            Profiler.EndSample();
+                s_Listeners.Add(scheduled, new ListenerRecord
+                {
+                    hashCode = hashCode,
+                    name = itemName,
+                    fileName = frame.GetFileName(),
+                    lineNumber = frame.GetFileLineNumber()
+                });
+            }
         }
         public static bool TryGetListener(IScheduled scheduled, out ListenerRecord record)
         {
@@ -51,22 +54,22 @@ namespace Kurisu.Framework.Schedulers
         }
         public static void UnregisterListener(IScheduled scheduled, Delegate callback)
         {
-            Profiler.BeginSample("SchedulerRegistry::UnregisterListener");
-            if (!s_Listeners.TryGetValue(scheduled, out ListenerRecord record))
-                return;
-
-            if (callback == null && record.name == Unmanaged)
+            using (UnregisterListenerPM.Auto())
             {
-                s_Listeners.Remove(scheduled);
-                return;
-            }
+                if (!s_Listeners.TryGetValue(scheduled, out ListenerRecord record))
+                    return;
 
-            if (record.name == Utils.GetDelegatePath(callback))
-            {
-                s_Listeners.Remove(scheduled);
+                if (callback == null && record.name == Unmanaged)
+                {
+                    s_Listeners.Remove(scheduled);
+                    return;
+                }
+
+                if (record.name == Utils.GetDelegatePath(callback))
+                {
+                    s_Listeners.Remove(scheduled);
+                }
             }
-            Profiler.EndSample();
         }
-
     }
 }

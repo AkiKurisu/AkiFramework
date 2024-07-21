@@ -14,12 +14,20 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "AF_COLLECTTIONS_INSTALL",
+        "AF_MATHEMATICS_INSTALL"
+    ],
     "versionDefines": [
         {
             "name": "com.unity.collections",
             "expression": "2.2.1",
             "define": "AF_COLLECTTIONS_INSTALL"
+        },
+        {
+            "name": "com.unity.mathematics",
+            "expression": "1.3.1",
+            "define": "AF_MATHEMATICS_INSTALL"
         }
     ],
     "noEngineReferences": false

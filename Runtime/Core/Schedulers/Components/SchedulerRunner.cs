@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using Kurisu.Framework.Collections;
 using Kurisu.Framework.Pool;
+using Unity.Profiling;
 using UnityEngine;
-using UnityEngine.Pool;
 namespace Kurisu.Framework.Schedulers
 {
     /// <summary>
@@ -29,6 +29,7 @@ namespace Kurisu.Framework.Schedulers
             public IScheduled Value { get; private set; }
             private bool delay;
             private TickFrame tickFrame;
+            private static readonly ProfilerMarker profilerMarker = new("SchedulerRunner.UpdateAll.UpdateStep.UpdateItem");
             public static ScheduledItem GetPooled(IScheduled scheduled, TickFrame tickFrame, bool delay)
             {
                 var item = pool.Get();
@@ -47,14 +48,17 @@ namespace Kurisu.Framework.Schedulers
             public bool IsDone() => Value.IsDone;
             public void Update(TickFrame tickFrame)
             {
-                if (Value.IsDone) return;
-                if (this.tickFrame != tickFrame) return;
-                if (delay)
+                using (profilerMarker.Auto())
                 {
-                    delay = false;
-                    return;
+                    if (Value.IsDone) return;
+                    if (this.tickFrame != tickFrame) return;
+                    if (delay)
+                    {
+                        delay = false;
+                        return;
+                    }
+                    Value.Update();
                 }
-                Value.Update();
             }
             /// <summary>
             /// Cancel internal scheduled task
@@ -83,13 +87,13 @@ namespace Kurisu.Framework.Schedulers
         // buffer adding tasks so we don't edit a collection during iteration
         private readonly List<SchedulerHandle> pendingHandles = new(InitialCapacity);
         private readonly List<SchedulerHandle> activeHandles = new(InitialCapacity);
-        private readonly List<SchedulerHandle> releaseHandles = new(InitialCapacity);
         private bool isDestroyed;
         private bool isGateOpen;
         private int lastFrame;
         public static SchedulerRunner Instance => instance != null ? instance : GetInstance();
         public static bool IsInitialized => instance != null;
         private static SchedulerRunner instance;
+        private static readonly ProfilerMarker UpdateStepPM = new("SchedulerRunner.UpdateAll.UpdateStep");
         private static SchedulerRunner GetInstance()
         {
 #if UNITY_EDITOR
@@ -160,7 +164,7 @@ namespace Kurisu.Framework.Schedulers
             // Assign item
             scheduledItems[index] = item;
             pendingHandles.Add(scheduled.Handle);
-#if UNITY_EDITOR
+#if UNITY_EDITOR&&!AF_SCHEDULER_STACK_TRACE_DISABLE
             SchedulerRegistry.RegisterListener(scheduled, @delegate);
 #endif
         }
@@ -176,7 +180,7 @@ namespace Kurisu.Framework.Schedulers
         public void Unregister(IScheduled scheduled, Delegate @delegate)
         {
             scheduledItems.RemoveAt(scheduled.Handle.GetIndex());
-#if UNITY_EDITOR
+#if UNITY_EDITOR&&!AF_SCHEDULER_STACK_TRACE_DISABLE
             SchedulerRegistry.UnregisterListener(scheduled, @delegate);
 #endif
         }
@@ -228,34 +232,26 @@ namespace Kurisu.Framework.Schedulers
             // Add
             if (pendingHandles.Count > 0)
             {
-                foreach (var handle in pendingHandles)
-                {
-                    activeHandles.Add(handle);
-                }
+                activeHandles.AddRange(pendingHandles);
                 pendingHandles.Clear();
                 // increase serial
                 serialNum++;
             }
 
             // Update
-            foreach (var handle in activeHandles)
+            using (UpdateStepPM.Auto())
             {
-                var item = FindItem(handle);
-                item.Update(tickFrame);
-                if (item.IsDone())
+                for (int i = activeHandles.Count - 1; i >= 0; --i)
                 {
-                    releaseHandles.Add(handle);
+                    var item = FindItem(activeHandles[i]);
+                    item.Update(tickFrame);
+                    if (item.IsDone())
+                    {
+                        activeHandles.RemoveAt(i);
+                        item.Dispose();
+                    }
                 }
             }
-
-            // Release
-            foreach (var handle in releaseHandles)
-            {
-                var item = FindItem(handle);
-                activeHandles.Remove(handle);
-                item.Dispose();
-            }
-            releaseHandles.Clear();
             isGateOpen = true;
         }
         private ScheduledItem FindItem(SchedulerHandle handle)

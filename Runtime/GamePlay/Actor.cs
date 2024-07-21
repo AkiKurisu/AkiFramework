@@ -11,7 +11,7 @@ namespace Kurisu.Framework
         private ActorWorld world;
         private ActorController controller;
         private int id = UnmanagedActorId;
-        private const int UnmanagedActorId = 0;
+        private const int UnmanagedActorId = -1;
         private readonly HashSet<ActorComponent> actorComponents = new();
         protected virtual void Awake()
         {
@@ -33,6 +33,11 @@ namespace Kurisu.Framework
         /// <returns></returns>
         public int GetActorId() => id;
         /// <summary>
+        /// Is actor valid
+        /// </summary>
+        /// <returns></returns>
+        public bool IsValid() => id != -1;
+        /// <summary>
         /// Register an actor to world
         /// </summary>
         /// <param name="actor"></param>
@@ -40,7 +45,7 @@ namespace Kurisu.Framework
         {
             actor.world = ActorWorld.Current;
             actor.id = actor.GetInstanceID();
-            actor.world.RegisterActor(actor);
+            actor.world.RegisterActor(actor, ref actor.id);
         }
         /// <summary>
         /// Unregister an actor from world
