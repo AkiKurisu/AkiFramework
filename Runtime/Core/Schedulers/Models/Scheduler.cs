@@ -6,8 +6,8 @@ namespace Kurisu.Framework.Schedulers
     /// </summary>
     public enum TickFrame
     {
-        FixedUpdate,
         Update,
+        FixedUpdate,
         LateUpdate,
     }
     /// <summary>

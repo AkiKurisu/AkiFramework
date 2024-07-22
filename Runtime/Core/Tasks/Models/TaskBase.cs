@@ -117,6 +117,10 @@ namespace Kurisu.Framework.Tasks
             taskBase.GetCompleteEvent().AddListenerTask(this);
             prerequisiteCount++;
         }
+        public virtual string GetTaskName()
+        {
+            return GetType().Name;
+        }
     }
     public abstract class PooledTaskBase<T> : TaskBase where T : PooledTaskBase<T>, new()
     {

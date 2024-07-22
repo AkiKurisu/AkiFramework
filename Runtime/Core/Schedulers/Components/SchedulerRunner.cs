@@ -80,6 +80,14 @@ namespace Kurisu.Framework.Schedulers
                 delay = default;
                 pool.Release(this);
             }
+            public void Pause()
+            {
+                Value.Pause();
+            }
+            public void Resume()
+            {
+                Value.Resume();
+            }
         }
         private const int InitialCapacity = 100;
         internal SparseList<ScheduledItem> scheduledItems = new(InitialCapacity, SchedulerHandle.MaxIndex + 1);
@@ -209,10 +217,15 @@ namespace Kurisu.Framework.Schedulers
         /// </summary>
         public void PauseAll()
         {
+            foreach (var handle in pendingHandles)
+            {
+                var item = FindItem(handle);
+                item.Pause();
+            }
             foreach (var handle in activeHandles)
             {
                 var item = FindItem(handle);
-                item.Value.Pause();
+                item.Pause();
             }
         }
         /// <summary>
@@ -220,10 +233,15 @@ namespace Kurisu.Framework.Schedulers
         /// </summary>
         public void ResumeAll()
         {
+            foreach (var handle in pendingHandles)
+            {
+                var item = FindItem(handle);
+                item.Resume();
+            }
             foreach (var handle in activeHandles)
             {
                 var item = FindItem(handle);
-                item.Value.Resume();
+                item.Resume();
             }
         }
         private void UpdateAll(TickFrame tickFrame)
@@ -292,6 +310,26 @@ namespace Kurisu.Framework.Schedulers
                 activeHandles.Remove(handle);
                 item.Dispose();
             }
+        }
+        /// <summary>
+        /// Pause target scheduled task
+        /// </summary>
+        /// <param name="handle"></param>
+        public void Pause(SchedulerHandle handle)
+        {
+            var item = FindItem(handle);
+            if (item == null) return;
+            item.Pause();
+        }
+        /// <summary>
+        /// Resume target scheduled task
+        /// </summary>
+        /// <param name="handle"></param>
+        public void Resume(SchedulerHandle handle)
+        {
+            var item = FindItem(handle);
+            if (item == null) return;
+            item.Resume();
         }
     }
 }

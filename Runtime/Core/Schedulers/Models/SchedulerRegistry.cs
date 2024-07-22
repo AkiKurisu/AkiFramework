@@ -13,7 +13,7 @@ namespace Kurisu.Framework.Schedulers
             public string fileName;
             public int lineNumber;
         }
-        private const string Unmanaged = nameof(Unmanaged);
+        private const string MethodPtr = nameof(MethodPtr);
         private static readonly ProfilerMarker RegisterListenerPM = new("SchedulerRegistry.RegisterListener");
         private static readonly ProfilerMarker UnregisterListenerPM = new("SchedulerRegistry.UnregisterListener");
         internal static readonly Dictionary<IScheduled, ListenerRecord> s_Listeners = new();
@@ -29,7 +29,7 @@ namespace Kurisu.Framework.Schedulers
                 string itemName;
                 if (callback == null)
                 {
-                    itemName = Unmanaged;
+                    itemName = MethodPtr;
                 }
                 else
                 {
@@ -59,7 +59,7 @@ namespace Kurisu.Framework.Schedulers
                 if (!s_Listeners.TryGetValue(scheduled, out ListenerRecord record))
                     return;
 
-                if (callback == null && record.name == Unmanaged)
+                if (callback == null && record.name == MethodPtr)
                 {
                     s_Listeners.Remove(scheduled);
                     return;

@@ -136,18 +136,18 @@ namespace Kurisu.Framework.AI
         /// <value></value>
         public static int MaxWorkerCount { get; set; } = DefaultWorkerCount;
         /// <summary>
-        /// Default parallel workers count: 10
+        /// Default parallel workers count: 5
         /// </summary>
-        public const int DefaultWorkerCount = 10;
+        public const int DefaultWorkerCount = 5;
         /// <summary>
-        /// Set sysytem tick rate
+        /// Set sysytem tick frame
         /// </summary>
         /// <value></value>
-        public static float TickRate { get; set; } = DefaultTickRate;
+        public static int FramePerTick { get; set; } = DefaultFramePerTick;
         /// <summary>
-        /// Default rate: 25 fps
+        /// Default tick frame: 2 fps
         /// </summary>
-        public const float DefaultTickRate = 0.04f;
+        public const int DefaultFramePerTick = 25;
         private static readonly ProfilerMarker ConsumeCommandsPM = new("PostQuerySystem.ConsumeCommands");
         private static readonly ProfilerMarker CompleteCommandsPM = new("PostQuerySystem.CompleteCommands");
         public void EnqueueCommand(PostQueryCommand command)
@@ -156,11 +156,13 @@ namespace Kurisu.Framework.AI
         }
         protected override void Initialize()
         {
-            Scheduler.Delay(ref updateTickHandle, TickRate, ConsumeCommands, TickFrame.Update, isLooped: true);
-            Scheduler.Delay(ref lateUpdateTickHandle, TickRate, CompleteCommands, TickFrame.LateUpdate, isLooped: true);
+            Scheduler.WaitFrame(ref updateTickHandle, FramePerTick, ConsumeCommands, TickFrame.FixedUpdate, isLooped: true);
+            // Allow job scheduled in 3 frames
+            Scheduler.WaitFrame(ref lateUpdateTickHandle, 3, CompleteCommands, TickFrame.FixedUpdate, isLooped: true);
+            lateUpdateTickHandle.Pause();
             batchActors = new NativeArray<int>(MaxWorkerCount, Allocator.Persistent);
         }
-        private void ConsumeCommands(float deltaTime)
+        private void ConsumeCommands(int _)
         {
             using (ConsumeCommandsPM.Auto())
             {
@@ -186,8 +188,9 @@ namespace Kurisu.Framework.AI
                 }
                 actorDatas.Dispose();
             }
+            lateUpdateTickHandle.Resume();
         }
-        private void CompleteCommands(float deltaTime)
+        private void CompleteCommands(int _)
         {
             using (CompleteCommandsPM.Auto())
             {
@@ -196,6 +199,7 @@ namespace Kurisu.Framework.AI
                     workerDic[batchActors[i]].Complete();
                 }
             }
+            lateUpdateTickHandle.Pause();
         }
         public ReadOnlySpan<float3> GetPosts(int actorId)
         {

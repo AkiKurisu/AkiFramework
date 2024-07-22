@@ -51,7 +51,7 @@ namespace Kurisu.Framework.Schedulers
 #pragma warning restore CS0675
         }
         /// <summary>
-        /// Cancel a scheduler if scheduler is valid
+        /// Cancel a scheduled task if is valid
         /// </summary>
         /// <value></value>
         public void Cancel()
@@ -59,6 +59,26 @@ namespace Kurisu.Framework.Schedulers
             if (!SchedulerRunner.IsInitialized) return;
             if (!IsValid) return;
             SchedulerRunner.Instance.Cancel(this);
+        }
+        /// <summary>
+        /// Pause a scheduled task if is valid
+        /// </summary>
+        /// <value></value>
+        public void Pause()
+        {
+            if (!SchedulerRunner.IsInitialized) return;
+            if (!IsValid) return;
+            SchedulerRunner.Instance.Pause(this);
+        }
+        /// <summary>
+        /// Resume a scheduled task if is valid
+        /// </summary>
+        /// <value></value>
+        public void Resume()
+        {
+            if (!SchedulerRunner.IsInitialized) return;
+            if (!IsValid) return;
+            SchedulerRunner.Instance.Resume(this);
         }
 
         public void Dispose()

@@ -29,7 +29,10 @@ namespace Kurisu.Framework.Tasks.Editor
             GUILayout.Label($"Managed task count: {ManagedTaskCount}");
             foreach (var task in Manager._tasks)
             {
-                GUILayout.Label($"{task.GetType().Name} Status: {TaskEditorUtils.StatusToString(task.GetStatus())}", style);
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(task.GetTaskName());
+                GUILayout.Label($"Status: {TaskEditorUtils.StatusToString(task.GetStatus())}", style);
+                GUILayout.EndHorizontal();
             }
             GUILayout.EndVertical();
         }
@@ -38,22 +41,13 @@ namespace Kurisu.Framework.Tasks.Editor
     {
         public static string StatusToString(TaskStatus status)
         {
-            if (status == TaskStatus.Running)
+            return status switch
             {
-                return "<color=#92F2FF>Running</color>";
-            }
-            else if (status == TaskStatus.Paused)
-            {
-                return "<color=#FFF892>Paused</color>";
-            }
-            else if (status == TaskStatus.Completed)
-            {
-                return "<color=#FFF892>Completed</color>";
-            }
-            else
-            {
-                return "<color=#FF787E>Stopped</color>";
-            }
+                TaskStatus.Running => "<color=#92F2FF>Running</color>",
+                TaskStatus.Paused => "<color=#FFF892>Paused</color>",
+                TaskStatus.Completed => "<color=#FFF892>Completed</color>",
+                _ => "<color=#FF787E>Stopped</color>"
+            };
         }
     }
 }
