@@ -4,7 +4,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-namespace Kurisu.Framework.EQS
+namespace Kurisu.Framework.AI.EQS
 {
     /// <summary>
     /// API for query actors
@@ -12,7 +12,7 @@ namespace Kurisu.Framework.EQS
     public static class EnvironmentQuery
     {
         [BurstCompile]
-        public struct OverlapFieldViewJob : IJob
+        public struct OverlapFieldViewJob : IJobParallelFor
         {
             [ReadOnly]
             public float3 center;
@@ -25,23 +25,21 @@ namespace Kurisu.Framework.EQS
             [ReadOnly]
             public float angle;
             [ReadOnly]
-            public int ignoreInstanceId;
+            public ActorHandle ignored;
             [ReadOnly]
             public NativeArray<ActorData> actors;
-            public NativeList<int> resultActors;
+            [NativeDisableParallelForRestriction]
+            public NativeList<ActorHandle> resultActors;
             [BurstCompile]
-            public void Execute()
+            public void Execute(int index)
             {
-                for (int i = 0; i < actors.Length; i++)
+                ActorData actor = actors[index];
+                if (IsInLayerMask(actor.layer, layerMask)
+                && actor.handle != ignored
+                && math.distance(center, actor.position) <= radius
+                && InViewAngle(center, actor.position, forward, angle))
                 {
-                    ActorData actor = actors[i];
-                    if (IsInLayerMask(actor.layer, layerMask)
-                    && actor.id != ignoreInstanceId
-                    && math.distance(center, actor.position) <= radius
-                    && InViewAngle(center, actor.position, forward, angle))
-                    {
-                        resultActors.Add(actor.id);
-                    }
+                    resultActors.Add(actor.handle);
                 }
             }
             [BurstCompile]
@@ -72,7 +70,7 @@ namespace Kurisu.Framework.EQS
             }
         }
         /// <summary>
-        /// Query actors overlap in field of view
+        /// Query actors overlap in field of view immediately
         /// </summary>
         /// <param name="actors"></param>
         /// <param name="position"></param>
@@ -83,7 +81,7 @@ namespace Kurisu.Framework.EQS
         /// <param name="ignoredActor"></param>
         public static void OverlapFieldView(List<Actor> actors, Vector3 position, Vector3 forward, float radius, float angle, LayerMask targetMask, Actor ignoredActor = null)
         {
-            var resultActors = new NativeList<int>(Allocator.TempJob);
+            var resultActors = new NativeList<ActorHandle>(Allocator.TempJob);
             var actorData = ActorWorld.Current.GetSubsystem<ActorQuerySystem>().GetAllActors(Allocator.TempJob);
             var job = new OverlapFieldViewJob()
             {
@@ -92,11 +90,11 @@ namespace Kurisu.Framework.EQS
                 radius = radius,
                 angle = angle,
                 layerMask = targetMask,
-                ignoreInstanceId = ignoredActor == null ? -1 : ignoredActor.GetInstanceID(),
+                ignored = ignoredActor == null ? default : ignoredActor.GetActorHandle(),
                 actors = actorData,
                 resultActors = resultActors
             };
-            job.Schedule().Complete();
+            job.Schedule(actorData.Length, 32).Complete();
             foreach (var id in resultActors)
             {
                 actors.Add(ActorWorld.Current.GetActor(id));

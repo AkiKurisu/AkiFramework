@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using Unity.Profiling;
 using UnityEngine;
-namespace Kurisu.Framework.AI
+namespace Kurisu.Framework.AI.EQS
 {
     /// <summary>
-    /// Reference article: 《Naughty Dog-Human Enemy AI In Last of The Us》.
+    /// Reference article: 《Naughty Dog-Human Enemy AI In Last of The Us》 with only runtime raycast detect.
     /// </summary>
     [Serializable]
     public struct PostQuery
@@ -30,7 +30,7 @@ namespace Kurisu.Framework.AI
         }
         private static readonly ProfilerMarker m_ProfilerMarker = new("PostQuerier.QueryPosts");
         /// <summary>
-        /// Query posts in source viuew using a Fan-Shaped Binary Search.
+        /// Query posts in source viuew using a Fan-Shaped Binary Search immediately.
         /// </summary>
         /// <param name="posts">Store results</param>
         /// <param name="source">View source transform</param>

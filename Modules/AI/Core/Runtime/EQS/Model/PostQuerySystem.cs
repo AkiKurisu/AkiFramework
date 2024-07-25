@@ -7,15 +7,16 @@ using Unity.Mathematics;
 using UnityEngine;
 using Unity.Burst;
 using Unity.Profiling;
-namespace Kurisu.Framework.AI
+using UnityEngine.Assertions;
+namespace Kurisu.Framework.AI.EQS
 {
     /// <summary>
     /// Command for schedule post query job
     /// </summary>
     public struct PostQueryCommand
     {
-        public int selfId;
-        public int targetId;
+        public ActorHandle self;
+        public ActorHandle target;
         public float3 offset;
         public int layerMask;
         public PostQuery postQuery;
@@ -85,19 +86,11 @@ namespace Kurisu.Framework.AI
                     command = command,
                     raycastCommands = raycastCommands,
                     length = length,
-                    source = FindActor(ref actorDatas, command.selfId),
-                    target = FindActor(ref actorDatas, command.targetId)
+                    source = actorDatas[command.self.GetIndex()],
+                    target = actorDatas[command.target.GetIndex()]
                 };
                 jobHandle = job.Schedule(length, 32, default);
                 jobHandle = RaycastCommand.ScheduleBatch(raycastCommands, hits, raycastCommands.Length, jobHandle);
-            }
-            private static ActorData FindActor(ref NativeArray<ActorData> actorDatas, int id)
-            {
-                for (int i = 0; i < actorDatas.Length; ++i)
-                {
-                    if (actorDatas[i].id == id) return actorDatas[i];
-                }
-                return default;
             }
             public void Complete()
             {
@@ -127,9 +120,9 @@ namespace Kurisu.Framework.AI
         private readonly Queue<PostQueryCommand> commandBuffer = new();
         private SchedulerHandle updateTickHandle;
         private SchedulerHandle lateUpdateTickHandle;
-        private NativeArray<int> batchActors;
+        private NativeArray<ActorHandle> batchActors;
         private int batchLength;
-        private readonly Dictionary<int, PostQueryWorker> workerDic = new();
+        private readonly Dictionary<ActorHandle, PostQueryWorker> workerDic = new();
         /// <summary>
         /// Set system parallel workers count
         /// </summary>
@@ -156,11 +149,12 @@ namespace Kurisu.Framework.AI
         }
         protected override void Initialize()
         {
+            Assert.IsFalse(FramePerTick <= 3);
             Scheduler.WaitFrame(ref updateTickHandle, FramePerTick, ConsumeCommands, TickFrame.FixedUpdate, isLooped: true);
             // Allow job scheduled in 3 frames
             Scheduler.WaitFrame(ref lateUpdateTickHandle, 3, CompleteCommands, TickFrame.FixedUpdate, isLooped: true);
             lateUpdateTickHandle.Pause();
-            batchActors = new NativeArray<int>(MaxWorkerCount, Allocator.Persistent);
+            batchActors = new NativeArray<ActorHandle>(MaxWorkerCount, Allocator.Persistent);
         }
         private void ConsumeCommands(int _)
         {
@@ -175,15 +169,15 @@ namespace Kurisu.Framework.AI
                         break;
                     }
 
-                    if (!workerDic.TryGetValue(command.selfId, out var worker))
+                    if (!workerDic.TryGetValue(command.self, out var worker))
                     {
-                        worker = workerDic[command.selfId] = new();
+                        worker = workerDic[command.self] = new();
                     }
                     if (worker.IsRunning)
                         continue;
 
                     worker.ExecuteCommand(ref command, ref actorDatas);
-                    batchActors[batchLength] = command.selfId;
+                    batchActors[batchLength] = command.self;
                     batchLength++;
                 }
                 actorDatas.Dispose();
@@ -201,15 +195,15 @@ namespace Kurisu.Framework.AI
             }
             lateUpdateTickHandle.Pause();
         }
-        public ReadOnlySpan<float3> GetPosts(int actorId)
+        public ReadOnlySpan<float3> GetPosts(ActorHandle handle)
         {
-            if (workerDic.TryGetValue(actorId, out var worker))
+            if (workerDic.TryGetValue(handle, out var worker))
                 return worker.GetPosts();
             return default;
         }
-        public bool IsComplete(int actorId)
+        public bool IsComplete(ActorHandle handle)
         {
-            if (workerDic.TryGetValue(actorId, out var worker))
+            if (workerDic.TryGetValue(handle, out var worker))
                 return !worker.IsRunning;
             return true;
         }

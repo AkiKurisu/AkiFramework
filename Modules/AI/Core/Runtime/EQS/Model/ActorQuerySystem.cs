@@ -2,14 +2,14 @@ using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Profiling;
-namespace Kurisu.Framework
+namespace Kurisu.Framework.AI.EQS
 {
     /// <summary>
     /// Actor world basic data
     /// </summary>
     public struct ActorData
     {
-        public int id;
+        public ActorHandle handle;
         public int layer;
         public byte active;
         public quaternion rotation;
@@ -56,7 +56,7 @@ namespace Kurisu.Framework
             {
                 _actorData[i] = new ActorData()
                 {
-                    id = _actors[i].GetActorId(),
+                    handle = _actors[i].GetActorHandle(),
                     // not update layer in tick to prevent allocation
                     // TODO: Move out of actor data, or use custom layer mask
                     layer = _actors[i].gameObject.layer

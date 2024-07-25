@@ -10,8 +10,7 @@ namespace Kurisu.Framework
     {
         private ActorWorld world;
         private ActorController controller;
-        private int id = UnmanagedActorId;
-        private const int UnmanagedActorId = -1;
+        private ActorHandle handle;
         private readonly HashSet<ActorComponent> actorComponents = new();
         protected virtual void Awake()
         {
@@ -31,12 +30,7 @@ namespace Kurisu.Framework
         /// Get actor's id according to actor's world
         /// </summary>
         /// <returns></returns>
-        public int GetActorId() => id;
-        /// <summary>
-        /// Is actor valid
-        /// </summary>
-        /// <returns></returns>
-        public bool IsValid() => id != -1;
+        public ActorHandle GetActorHandle() => handle;
         /// <summary>
         /// Register an actor to world
         /// </summary>
@@ -44,7 +38,7 @@ namespace Kurisu.Framework
         protected static void RegisterActor(Actor actor)
         {
             actor.world = ActorWorld.Current;
-            actor.world.RegisterActor(actor, ref actor.id);
+            actor.world.RegisterActor(actor, ref actor.handle);
         }
         /// <summary>
         /// Unregister an actor from world
@@ -55,7 +49,7 @@ namespace Kurisu.Framework
             if (actor.world == null || actor.world != ActorWorld.Current) return;
             actor.world.UnregisterActor(actor);
             actor.world = null;
-            actor.id = UnmanagedActorId;
+            actor.handle = default;
         }
         public TController GetTController<TController>() where TController : ActorController
         {

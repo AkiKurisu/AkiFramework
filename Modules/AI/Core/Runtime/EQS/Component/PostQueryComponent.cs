@@ -1,13 +1,14 @@
 using System;
 using Unity.Mathematics;
 using UnityEngine;
-namespace Kurisu.Framework.AI
+namespace Kurisu.Framework.AI.EQS
 {
     /// <summary>
     /// Post Query data provider associated with an Actor as component
     /// </summary>
     public class PostQueryComponent : ActorComponent
     {
+        [Header("Data")]
         public PostQuery PostQuery = new()
         {
             Angle = 120,
@@ -42,14 +43,14 @@ namespace Kurisu.Framework.AI
                 Debug.LogWarning($"[PostQueryComponent] Can not request post query from self view.");
                 return false;
             }
-            if (!system.IsComplete(GetActor().GetActorId()))
+            if (!system.IsComplete(GetActor().GetActorHandle()))
             {
                 return false;
             }
             PostQueryCommand command = new()
             {
-                selfId = GetActor().GetActorId(),
-                targetId = target.GetActorId(),
+                self = GetActor().GetActorHandle(),
+                target = target.GetActorHandle(),
                 postQuery = PostQuery,
                 offset = RaycastOffset,
                 layerMask = RaycastLayerMask
@@ -63,7 +64,7 @@ namespace Kurisu.Framework.AI
         /// <returns></returns>
         public ReadOnlySpan<float3> GetPosts()
         {
-            return system.GetPosts(GetActor().GetActorId());
+            return system.GetPosts(GetActor().GetActorHandle());
         }
     }
 }

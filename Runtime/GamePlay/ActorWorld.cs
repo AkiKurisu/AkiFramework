@@ -2,13 +2,58 @@ using System;
 using Kurisu.Framework.Collections;
 using R3;
 using UnityEngine;
+using UnityEngine.Assertions;
 namespace Kurisu.Framework
 {
+    /// <summary>
+    /// Struct to represent an GamePlay actor level entity
+    /// </summary>
+    public readonly struct ActorHandle
+    {
+        public readonly ulong Handle { get; }
+        public const int IndexBits = 24;
+        public const int SerialNumberBits = 40;
+        public const int MaxIndex = 1 << IndexBits;
+        public const ulong MaxSerialNumber = (ulong)1 << SerialNumberBits;
+        public readonly int GetIndex() => (int)(Handle & MaxIndex - 1);
+        public readonly ulong GetSerialNumber() => Handle >> IndexBits;
+        public readonly bool IsValid()
+        {
+            return Handle != 0;
+        }
+        public ActorHandle(ulong serialNum, int index)
+        {
+            Assert.IsTrue(index >= 0 && index < MaxIndex);
+            Assert.IsTrue(serialNum < MaxSerialNumber);
+#pragma warning disable CS0675
+            Handle = (serialNum << IndexBits) | (ulong)index;
+#pragma warning restore CS0675
+        }
+
+        public static bool operator ==(ActorHandle left, ActorHandle right)
+        {
+            return left.Handle == right.Handle;
+        }
+        public static bool operator !=(ActorHandle left, ActorHandle right)
+        {
+            return left.Handle != right.Handle;
+        }
+        public override bool Equals(object obj)
+        {
+            if (obj is not ActorHandle handle) return false;
+            return handle.Handle == Handle;
+        }
+        public override int GetHashCode()
+        {
+            return Handle.GetHashCode();
+        }
+    }
     /// <summary>
     /// World for GamePlay actor level.
     /// </summary>
     public class ActorWorld : MonoBehaviour
     {
+        private ulong serialNum = 1;
         public static int MaxActorNum { get; set; } = DefaultMaxActorNum;
         public const int DefaultMaxActorNum = 5000;
         /// <summary>
@@ -76,29 +121,45 @@ namespace Kurisu.Framework
             subsystemCollection.Dispose();
             onActorsUpdate.Dispose();
         }
-        internal void RegisterActor(Actor actor, ref int actorId)
+        internal void RegisterActor(Actor actor, ref ActorHandle handle)
         {
-            if (actorId >= 0 && actorsInWorld.IsValidIndex(actorId))
+            if (GetActor(handle) != null)
             {
                 Debug.LogError($"[ActorWorld] {actor.gameObject.name} is already registered to world!");
                 return;
             }
-            actorId = actorsInWorld.Add(actor);
+            int index = actorsInWorld.Add(actor);
+            handle = new ActorHandle(serialNum, index);
             onActorsUpdate.OnNext(Unit.Default);
         }
         internal void UnregisterActor(Actor actor)
         {
-            int actorId = actor.GetActorId();
-            if (actorsInWorld.IsValidIndex(actorId))
+            var handle = actor.GetActorHandle();
+            int index = handle.GetIndex();
+            if (actorsInWorld.IsValidIndex(index))
             {
-                actorsInWorld.RemoveAt(actorId);
+                var current = actorsInWorld[index];
+                if (current.GetActorHandle().GetSerialNumber() != handle.GetSerialNumber())
+                {
+                    Debug.LogWarning($"Actor {handle.Handle} has already been removed from world!");
+                    return;
+                }
+                // increase serial num as version update
+                ++serialNum;
+                actorsInWorld.RemoveAt(index);
                 onActorsUpdate.OnNext(Unit.Default);
             }
         }
-        public Actor GetActor(int id)
+        public Actor GetActor(ActorHandle handle)
         {
-            // auto safe check by container
-            return actorsInWorld[id];
+            int index = handle.GetIndex();
+            if (handle.IsValid() && actorsInWorld.IsValidIndex(index))
+            {
+                var actor = actorsInWorld[index];
+                if (actor.GetActorHandle().GetSerialNumber() != handle.GetSerialNumber()) return null;
+                return actor;
+            }
+            return null;
         }
         public T GetSubsystem<T>() where T : SubsystemBase
         {
