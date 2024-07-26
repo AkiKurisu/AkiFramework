@@ -9,6 +9,7 @@ namespace Kurisu.Framework
     {
         private readonly Dictionary<Type, SubsystemBase> systems = new();
         private SubsystemBase[] subsystems;
+        private IDisposable actorsUpdateSubscription;
         public WorldSubsystemCollection(ActorWorld world)
         {
             var types = AppDomain.CurrentDomain
@@ -24,6 +25,7 @@ namespace Kurisu.Framework
                 else systems[type].SetWorld(world);
             }
             subsystems = systems.Values.ToArray();
+            actorsUpdateSubscription = world.onActorsUpdate.Subscribe(OnActorsUpdate);
         }
         internal void RegisterSubsystem<T>(T subsystem) where T : SubsystemBase
         {
@@ -75,6 +77,14 @@ namespace Kurisu.Framework
                 subsystems[i].InternalRelease();
             }
             subsystems = null;
+            actorsUpdateSubscription.Dispose();
+        }
+        private void OnActorsUpdate(Unit _)
+        {
+            for (int i = 0; i < subsystems.Length; ++i)
+            {
+                subsystems[i].IsActorsDirty = true;
+            }
         }
     }
     public abstract class SubsystemBase
@@ -83,7 +93,7 @@ namespace Kurisu.Framework
         /// <summary>
         /// Buffered dirty flag when world actors changed
         /// </summary>
-        protected bool IsActorsDirty { get; set; }
+        protected internal bool IsActorsDirty { get; set; }
         /// <summary>
         /// Is system initialized
         /// </summary>
@@ -94,7 +104,6 @@ namespace Kurisu.Framework
         /// </summary>
         /// <value></value>
         protected bool IsDestroyed { get; private set; }
-        private IDisposable actorsUpdateSubscription;
         private ActorWorld world;
         /// <summary>
         /// Whether system can create
@@ -113,12 +122,7 @@ namespace Kurisu.Framework
         {
             if (IsInitialized) return;
             IsInitialized = true;
-            actorsUpdateSubscription = world.onActorsUpdate.Subscribe(OnActorsUpdate);
             Initialize();
-        }
-        private void OnActorsUpdate(Unit _)
-        {
-            IsActorsDirty = true;
         }
         public virtual void Tick()
         {
@@ -140,7 +144,6 @@ namespace Kurisu.Framework
             if (IsDestroyed) return;
             world = null;
             IsDestroyed = true;
-            actorsUpdateSubscription.Dispose();
             Release();
         }
         internal void SetWorld(ActorWorld world)

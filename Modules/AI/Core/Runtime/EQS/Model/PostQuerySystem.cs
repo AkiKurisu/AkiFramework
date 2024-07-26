@@ -58,11 +58,10 @@ namespace Kurisu.Framework.AI.EQS
         /// </summary>
         private class PostQueryWorker
         {
-            public PostQueryCommand executeCommand;
-            public NativeList<float3> posts;
-            public NativeArray<RaycastHit> hits;
-            public NativeArray<RaycastCommand> raycastCommands;
-            public JobHandle jobHandle;
+            private NativeList<float3> posts;
+            private NativeArray<RaycastHit> hits;
+            private NativeArray<RaycastCommand> raycastCommands;
+            private JobHandle jobHandle;
             public bool IsRunning { get; private set; }
             public PostQueryWorker()
             {
@@ -75,7 +74,6 @@ namespace Kurisu.Framework.AI.EQS
             public void ExecuteCommand(ref PostQueryCommand command, ref NativeArray<ActorData> actorDatas)
             {
                 IsRunning = true;
-                executeCommand = command;
                 int length = command.postQuery.Step * command.postQuery.Depth;
                 raycastCommands.DisposeSafe();
                 raycastCommands = new(length, Allocator.TempJob);
@@ -92,7 +90,7 @@ namespace Kurisu.Framework.AI.EQS
                 jobHandle = job.Schedule(length, 32, default);
                 jobHandle = RaycastCommand.ScheduleBatch(raycastCommands, hits, raycastCommands.Length, jobHandle);
             }
-            public void Complete()
+            public void CompleteCommand()
             {
                 IsRunning = false;
                 jobHandle.Complete();
@@ -120,7 +118,7 @@ namespace Kurisu.Framework.AI.EQS
         private readonly Queue<PostQueryCommand> commandBuffer = new();
         private SchedulerHandle updateTickHandle;
         private SchedulerHandle lateUpdateTickHandle;
-        private NativeArray<ActorHandle> batchActors;
+        private NativeArray<ActorHandle> batchHandles;
         private int batchLength;
         private readonly Dictionary<ActorHandle, PostQueryWorker> workerDic = new();
         /// <summary>
@@ -154,7 +152,7 @@ namespace Kurisu.Framework.AI.EQS
             // Allow job scheduled in 3 frames
             Scheduler.WaitFrame(ref lateUpdateTickHandle, 3, CompleteCommands, TickFrame.FixedUpdate, isLooped: true);
             lateUpdateTickHandle.Pause();
-            batchActors = new NativeArray<ActorHandle>(MaxWorkerCount, Allocator.Persistent);
+            batchHandles = new NativeArray<ActorHandle>(MaxWorkerCount, Allocator.Persistent);
         }
         private void ConsumeCommands(int _)
         {
@@ -173,11 +171,15 @@ namespace Kurisu.Framework.AI.EQS
                     {
                         worker = workerDic[command.self] = new();
                     }
+
                     if (worker.IsRunning)
+                    {
+                        Debug.LogWarning($"[PostQuerySystem] Should not enquene new command [ActorId: {command.self.Handle}] before last command completed!");
                         continue;
+                    }
 
                     worker.ExecuteCommand(ref command, ref actorDatas);
-                    batchActors[batchLength] = command.self;
+                    batchHandles[batchLength] = command.self;
                     batchLength++;
                 }
                 actorDatas.Dispose();
@@ -190,7 +192,7 @@ namespace Kurisu.Framework.AI.EQS
             {
                 for (int i = 0; i < batchLength; ++i)
                 {
-                    workerDic[batchActors[i]].Complete();
+                    workerDic[batchHandles[i]].CompleteCommand();
                 }
             }
             lateUpdateTickHandle.Pause();
@@ -210,7 +212,7 @@ namespace Kurisu.Framework.AI.EQS
 
         protected override void Release()
         {
-            batchActors.Dispose();
+            batchHandles.Dispose();
             updateTickHandle.Dispose();
             lateUpdateTickHandle.Dispose();
             foreach (var worker in workerDic.Values)

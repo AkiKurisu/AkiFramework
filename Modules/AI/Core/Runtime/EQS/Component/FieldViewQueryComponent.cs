@@ -23,7 +23,7 @@ namespace Kurisu.Framework.AI.EQS
             system = DynamicSubsystem.Get<FieldViewQuerySystem>(ActorWorld.Current);
             if (system == null)
             {
-                Debug.LogError($"[FieldViewQueryComponent] Can not get PostQuerySystem dynamically.");
+                Debug.LogError($"[FieldViewQueryComponent] Can not get FieldViewQuerySystem dynamically.");
             }
         }
         /// <summary>

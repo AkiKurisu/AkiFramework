@@ -38,7 +38,7 @@ namespace Kurisu.Framework
         protected static void RegisterActor(Actor actor)
         {
             actor.world = ActorWorld.Current;
-            actor.world.RegisterActor(actor, ref actor.handle);
+            ActorWorld.Current.RegisterActor(actor, ref actor.handle);
         }
         /// <summary>
         /// Unregister an actor from world
@@ -66,10 +66,8 @@ namespace Kurisu.Framework
         /// <param name="component"></param>
         internal static void RegisterActorComponent(Actor actor, ActorComponent component)
         {
-#if UNITY_EDITOR
             Assert.IsNotNull(actor);
             Assert.IsNotNull(component);
-#endif
             actor.actorComponents.Add(component);
         }
         /// <summary>
@@ -79,10 +77,8 @@ namespace Kurisu.Framework
         /// <param name="component"></param>
         internal static void UnregisterActor(Actor actor, ActorComponent component)
         {
-#if UNITY_EDITOR
             Assert.IsNotNull(actor);
             Assert.IsNotNull(component);
-#endif
             actor.actorComponents.Remove(component);
         }
         internal void BindController(ActorController controller)
@@ -108,6 +104,13 @@ namespace Kurisu.Framework
                 if (component is TComponent tComponent) return tComponent;
             }
             return null;
+        }
+        public void GetActorComponents<TComponent>(List<TComponent> components) where TComponent : ActorComponent
+        {
+            foreach (var component in actorComponents)
+            {
+                if (component is TComponent tComponent) components.Add(tComponent);
+            }
         }
     }
 }

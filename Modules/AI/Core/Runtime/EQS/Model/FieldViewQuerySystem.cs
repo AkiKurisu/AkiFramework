@@ -162,7 +162,7 @@ namespace Kurisu.Framework.AI.EQS
         {
             if (!handleIndices.TryGetValue(handle, out var index))
             {
-                Debug.LogWarning($"Actor {handle.Handle}'s field view has not been initialized");
+                Debug.LogWarning($"[FieldViewQuerySystem] Actor {handle.Handle}'s field view has not been initialized");
                 return;
             }
             if (!cache.IsCreated) return;
