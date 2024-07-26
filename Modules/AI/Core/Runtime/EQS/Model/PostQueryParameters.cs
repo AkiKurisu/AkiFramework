@@ -8,7 +8,7 @@ namespace Kurisu.Framework.AI.EQS
     /// Reference article: 《Naughty Dog-Human Enemy AI In Last of The Us》 with only runtime raycast detect.
     /// </summary>
     [Serializable]
-    public struct PostQuery
+    public struct PostQueryParameters
     {
         [Range(0, 360), Tooltip("Post query angle, can only see target within angle")]
         public float Angle;

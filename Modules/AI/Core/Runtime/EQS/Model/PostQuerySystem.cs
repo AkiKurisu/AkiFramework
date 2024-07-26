@@ -19,7 +19,7 @@ namespace Kurisu.Framework.AI.EQS
         public ActorHandle target;
         public float3 offset;
         public int layerMask;
-        public PostQuery postQuery;
+        public PostQueryParameters parameters;
     }
     public class PostQuerySystem : DynamicSubsystem
     {
@@ -40,7 +40,7 @@ namespace Kurisu.Framework.AI.EQS
             {
                 var direction = math.normalize(source.position - target.position);
 
-                float angle = command.postQuery.Angle / 2;
+                float angle = command.parameters.Angle / 2;
 
                 quaternion rot = quaternion.RotateY(math.radians(math.lerp(-angle, angle, (float)index / length)));
 
@@ -48,7 +48,7 @@ namespace Kurisu.Framework.AI.EQS
                 {
                     from = target.position + command.offset,
                     direction = math.rotate(rot, direction),
-                    distance = command.postQuery.Distance,
+                    distance = command.parameters.Distance,
                     queryParameters = new QueryParameters() { layerMask = command.layerMask }
                 };
             }
@@ -74,7 +74,7 @@ namespace Kurisu.Framework.AI.EQS
             public void ExecuteCommand(ref PostQueryCommand command, ref NativeArray<ActorData> actorDatas)
             {
                 IsRunning = true;
-                int length = command.postQuery.Step * command.postQuery.Depth;
+                int length = command.parameters.Step * command.parameters.Depth;
                 raycastCommands.DisposeSafe();
                 raycastCommands = new(length, Allocator.TempJob);
                 hits.DisposeSafe();
@@ -179,8 +179,7 @@ namespace Kurisu.Framework.AI.EQS
                     }
 
                     worker.ExecuteCommand(ref command, ref actorDatas);
-                    batchHandles[batchLength] = command.self;
-                    batchLength++;
+                    batchHandles[batchLength++] = command.self;
                 }
                 actorDatas.Dispose();
             }
