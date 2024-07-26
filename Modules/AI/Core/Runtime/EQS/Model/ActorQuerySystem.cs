@@ -23,14 +23,14 @@ namespace Kurisu.Framework.AI.EQS
     {
         private NativeArray<ActorData> _actorData = default;
         private readonly List<Actor> _actors = new();
-        private static readonly ProfilerMarker FixedTickPM = new("ActorQuerySystem.FixedTick");
+        private static readonly ProfilerMarker TickPM = new("ActorQuerySystem.Tick");
         protected override void Initialize()
         {
             RebuildArray();
         }
         public override void Tick()
         {
-            using (FixedTickPM.Auto())
+            using (TickPM.Auto())
             {
                 if (IsActorsDirty)
                 {

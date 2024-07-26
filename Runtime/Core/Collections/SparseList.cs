@@ -28,12 +28,12 @@ namespace Kurisu.Framework.Collections
         {
             get
             {
-                if (!IsValidIndex(index)) return default;
+                if (!IsAllocated(index)) return default;
                 return data[index].value;
             }
             set
             {
-                if (!IsValidIndex(index)) return;
+                if (!IsAllocated(index)) return;
                 var link = data[index];
                 link.value = value;
                 data[index] = link;
@@ -141,7 +141,7 @@ namespace Kurisu.Framework.Collections
             }
             firstFreeIndex = 0;
         }
-        public bool IsValidIndex(int index)
+        public bool IsAllocated(int index)
         {
             if (index < 0 || index >= allocationFlags.Count) return false;
             return allocationFlags[index];

@@ -136,7 +136,7 @@ namespace Kurisu.Framework
         {
             var handle = actor.GetActorHandle();
             int index = handle.GetIndex();
-            if (actorsInWorld.IsValidIndex(index))
+            if (actorsInWorld.IsAllocated(index))
             {
                 var current = actorsInWorld[index];
                 if (current.GetActorHandle().GetSerialNumber() != handle.GetSerialNumber())
@@ -153,7 +153,7 @@ namespace Kurisu.Framework
         public Actor GetActor(ActorHandle handle)
         {
             int index = handle.GetIndex();
-            if (handle.IsValid() && actorsInWorld.IsValidIndex(index))
+            if (handle.IsValid() && actorsInWorld.IsAllocated(index))
             {
                 var actor = actorsInWorld[index];
                 if (actor.GetActorHandle().GetSerialNumber() != handle.GetSerialNumber()) return null;

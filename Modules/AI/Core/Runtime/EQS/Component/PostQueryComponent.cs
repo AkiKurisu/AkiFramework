@@ -43,7 +43,7 @@ namespace Kurisu.Framework.AI.EQS
                 Debug.LogWarning($"[PostQueryComponent] Can not request post query from self view.");
                 return false;
             }
-            if (!system.IsComplete(GetActor().GetActorHandle()))
+            if (!system.IsFree(GetActor().GetActorHandle()))
             {
                 return false;
             }

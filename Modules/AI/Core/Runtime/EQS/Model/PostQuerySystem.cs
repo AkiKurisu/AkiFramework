@@ -58,11 +58,16 @@ namespace Kurisu.Framework.AI.EQS
         /// </summary>
         private class PostQueryWorker
         {
+            private enum WorkerStatus
+            {
+                FREE, PENDING, RUNNING
+            }
             private NativeList<float3> posts;
             private NativeArray<RaycastHit> hits;
             private NativeArray<RaycastCommand> raycastCommands;
             private JobHandle jobHandle;
             public bool IsRunning { get; private set; }
+            public bool HasPendingCommand { get; private set; }
             public PostQueryWorker()
             {
                 posts = new(Allocator.Persistent);
@@ -71,8 +76,13 @@ namespace Kurisu.Framework.AI.EQS
             {
                 return posts.AsReadOnly();
             }
+            public void SetPending()
+            {
+                HasPendingCommand = true;
+            }
             public void ExecuteCommand(ref PostQueryCommand command, ref NativeArray<ActorData> actorDatas)
             {
+                HasPendingCommand = false;
                 IsRunning = true;
                 int length = command.parameters.Step * command.parameters.Depth;
                 raycastCommands.DisposeSafe();
@@ -141,10 +151,6 @@ namespace Kurisu.Framework.AI.EQS
         public const int DefaultFramePerTick = 25;
         private static readonly ProfilerMarker ConsumeCommandsPM = new("PostQuerySystem.ConsumeCommands");
         private static readonly ProfilerMarker CompleteCommandsPM = new("PostQuerySystem.CompleteCommands");
-        public void EnqueueCommand(PostQueryCommand command)
-        {
-            commandBuffer.Enqueue(command);
-        }
         protected override void Initialize()
         {
             Assert.IsFalse(FramePerTick <= 3);
@@ -167,10 +173,7 @@ namespace Kurisu.Framework.AI.EQS
                         break;
                     }
 
-                    if (!workerDic.TryGetValue(command.self, out var worker))
-                    {
-                        worker = workerDic[command.self] = new();
-                    }
+                    var worker = workerDic[command.self];
 
                     if (worker.IsRunning)
                     {
@@ -196,18 +199,6 @@ namespace Kurisu.Framework.AI.EQS
             }
             lateUpdateTickHandle.Pause();
         }
-        public ReadOnlySpan<float3> GetPosts(ActorHandle handle)
-        {
-            if (workerDic.TryGetValue(handle, out var worker))
-                return worker.GetPosts();
-            return default;
-        }
-        public bool IsComplete(ActorHandle handle)
-        {
-            if (workerDic.TryGetValue(handle, out var worker))
-                return !worker.IsRunning;
-            return true;
-        }
 
         protected override void Release()
         {
@@ -219,6 +210,41 @@ namespace Kurisu.Framework.AI.EQS
                 worker.Dispose();
             }
             workerDic.Clear();
+        }
+        /// <summary>
+        /// Enqueue a new <see cref="PostQueryCommand"/> to the system
+        /// </summary>
+        /// <param name="command"></param>
+        public void EnqueueCommand(PostQueryCommand command)
+        {
+            if (!workerDic.TryGetValue(command.self, out var worker))
+            {
+                worker = workerDic[command.self] = new();
+            }
+            worker.SetPending();
+            commandBuffer.Enqueue(command);
+        }
+        /// <summary>
+        /// Get cached posts has found for target actor use latest command
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        public ReadOnlySpan<float3> GetPosts(ActorHandle handle)
+        {
+            if (workerDic.TryGetValue(handle, out var worker))
+                return worker.GetPosts();
+            return default;
+        }
+        /// <summary>
+        /// Whether the worker for target actor is free to execute new command
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        public bool IsFree(ActorHandle handle)
+        {
+            if (workerDic.TryGetValue(handle, out var worker))
+                return !worker.IsRunning && !worker.HasPendingCommand;
+            return true;
         }
     }
 }

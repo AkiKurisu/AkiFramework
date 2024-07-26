@@ -63,12 +63,12 @@ namespace Kurisu.Framework.AI.EQS
         {
             if (target == null) return false;
 
-            bool CanSeeTarget = true;
+            bool isVisible = true;
             Vector3 directionToTarget = (target.position - fromPosition).normalized;
 
             if (Vector3.Angle(viewDirection, directionToTarget) > Angle / 2)
             {
-                CanSeeTarget = false;
+                isVisible = false;
             }
             else
             {
@@ -78,27 +78,27 @@ namespace Kurisu.Framework.AI.EQS
                 Physics.Linecast(fromPosition, lineCastEndPosition, out RaycastHit hit, layerMask);
                 if (hit.collider != null)
                 {
-                    if (TagMatches(hit.collider.tag, filterTags) == false)
+                    if (TagMatches(hit.collider, filterTags) == false)
                     {
                         Debug.DrawLine(hit.point, fromPosition, Color.cyan);
-                        CanSeeTarget = false;
+                        isVisible = false;
                     }
                     else
                     {
-                        CanSeeTarget = true;
+                        isVisible = true;
                     }
                 }
             }
-            return CanSeeTarget;
+            return isVisible;
         }
-        private static bool TagMatches(string targetTag, string[] allowedTags)
+        private static bool TagMatches(Component target, string[] allowedTags)
         {
-            if (targetTag == null || allowedTags == null) return false;
+            if (target == null || allowedTags == null) return false;
 
             bool match = false;
             foreach (string tag in allowedTags)
             {
-                if (targetTag == tag) match = true;
+                if (target.CompareTag(tag)) match = true;
             }
             return match;
 
