@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
 namespace Kurisu.Framework.AI.EQS
@@ -27,7 +28,7 @@ namespace Kurisu.Framework.AI.EQS
         {
             RebuildArray();
         }
-        public override void FixedTick()
+        public override void Tick()
         {
             using (FixedTickPM.Auto())
             {
@@ -36,14 +37,19 @@ namespace Kurisu.Framework.AI.EQS
                     RebuildArray();
                     IsActorsDirty = false;
                 }
-                for (int i = 0; i < _actorData.Length; ++i)
+                unsafe
                 {
-                    var data = _actorData[i];
-                    _actors[i].transform.GetPositionAndRotation(out var pos, out var rot);
-                    data.position = pos;
-                    data.rotation = rot;
-                    data.active = (byte)(_actors[i].isActiveAndEnabled ? 0 : 1);
-                    _actorData[i] = data;
+                    void* arrayPtr = _actorData.GetUnsafePtr();
+                    for (int i = 0; i < _actorData.Length; ++i)
+                    {
+                        _actors[i].transform.GetPositionAndRotation(out var pos, out var rot);
+                        fixed (ActorData* ptr = &UnsafeUtility.ArrayElementAsRef<ActorData>(arrayPtr, i))
+                        {
+                            ptr->position = pos;
+                            ptr->rotation = rot;
+                            ptr->active = (byte)(_actors[i].isActiveAndEnabled ? 0 : 1);
+                        }
+                    }
                 }
             }
         }

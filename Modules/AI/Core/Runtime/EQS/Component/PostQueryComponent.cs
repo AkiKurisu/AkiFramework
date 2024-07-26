@@ -9,7 +9,7 @@ namespace Kurisu.Framework.AI.EQS
     public class PostQueryComponent : ActorComponent
     {
         [Header("Data")]
-        public PostQuery PostQuery = new()
+        public PostQueryParameters PostQuery = new()
         {
             Angle = 120,
             Distance = 30,
@@ -51,7 +51,7 @@ namespace Kurisu.Framework.AI.EQS
             {
                 self = GetActor().GetActorHandle(),
                 target = target.GetActorHandle(),
-                postQuery = PostQuery,
+                parameters = PostQuery,
                 offset = RaycastOffset,
                 layerMask = RaycastLayerMask
             };

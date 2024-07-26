@@ -141,7 +141,7 @@ namespace Kurisu.Framework
                 var current = actorsInWorld[index];
                 if (current.GetActorHandle().GetSerialNumber() != handle.GetSerialNumber())
                 {
-                    Debug.LogWarning($"Actor {handle.Handle} has already been removed from world!");
+                    Debug.LogWarning($"[ActorWorld] Actor {handle.Handle} has already been removed from world!");
                     return;
                 }
                 // increase serial num as version update
