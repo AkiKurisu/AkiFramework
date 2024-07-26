@@ -9,7 +9,7 @@ namespace Kurisu.Framework.React
     {
         void Add(IDisposable disposable);
     }
-    internal readonly struct ObservableDestroyTriggerUnRegister : IUnRegister
+    public readonly struct ObservableDestroyTriggerUnRegister : IUnRegister
     {
         private readonly ObservableDestroyTrigger trigger;
         public ObservableDestroyTriggerUnRegister(ObservableDestroyTrigger trigger)
@@ -21,7 +21,7 @@ namespace Kurisu.Framework.React
             trigger.AddDisposableOnDestroy(disposable);
         }
     }
-    internal readonly struct CancellationTokenUnRegister : IUnRegister
+    public readonly struct CancellationTokenUnRegister : IUnRegister
     {
         private readonly CancellationToken cancellationToken;
         public CancellationTokenUnRegister(CancellationToken cancellationToken)
@@ -40,7 +40,7 @@ namespace Kurisu.Framework.React
         /// </summary>
         /// <param name="gameObject"></param>
         /// <returns></returns>
-        public static IUnRegister GetUnRegister(this GameObject gameObject)
+        public static ObservableDestroyTriggerUnRegister GetUnRegister(this GameObject gameObject)
         {
             return new ObservableDestroyTriggerUnRegister(gameObject.GetOrAddComponent<ObservableDestroyTrigger>());
         }
@@ -49,9 +49,14 @@ namespace Kurisu.Framework.React
         /// </summary>
         /// <param name="monoBehaviour"></param>
         /// <returns></returns>
-        public static IUnRegister GetUnRegister(this MonoBehaviour monoBehaviour)
+        public static CancellationTokenUnRegister GetUnRegister(this MonoBehaviour monoBehaviour)
         {
             return new CancellationTokenUnRegister(monoBehaviour.destroyCancellationToken);
+        }
+        public static T AddTo<T, K>(this T disposable, ref K unRegister) where T : IDisposable where K : struct, IUnRegister
+        {
+            unRegister.Add(disposable);
+            return disposable;
         }
         public static T AddTo<T>(this T disposable, IUnRegister unRegister) where T : IDisposable
         {
