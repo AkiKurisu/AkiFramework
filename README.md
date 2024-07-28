@@ -23,6 +23,10 @@ I supposed these code are useful but also not-must-be-included, which is my pers
 
 Modules are based on core features.
 
+[AI](./Docs/AI.md)
+
+>Personal AI tools from AAA games research. 
+
 [Mod](./Docs/Mod.md) 
 > Simple mod system based on Addressables. 
 
