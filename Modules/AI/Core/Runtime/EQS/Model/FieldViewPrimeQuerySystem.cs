@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Kurisu.Framework.Schedulers;
 using Unity.Burst;
 using Unity.Collections;
@@ -9,13 +10,13 @@ using UnityEngine;
 using UnityEngine.Assertions;
 namespace Kurisu.Framework.AI.EQS
 {
-    public struct FieldViewQueryCommand
+    public struct FieldViewPrimeQueryCommand
     {
         public ActorHandle self;
-        public FieldView fieldView;
+        public FieldViewPrime fieldView;
         public LayerMask layerMask;
     }
-    public class FieldViewQuerySystem : DynamicSubsystem
+    public class FieldViewPrimeQuerySystem : DynamicSubsystem
     {
         /// <summary>
         /// Batch field view query, performe better than <see cref="EnvironmentQuery.OverlapFieldViewJob"/>
@@ -24,7 +25,7 @@ namespace Kurisu.Framework.AI.EQS
         private struct OverlapFieldViewBatchJob : IJobParallelFor
         {
             [ReadOnly]
-            public NativeArray<FieldViewQueryCommand> datas;
+            public NativeArray<FieldViewPrimeQueryCommand> datas;
             [ReadOnly]
             public NativeArray<ActorData> actors;
             [WriteOnly, NativeDisableParallelForRestriction]
@@ -32,20 +33,56 @@ namespace Kurisu.Framework.AI.EQS
             [BurstCompile]
             public void Execute(int index)
             {
-                FieldViewQueryCommand source = datas[index];
+                FieldViewPrimeQueryCommand source = datas[index];
                 ActorData self = actors[source.self.GetIndex()];
                 float3 forward = math.mul(self.rotation, new float3(0, 0, 1));
                 for (int i = 0; i < actors.Length; i++)
                 {
                     if (i == index) continue;
                     ActorData actor = actors[i];
-                    if (MathUtils.IsInLayerMask(actor.layer, source.layerMask)
-                    && math.distance(self.position, actor.position) <= source.fieldView.Radius
+                    if (!MathUtils.IsInLayerMask(actor.layer, source.layerMask)) continue;
+                    float radius = source.fieldView.PolygonRadius;
+                    float centerDistance = math.distance(self.position + forward * radius, actor.position);
+                    // Inside
+                    if (centerDistance >= radius)
+                    {
+                        using var polygons = AllocatePolygonCorners(source.fieldView, self.position, self.rotation, forward, Allocator.Temp);
+                        if (!MathUtils.IsPointInPolygon(polygons, actor.position))
+                        {
+                            // When target is nearly on edge, detect whether target is in fov now
+                            const float threshold = 0.9f;
+                            if (centerDistance >= threshold * radius && MathUtils.InViewAngle(self.position, actor.position, forward, source.fieldView.Angle))
+                            {
+                                resultActors.Add(index, actor.handle);
+                            }
+                            continue;
+                        }
+                    }
+                    // Outside
+                    if (math.distance(self.position, actor.position) <= source.fieldView.Radius
                     && MathUtils.InViewAngle(self.position, actor.position, forward, source.fieldView.Angle))
                     {
                         resultActors.Add(index, actor.handle);
                     }
                 }
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            private static NativeArray<float3> AllocatePolygonCorners(FieldViewPrime fieldViewPrime, float3 position, quaternion rotation, float3 forward, Allocator allocator)
+            {
+                float radius = fieldViewPrime.PolygonRadius;
+                var frustumCorners = new NativeArray<float3>(fieldViewPrime.Sides, allocator);
+                float angleStep = 360f / fieldViewPrime.Sides;
+
+                for (int i = 0; i < fieldViewPrime.Sides; i++)
+                {
+                    float angle = math.degrees(i * angleStep);
+                    frustumCorners[i] = new float3(math.cos(angle) * radius, 0, math.sin(angle) * radius);
+                }
+                for (int i = 0; i < frustumCorners.Length; i++)
+                {
+                    frustumCorners[i] = position + forward * radius + math.mul(rotation, frustumCorners[i]);
+                }
+                return frustumCorners;
             }
         }
         private SchedulerHandle updateTickHandle;
@@ -61,17 +98,17 @@ namespace Kurisu.Framework.AI.EQS
         public const int DefaultFramePerTick = 25;
         private readonly Dictionary<ActorHandle, int> handleIndices = new();
         private NativeParallelMultiHashMap<int, ActorHandle> results;
-        private NativeList<FieldViewQueryCommand> commands;
-        private NativeArray<FieldViewQueryCommand> execution;
+        private NativeList<FieldViewPrimeQueryCommand> commands;
+        private NativeArray<FieldViewPrimeQueryCommand> execution;
         private NativeParallelMultiHashMap<int, ActorHandle> cache;
         private NativeArray<ActorData> actorData;
         private JobHandle jobHandle;
-        private static readonly ProfilerMarker ScheduleJobPM = new("FieldViewQuerySystem.ScheduleJob");
-        private static readonly ProfilerMarker CompleteJobPM = new("FieldViewQuerySystem.CompleteJob");
+        private static readonly ProfilerMarker ScheduleJobPM = new("FieldViewPrimeQuerySystem.ScheduleJob");
+        private static readonly ProfilerMarker CompleteJobPM = new("FieldViewPrimeQuerySystem.CompleteJob");
         protected override void Initialize()
         {
             Assert.IsFalse(FramePerTick <= 3);
-            commands = new NativeList<FieldViewQueryCommand>(100, Allocator.Persistent);
+            commands = new NativeList<FieldViewPrimeQueryCommand>(100, Allocator.Persistent);
             Scheduler.WaitFrame(ref updateTickHandle, FramePerTick, ScheduleJob, TickFrame.FixedUpdate, isLooped: true);
             // Allow job scheduled in 3 frames
             Scheduler.WaitFrame(ref lateUpdateTickHandle, 3, CompleteJob, TickFrame.FixedUpdate, isLooped: true);
@@ -119,7 +156,7 @@ namespace Kurisu.Framework.AI.EQS
             lateUpdateTickHandle.Dispose();
             updateTickHandle.Dispose();
         }
-        public void EnqueueCommand(FieldViewQueryCommand command)
+        public void EnqueueCommand(FieldViewPrimeQueryCommand command)
         {
             if (handleIndices.TryGetValue(command.self, out var index))
             {

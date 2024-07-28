@@ -34,39 +34,13 @@ namespace Kurisu.Framework.AI.EQS
             public void Execute(int index)
             {
                 ActorData actor = actors[index];
-                if (IsInLayerMask(actor.layer, layerMask)
+                if (MathUtils.IsInLayerMask(actor.layer, layerMask)
                 && actor.handle != ignored
                 && math.distance(center, actor.position) <= radius
-                && InViewAngle(center, actor.position, forward, angle))
+                && MathUtils.InViewAngle(center, actor.position, forward, angle))
                 {
                     resultActors.Add(actor.handle);
                 }
-            }
-            [BurstCompile]
-            private static bool InViewAngle(in float3 center, in float3 position, in float3 forward, in float angle)
-            {
-                float3 targetPosition = position;
-                targetPosition.y = center.y;
-
-                float3 directionToTarget = math.normalize(targetPosition - center);
-
-                return Angle(forward, directionToTarget) <= angle / 2;
-            }
-            [BurstCompile]
-            private static float Angle(in float3 from, in float3 to)
-            {
-                float num = math.sqrt(math.sqrt(math.dot(from, from)) * math.sqrt(math.dot(to, to)));
-                if (num < 1E-15f)
-                {
-                    return 0f;
-                }
-                float num2 = math.clamp(math.dot(from, to) / num, -1f, 1f);
-                return (float)math.acos(num2) * 57.29578f;
-            }
-            [BurstCompile]
-            private static bool IsInLayerMask(in int layer, in LayerMask mask)
-            {
-                return (mask.value & (1 << layer)) != 0;
             }
         }
         /// <summary>

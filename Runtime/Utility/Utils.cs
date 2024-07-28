@@ -34,6 +34,17 @@ namespace Kurisu.Framework
             float uu = u * u;
             return (uu * p0) + (2 * u * t * p1) + (tt * p2);
         }
+        public static bool CompareTags(Component target, string[] allowedTags)
+        {
+            if (target == null || allowedTags == null) return false;
+
+            bool match = false;
+            foreach (string tag in allowedTags)
+            {
+                if (target.CompareTag(tag)) match = true;
+            }
+            return match;
+        }
         #region Internal Utils
         internal static MethodInfo GetStaticMethodWithNoParametersInBase(Type type, string methodName)
         {

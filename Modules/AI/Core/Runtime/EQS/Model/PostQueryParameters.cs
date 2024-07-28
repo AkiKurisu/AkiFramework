@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Kurisu.Framework.AI.EQS
 {
     /// <summary>
-    /// Reference article: 《Naughty Dog-Human Enemy AI In Last of The Us》 with only runtime raycast detect.
+    /// Reference article: "Naughty Dog: Human Enemy AI In Last of The Us" with only runtime raycast detect.
     /// </summary>
     [Serializable]
     public struct PostQueryParameters

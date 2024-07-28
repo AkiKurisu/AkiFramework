@@ -5,6 +5,7 @@ using UnityEngine;
 namespace Kurisu.Framework.AI.Editor
 {
     [CustomEditor(typeof(AIController), true)]
+    [CanEditMultipleObjects]
     public class AIControllerEditor : UnityEditor.Editor
     {
         private AIController Controller => target as AIController;

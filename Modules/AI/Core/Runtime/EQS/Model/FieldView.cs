@@ -49,9 +49,8 @@ namespace Kurisu.Framework.AI.EQS
             }
             ListPool<Actor>.Release(list);
         }
-        // TODO: Need optimize
         /// <summary>
-        /// Whether can see the target
+        /// Detect whether can see the target
         /// </summary>
         /// <param name="target"></param>
         /// <param name="fromPosition"></param>
@@ -59,12 +58,11 @@ namespace Kurisu.Framework.AI.EQS
         /// <param name="layerMask"></param>
         /// <param name="filterTags"></param>
         /// <returns></returns>
-        public readonly bool CanVisible(Transform target, Vector3 fromPosition, Vector3 viewDirection, LayerMask layerMask, string[] filterTags = null)
+        public readonly bool Detect(Vector3 target, Vector3 fromPosition, Quaternion fromRotation, LayerMask layerMask, string[] filterTags = null)
         {
-            if (target == null) return false;
-
             bool isVisible = true;
-            Vector3 directionToTarget = (target.position - fromPosition).normalized;
+            Vector3 viewDirection = fromRotation * Vector3.forward;
+            Vector3 directionToTarget = (target - fromPosition).normalized;
 
             if (Vector3.Angle(viewDirection, directionToTarget) > Angle / 2)
             {
@@ -72,13 +70,16 @@ namespace Kurisu.Framework.AI.EQS
             }
             else
             {
-
-                float normalDistance = Vector3.Distance(fromPosition, target.position);
-                Vector3 lineCastEndPosition = fromPosition + directionToTarget * normalDistance;
-                Physics.Linecast(fromPosition, lineCastEndPosition, out RaycastHit hit, layerMask);
+                // Raycast detect, ignore height
+                float normalDistance = Vector3.Distance(new Vector3(fromPosition.x, 0, fromPosition.z), new Vector3(target.x, 0, target.z));
+                if (normalDistance > Radius)
+                {
+                    return false;
+                }
+                Physics.Linecast(fromPosition, target, out RaycastHit hit, layerMask);
                 if (hit.collider != null)
                 {
-                    if (TagMatches(hit.collider, filterTags) == false)
+                    if (Utils.CompareTags(hit.collider, filterTags) == false)
                     {
                         Debug.DrawLine(hit.point, fromPosition, Color.cyan);
                         isVisible = false;
@@ -90,18 +91,6 @@ namespace Kurisu.Framework.AI.EQS
                 }
             }
             return isVisible;
-        }
-        private static bool TagMatches(Component target, string[] allowedTags)
-        {
-            if (target == null || allowedTags == null) return false;
-
-            bool match = false;
-            foreach (string tag in allowedTags)
-            {
-                if (target.CompareTag(tag)) match = true;
-            }
-            return match;
-
         }
         public readonly void DrawGizmos(Vector3 position, Vector3 forward)
         {
