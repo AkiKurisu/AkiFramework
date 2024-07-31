@@ -173,7 +173,7 @@ namespace Kurisu.Framework.Events
 
     internal class EventCallbackRegistry
     {
-        private static readonly EventCallbackListPool s_ListPool = new EventCallbackListPool();
+        private static readonly EventCallbackListPool s_ListPool = new();
 
         private static EventCallbackList GetCallbackList(EventCallbackList initializer = null)
         {

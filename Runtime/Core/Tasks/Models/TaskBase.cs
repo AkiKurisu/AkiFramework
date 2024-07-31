@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Kurisu.Framework.Events;
 using Kurisu.Framework.Pool;
 using UnityEngine;
+using UnityEngine.Pool;
 namespace Kurisu.Framework.Tasks
 {
     public enum TaskStatus
@@ -16,17 +17,23 @@ namespace Kurisu.Framework.Tasks
         /// </summary>
         Paused,
         /// <summary>
-        /// Task is completed and can not be updated any longer
+        /// Task is completed and wait to broadcast complete event
         /// </summary>
         Completed,
         /// <summary>
-        /// Task is not completed but is stopped externally
+        /// Task is stopped and will not broadcast complete event
         /// </summary>
         Stopped
     }
-    public class TaskCompleteEvent : EventBase<TaskCompleteEvent>
+    public interface ITaskEvent { }
+    public sealed class TaskCompleteEvent : EventBase<TaskCompleteEvent>, ITaskEvent
     {
         public TaskBase Task { get; private set; }
+        /// <summary>
+        /// Soft reference to subtask, listener may be disposed before broadcast this event.
+        /// So we check subtask's prerequisite whether contains this event to identify its lifetime version.
+        /// </summary>
+        /// <returns></returns>
         public readonly List<TaskBase> Listeners = new();
         public static TaskCompleteEvent GetPooled(TaskBase task)
         {
@@ -38,6 +45,10 @@ namespace Kurisu.Framework.Tasks
         public void AddListenerTask(TaskBase taskBase)
         {
             Listeners.Add(taskBase);
+        }
+        public void RemoveListenerTask(TaskBase taskBase)
+        {
+            Listeners.Remove(taskBase);
         }
     }
     /// <summary>
@@ -51,7 +62,20 @@ namespace Kurisu.Framework.Tasks
             return mStatus;
         }
         public abstract string GetTaskID();
-
+        /// <summary>
+        /// Debug usage
+        /// </summary>
+        /// <returns></returns>
+        protected virtual string GetTaskName()
+        {
+#if UNITY_EDITOR
+            return GetType().Name;
+#else
+            return string.Empty;
+#endif
+        }
+        internal string InternalGetTaskName() => GetTaskName();
+        #region Lifetime Cycle
         protected virtual void Init()
         {
             mStatus = TaskStatus.Stopped;
@@ -78,20 +102,27 @@ namespace Kurisu.Framework.Tasks
         {
             mStatus = TaskStatus.Stopped;
         }
+        public virtual void Acquire()
+        {
+
+        }
         public virtual void Dispose()
         {
+            if (prerequisites != null)
+            {
+                HashSetPool<TaskCompleteEvent>.Release(prerequisites);
+                prerequisites = null;
+            }
             if (completeEvent != null)
             {
                 completeEvent.Dispose();
                 completeEvent = null;
             }
         }
-        public virtual void Acquire()
-        {
-
-        }
+        #endregion
+        #region Prerequistes Management
+        private HashSet<TaskCompleteEvent> prerequisites;
         private TaskCompleteEvent completeEvent;
-        private int prerequisiteCount;
         internal void PostComplete()
         {
             if (completeEvent == null) return;
@@ -99,28 +130,49 @@ namespace Kurisu.Framework.Tasks
             completeEvent.Dispose();
             completeEvent = null;
         }
-        internal void ReleasePrerequistite()
+        /// <summary>
+        /// Release prerequistite if contains its reference
+        /// </summary>
+        /// <param name="evt"></param>
+        /// <returns></returns>
+        internal bool ReleasePrerequistite(TaskCompleteEvent evt)
         {
-            prerequisiteCount--;
+            return prerequisites.Remove(evt);
         }
         internal bool HasPrerequistites()
         {
-            return prerequisiteCount > 0;
+            return prerequisites != null && prerequisites.Count > 0;
         }
         private TaskCompleteEvent GetCompleteEvent()
         {
             completeEvent ??= TaskCompleteEvent.GetPooled(this);
             return completeEvent;
         }
+        /// <summary>
+        /// Add a prerequisite task before this task run
+        /// </summary>
+        /// <param name="taskBase"></param>
         public void RegisterPrerequisite(TaskBase taskBase)
         {
-            taskBase.GetCompleteEvent().AddListenerTask(this);
-            prerequisiteCount++;
+            var evt = taskBase.GetCompleteEvent();
+            evt.AddListenerTask(this);
+            prerequisites ??= HashSetPool<TaskCompleteEvent>.Get();
+            prerequisites.Add(evt);
         }
-        public virtual string GetTaskName()
+        /// <summary>
+        /// Remove a prerequisite task if exist
+        /// </summary>
+        /// <param name="taskBase"></param>
+        public bool UnregisterPrerequisite(TaskBase taskBase)
         {
-            return GetType().Name;
+            if (prerequisites == null) return false;
+            var evt = taskBase.GetCompleteEvent();
+            // should not edit collections when is being dispatched
+            if (!evt.Dispatch)
+                evt.RemoveListenerTask(this);
+            return prerequisites.Remove(evt);
         }
+        #endregion
     }
     public abstract class PooledTaskBase<T> : TaskBase where T : PooledTaskBase<T>, new()
     {

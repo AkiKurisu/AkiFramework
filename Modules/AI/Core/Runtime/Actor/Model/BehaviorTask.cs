@@ -76,7 +76,7 @@ namespace Kurisu.Framework.AI
         {
             return startOnEnabled;
         }
-        public override string GetTaskName()
+        protected override string GetTaskName()
         {
             return $"BehaviorTask [{host.gameObject.name}>>{behaviorTreeAsset.name}]";
         }

@@ -1,5 +1,4 @@
-using Kurisu.Framework.Tasks;
-namespace Kurisu.Framework
+namespace Kurisu.Framework.Tasks
 {
     public static class TaskExtensions
     {
