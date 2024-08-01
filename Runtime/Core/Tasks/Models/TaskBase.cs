@@ -143,7 +143,11 @@ namespace Kurisu.Framework.Tasks
         {
             return prerequisites != null && prerequisites.Count > 0;
         }
-        private TaskCompleteEvent GetCompleteEvent()
+        /// <summary>
+        /// Get task complete event
+        /// </summary>
+        /// <returns></returns>
+        public TaskCompleteEvent GetCompleteEvent()
         {
             completeEvent ??= TaskCompleteEvent.GetPooled(this);
             return completeEvent;

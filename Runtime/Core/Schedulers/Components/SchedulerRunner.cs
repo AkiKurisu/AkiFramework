@@ -270,6 +270,19 @@ namespace Kurisu.Framework.Schedulers
                     }
                 }
             }
+
+            // Shrink
+            if (tickFrame == TickFrame.LateUpdate)
+            {
+                // check match shrink threshold that capacity is more than initial capacity
+                bool canShrink = scheduledItems.InternalCapacity > 2 * InitialCapacity;
+                // shrink list when non-allocated elements are far more than allocated ones
+                bool overlapAllocated = scheduledItems.NumFreeIndices > 4 * scheduledItems.Count;
+                if (canShrink && overlapAllocated)
+                {
+                    scheduledItems.Shrink();
+                }
+            }
             isGateOpen = true;
         }
         private ScheduledItem FindItem(SchedulerHandle handle)

@@ -8,6 +8,7 @@ namespace Kurisu.Framework.Schedulers.Editor
     {
         private SchedulerRunner Manager => target as SchedulerRunner;
         private int ManagedScheduledCount => Manager.scheduledItems.Count;
+        private int ManagedScheduledCapacity => Manager.scheduledItems.InternalCapacity;
         private void OnEnable()
         {
             if (!Application.isPlaying) return;
@@ -31,7 +32,7 @@ namespace Kurisu.Framework.Schedulers.Editor
                 fontSize = 12
             };
             GUILayout.BeginVertical(GUI.skin.box);
-            GUILayout.Label($"Managed scheduled task count: {ManagedScheduledCount}");
+            GUILayout.Label($"Managed scheduled task count: {ManagedScheduledCount} capacity: {ManagedScheduledCapacity}");
             foreach (var scheduled in Manager.scheduledItems)
             {
                 double elapsedTime = Time.timeSinceLevelLoadAsDouble - scheduled.Timestamp;
