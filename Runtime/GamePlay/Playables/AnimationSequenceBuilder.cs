@@ -4,26 +4,36 @@ using Kurisu.Framework.Tasks;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
+using UnityEngine.Pool;
 namespace Kurisu.Framework.Playables.Tasks
 {
     /// <summary>
-    /// Provide an animation sequence using UnityEngine.Playables API
+    /// Builder for creating sequence on animation clips, using UnityEngine.Playables API.
     /// </summary>
-    public class AnimationSequenceBuilder : IDisposable
+    /// <remarks>
+    /// Useful to perform dynamic animation for character without <see cref="PlayableDirector"/>.
+    /// </remarks>
+    public struct AnimationSequenceBuilder : IDisposable
     {
         private readonly PlayableGraph playableGraph;
         private AnimationPlayableOutput playableOutput;
-        private readonly List<TaskBase> taskBuffer = new();
+        // TODO: Use complete event to create a link list instead of using an additional containers?
+        private List<TaskBase> taskBuffer;
         private Playable rootMixer;
         private Playable mixerPointer;
         private SequenceTask sequence;
-        private float fadeOutTime = 0f;
+        private float fadeOutTime;
+        private bool isDisposed;
         public AnimationSequenceBuilder(Animator animator)
         {
-            playableGraph = PlayableGraph.Create($"{animator.name}_AnimationSequence_{GetHashCode()}");
-            playableOutput = AnimationPlayableOutput.Create(playableGraph, "Animation", animator);
+            playableGraph = PlayableGraph.Create($"{animator.name}_AnimationSequence_{animator.GetHashCode()}");
+            playableOutput = AnimationPlayableOutput.Create(playableGraph, nameof(AnimationSequenceBuilder), animator);
             mixerPointer = rootMixer = AnimationMixerPlayable.Create(playableGraph, 2);
             playableOutput.SetSourcePlayable(mixerPointer);
+            fadeOutTime = 0f;
+            sequence = null;
+            isDisposed = false;
+            taskBuffer = ListPool<TaskBase>.Get();
         }
         /// <summary>
         /// Append an animation clip
@@ -84,7 +94,7 @@ namespace Kurisu.Framework.Playables.Tasks
         /// </summary>
         /// <param name="duration"></param>
         /// <returns></returns>
-        public AnimationSequenceBuilder SetDuration(double duration)
+        public readonly AnimationSequenceBuilder SetDuration(double duration)
         {
             mixerPointer.GetInput(1).SetDuration(duration);
             return this;
@@ -150,7 +160,7 @@ namespace Kurisu.Framework.Playables.Tasks
         /// </summary>
         /// <param name="callBack"></param>
         /// <returns></returns>
-        public SequenceTask BuildFadeOut(Action callBack)
+        public readonly SequenceTask BuildFadeOut(Action callBack)
         {
             return SequenceTask.GetPooled(AbsolutelyFadeOutPlayableTask.GetPooled(rootMixer, fadeOutTime), callBack);
         }
@@ -169,7 +179,7 @@ namespace Kurisu.Framework.Playables.Tasks
         /// Whether animation sequence is already built
         /// </summary>
         /// <returns></returns>
-        public bool IsBuilt()
+        public readonly bool IsBuilt()
         {
             return sequence != null;
         }
@@ -177,7 +187,7 @@ namespace Kurisu.Framework.Playables.Tasks
         /// Whether animation sequence is valid
         /// </summary>
         /// <returns></returns>
-        public bool IsValid()
+        public readonly bool IsValid()
         {
             return playableGraph.IsValid();
         }
@@ -186,12 +196,166 @@ namespace Kurisu.Framework.Playables.Tasks
         /// </summary> <summary>
         public void Dispose()
         {
+            if (isDisposed)
+            {
+                return;
+            }
+            isDisposed = true;
             sequence?.Dispose();
             sequence = null;
             if (playableGraph.IsValid())
             {
                 playableGraph.Destroy();
             }
+            ListPool<TaskBase>.Release(taskBuffer);
+            taskBuffer = null;
         }
+        #region Playable Tasks
+        /// <summary>
+        /// A task to fade in playable according to playable's duration
+        /// </summary>
+        private class FadeInPlayableTask : PooledTaskBase<FadeInPlayableTask>
+        {
+            private Playable clipPlayable;
+            private Playable mixerPlayable;
+            private float fadeInTime;
+            public static FadeInPlayableTask GetPooled(Playable mixerPlayable, Playable clipPlayable, float fadeInTime)
+            {
+                var task = GetPooled();
+                task.clipPlayable = clipPlayable;
+                task.mixerPlayable = mixerPlayable;
+                task.fadeInTime = fadeInTime;
+                return task;
+            }
+            public override void Tick()
+            {
+                if (!mixerPlayable.IsValid())
+                {
+                    Debug.LogWarning("Playable is already destroyed");
+                    mStatus = TaskStatus.Completed;
+                    return;
+                }
+                clipPlayable.SetSpeed(1d);
+                double current = clipPlayable.GetTime();
+                if (current >= fadeInTime)
+                {
+                    mixerPlayable.SetInputWeight(0, 0);
+                    mixerPlayable.SetInputWeight(1, 1);
+                    mStatus = TaskStatus.Completed;
+                }
+                else
+                {
+                    float weight = (float)(current / fadeInTime);
+                    mixerPlayable.SetInputWeight(0, Mathf.Lerp(1, 0, weight));
+                    mixerPlayable.SetInputWeight(1, Mathf.Lerp(0, 1, weight));
+                }
+            }
+        }
+        /// <summary>
+        /// A task to fade out playable according to playable's duration
+        /// </summary>
+        private class FadeOutPlayableTask : PooledTaskBase<FadeOutPlayableTask>
+        {
+            private Playable clipPlayable;
+            private Playable mixerPlayable;
+            private float fadeOutTime;
+            private double duration;
+            public static FadeOutPlayableTask GetPooled(Playable mixerPlayable, Playable clipPlayable, float fadeOutTime)
+            {
+                var task = GetPooled();
+                task.clipPlayable = clipPlayable;
+                task.mixerPlayable = mixerPlayable;
+                task.fadeOutTime = fadeOutTime;
+                task.duration = clipPlayable.GetDuration();
+                return task;
+            }
+            public override void Tick()
+            {
+                if (!mixerPlayable.IsValid())
+                {
+                    Debug.LogWarning("Playable is already destroyed");
+                    mStatus = TaskStatus.Completed;
+                    return;
+                }
+                double current = clipPlayable.GetTime();
+                if (current >= duration)
+                {
+                    mixerPlayable.SetInputWeight(0, 1);
+                    mixerPlayable.SetInputWeight(1, 0);
+                    mStatus = TaskStatus.Completed;
+                }
+                else
+                {
+                    float weight = 1 - (float)((duration - current) / fadeOutTime);
+                    mixerPlayable.SetInputWeight(0, Mathf.Lerp(0, 1, weight));
+                    mixerPlayable.SetInputWeight(1, Mathf.Lerp(1, 0, weight));
+                }
+            }
+        }
+        /// <summary>
+        /// A task to fade out playable according to fadeOutTime 
+        /// </summary>
+        private class AbsolutelyFadeOutPlayableTask : PooledTaskBase<AbsolutelyFadeOutPlayableTask>
+        {
+            private Playable mixerPlayable;
+            private float fadeOutTime;
+            private float timer;
+            public static AbsolutelyFadeOutPlayableTask GetPooled(Playable mixerPlayable, float fadeOutTime)
+            {
+                var task = GetPooled();
+                task.mixerPlayable = mixerPlayable;
+                task.fadeOutTime = fadeOutTime;
+                task.timer = 0;
+                return task;
+            }
+            public override void Tick()
+            {
+                if (!mixerPlayable.IsValid())
+                {
+                    Debug.LogWarning("Playable is already destroyed");
+                    mStatus = TaskStatus.Completed;
+                    return;
+                }
+                timer += Time.deltaTime;
+                if (timer >= fadeOutTime)
+                {
+                    mixerPlayable.SetInputWeight(0, 1);
+                    mixerPlayable.SetInputWeight(1, 0);
+                    mStatus = TaskStatus.Completed;
+                }
+                else
+                {
+                    float weight = timer / fadeOutTime;
+                    mixerPlayable.SetInputWeight(0, Mathf.Lerp(0, 1, weight));
+                    mixerPlayable.SetInputWeight(1, Mathf.Lerp(1, 0, weight));
+                }
+            }
+        }
+        private class WaitPlayableTask : PooledTaskBase<WaitPlayableTask>
+        {
+            private Playable clipPlayable;
+            private double waitTime;
+            public static WaitPlayableTask GetPooled(Playable clipPlayable, double waitTime)
+            {
+                var task = GetPooled();
+                task.clipPlayable = clipPlayable;
+                task.waitTime = waitTime;
+                return task;
+            }
+            public override void Tick()
+            {
+                if (!clipPlayable.IsValid())
+                {
+                    Debug.LogWarning("Playable is already destroyed");
+                    mStatus = TaskStatus.Completed;
+                    return;
+                }
+                if (clipPlayable.GetTime() >= waitTime)
+                {
+                    mStatus = TaskStatus.Completed;
+                }
+            }
+        }
+        #endregion
     }
 }
