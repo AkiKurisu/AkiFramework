@@ -1,9 +1,9 @@
-using UnityEngine;
-using System.Collections.Generic;
-using UnityEngine.AddressableAssets;
-using UnityEngine.ResourceManagement.AsyncOperations;
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using Cysharp.Threading.Tasks;
 namespace Kurisu.Framework.Resource
 {
@@ -227,6 +227,7 @@ namespace Kurisu.Framework.Resource
         /// </summary>
         private static uint handleIndex = 1;
         private static readonly Dictionary<int, uint> instanceIDMap = new();
+        // TODO: Use sparse list
         private static readonly Dictionary<uint, AsyncOperationHandle> internalHandleMap = new();
         internal static ResourceHandle<T> CreateHandle<T>(AsyncOperationHandle<T> asyncOperationHandle, byte operation)
         {

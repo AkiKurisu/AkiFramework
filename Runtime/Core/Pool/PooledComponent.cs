@@ -53,9 +53,6 @@ namespace Kurisu.Framework.Pool
         /// <returns></returns>
         public static T Instantiate(GameObject prefab, Transform parent = null)
         {
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.BeginSample(nameof(Instantiate));
-#endif
             var pooledComponent = pool.Get();
             PoolKey key = GetPooledKey(prefab);
             pooledComponent.PoolKey = key;
@@ -67,9 +64,6 @@ namespace Kurisu.Framework.Pool
             pooledComponent.Cache = metaData as ComponentCache;
             pooledComponent.GameObject = @object;
             pooledComponent.Init();
-#if UNITY_EDITOR
-            UnityEngine.Profiling.Profiler.EndSample();
-#endif
             return pooledComponent;
         }
         /// <summary>

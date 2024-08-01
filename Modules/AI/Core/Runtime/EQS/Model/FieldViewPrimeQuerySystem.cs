@@ -129,7 +129,7 @@ namespace Kurisu.Framework.AI.EQS
                     actors = actorData,
                     datas = execution,
                     resultActors = results
-                }.Schedule(commands.Length, 32);
+                }.Schedule(execution.Length, 32);
                 lateUpdateTickHandle.Resume();
             }
         }

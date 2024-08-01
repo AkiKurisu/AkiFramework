@@ -10,9 +10,7 @@ namespace Kurisu.Framework.Events
             public sealed override bool IsCompositeRoot => true;
             private readonly EventSystem eventCoordinator;
             public sealed override IEventCoordinator Root => eventCoordinator;
-
             public MonoBehaviour AttachedBehaviour { get; }
-
             public RootCallBackEventHandler(EventSystem eventCoordinator)
             {
                 AttachedBehaviour = eventCoordinator;
@@ -29,11 +27,11 @@ namespace Kurisu.Framework.Events
                 eventCoordinator.Dispatch(e, dispatchMode, MonoDispatchType.Update);
             }
         }
-        private class MonoCallBackEventHandler : CallbackEventHandler, IBehaviourScope
+        private sealed class MonoCallBackEventHandler : CallbackEventHandler, IBehaviourScope
         {
             public sealed override bool IsCompositeRoot => false;
-            protected readonly MonoDispatchType monoDispatchType;
-            protected readonly MonoEventCoordinator eventCoordinator;
+            private readonly MonoDispatchType monoDispatchType;
+            private readonly MonoEventCoordinator eventCoordinator;
             public sealed override IEventCoordinator Root => eventCoordinator;
             public MonoBehaviour AttachedBehaviour { get; }
             public MonoCallBackEventHandler(MonoEventCoordinator eventCoordinator, MonoDispatchType monoDispatchType, CallbackEventHandler parent)

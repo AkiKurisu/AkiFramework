@@ -54,13 +54,12 @@ namespace Kurisu.Framework
     public class ActorWorld : MonoBehaviour
     {
         private ulong serialNum = 1;
-        public static int MaxActorNum { get; set; } = DefaultMaxActorNum;
-        public const int DefaultMaxActorNum = 5000;
+        private const int InitialCapacity = 100;
         /// <summary>
         /// Use <see cref="SparseList{T}"/> for fast look up
         /// </summary>
         /// <returns></returns>
-        internal SparseList<Actor> actorsInWorld = new(100, MaxActorNum);
+        internal SparseList<Actor> actorsInWorld = new(InitialCapacity, ActorHandle.MaxIndex + 1);
         internal readonly Subject<Unit> onActorsUpdate = new();
         private WorldSubsystemCollection subsystemCollection;
         private static ActorWorld current;

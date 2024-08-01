@@ -24,6 +24,8 @@ namespace Kurisu.Framework.Collections
         private readonly int capacity;
         public int FirstFreeIndex => firstFreeIndex;
         public int NumFreeIndices => numFreeIndices;
+        public int InternalCapacity => data.Capacity;
+        public int Capacity => capacity;
         public T this[int index]
         {
             get
@@ -140,6 +142,53 @@ namespace Kurisu.Framework.Collections
                 allocationFlags[i] = false;
             }
             firstFreeIndex = 0;
+        }
+        public void Shrink()
+        {
+            int firstIndexToRemove = allocationFlags.FindLastIndex(static x => x) + 1;
+            int count = data.Count;
+            if (firstIndexToRemove < count)
+            {
+                if (NumFreeIndices > 0)
+                {
+                    int freeIndex = FirstFreeIndex;
+                    while (freeIndex != -1)
+                    {
+                        if (freeIndex >= firstIndexToRemove)
+                        {
+                            int PrevFreeIndex = data[freeIndex].last;
+                            int NextFreeIndex = data[freeIndex].next;
+                            if (NextFreeIndex != -1)
+                            {
+                                var d = data[NextFreeIndex];
+                                d.last = PrevFreeIndex;
+                                data[NextFreeIndex] = d;
+                            }
+                            if (PrevFreeIndex != -1)
+                            {
+                                var d = data[PrevFreeIndex];
+                                d.next = NextFreeIndex;
+                                data[PrevFreeIndex] = d;
+                            }
+                            else
+                            {
+                                firstFreeIndex = NextFreeIndex;
+                            }
+                            --numFreeIndices;
+
+                            freeIndex = NextFreeIndex;
+                        }
+                        else
+                        {
+                            freeIndex = data[freeIndex].next;
+                        }
+                    }
+                }
+                data.RemoveRange(firstIndexToRemove, count - firstIndexToRemove);
+                allocationFlags.RemoveRange(firstIndexToRemove, count - firstIndexToRemove);
+            }
+            // shrink list
+            data.Capacity = allocationFlags.Capacity = data.Count;
         }
         public bool IsAllocated(int index)
         {

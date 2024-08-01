@@ -7,8 +7,11 @@ using UnityEngine.Playables;
 namespace Kurisu.Framework.Playables
 {
     /// <summary>
-    /// Playable animator can cross fade multi <see cref="RuntimeAnimatorController"/>
+    /// Playable animator that can cross fade multi <see cref="RuntimeAnimatorController"/>
     /// </summary>
+    /// <remarks>
+    /// Useful to override default animation in cutscene and dialogue.
+    /// </remarks>
     public class PlayableAnimator : IDisposable
     {
         /// <summary>

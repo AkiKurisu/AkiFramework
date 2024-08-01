@@ -30,7 +30,7 @@ namespace Kurisu.Framework.Tasks.Editor
             foreach (var task in Manager._tasks)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(task.GetTaskName());
+                GUILayout.Label(task.InternalGetTaskName());
                 GUILayout.Label($"Status: {TaskEditorUtils.StatusToString(task.GetStatus())}", style);
                 GUILayout.EndHorizontal();
             }

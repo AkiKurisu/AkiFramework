@@ -29,7 +29,7 @@ namespace Kurisu.Framework.Tasks
             {
                 if (instance._tasks.Contains(task))
                 {
-                    Debug.LogWarning($"[TaskRunner] Duplicate register task {task}.");
+                    Debug.LogWarning($"[TaskRunner] Registered a Task {task.InternalGetTaskName()} that has already been registered!");
                     return;
                 }
                 task.Acquire();
@@ -78,8 +78,7 @@ namespace Kurisu.Framework.Tasks
         {
             foreach (var task in evt.Listeners)
             {
-                task.ReleasePrerequistite();
-                if (!task.HasPrerequistites())
+                if (task.ReleasePrerequistite(evt) && !task.HasPrerequistites())
                 {
                     task.Run();
                 }
