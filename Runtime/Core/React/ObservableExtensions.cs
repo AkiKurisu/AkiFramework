@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Kurisu.Framework.Events;
 using R3;
+using UnityEngine.UI;
 namespace Kurisu.Framework.React
 {
     public static class ObservableExtensions
@@ -70,6 +71,30 @@ namespace Kurisu.Framework.React
                 evt.Dispose();
             }
             return source.Subscribe(action);
+        }
+        /// <summary>
+        /// Bind <see cref="R3.ReactiveProperty{float}"/> to slider
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="slider"></param>
+        /// <param name="property"></param>
+        /// <param name="unRegister"></param>
+        public static void BindProperty<T>(this Slider slider, R3.ReactiveProperty<float> property, ref T unRegister) where T : struct, IUnRegister
+        {
+            slider.onValueChanged.AsObservable().Subscribe(e => property.Value = e).AddTo(unRegister);
+            property.Subscribe(e => slider.SetValueWithoutNotify(e)).AddTo(unRegister);
+        }
+        /// <summary>
+        /// Bind <see cref="R3.ReactiveProperty{bool}"/> to toggle
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="toggle"></param>
+        /// <param name="property"></param>
+        /// <param name="unRegister"></param>
+        public static void BindProperty<T>(this Toggle toggle, R3.ReactiveProperty<bool> property, ref T unRegister) where T : struct, IUnRegister
+        {
+            toggle.onValueChanged.AsObservable().Subscribe(e => property.Value = e).AddTo(unRegister);
+            property.Subscribe(e => toggle.SetIsOnWithoutNotify(e)).AddTo(unRegister);
         }
     }
 }
