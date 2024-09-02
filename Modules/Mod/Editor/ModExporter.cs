@@ -22,7 +22,6 @@ namespace Kurisu.Framework.Mod.Editor
         }
         private static string CreateBuildPath(string modName)
         {
-            if (!Directory.Exists(ExportConstants.ExportPath)) Directory.CreateDirectory(ExportConstants.ExportPath);
             var targetPath = Path.Combine(ExportConstants.ExportPath, EditorUserBuildSettings.activeBuildTarget.ToString());
             if (!Directory.Exists(targetPath)) Directory.CreateDirectory(targetPath);
             var buildPath = Path.Combine(targetPath, modName.Replace(" ", string.Empty));
