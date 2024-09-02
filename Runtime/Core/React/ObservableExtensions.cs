@@ -81,8 +81,9 @@ namespace Kurisu.Framework.React
         /// <param name="unRegister"></param>
         public static void BindProperty<T>(this Slider slider, R3.ReactiveProperty<float> property, ref T unRegister) where T : struct, IUnRegister
         {
-            slider.onValueChanged.AsObservable().Subscribe(e => property.Value = e).AddTo(unRegister);
-            property.Subscribe(e => slider.SetValueWithoutNotify(e)).AddTo(unRegister);
+            slider.onValueChanged.AsObservable().Subscribe(e => property.Value = e).AddTo(ref unRegister);
+            property.Subscribe(e => slider.SetValueWithoutNotify(e)).AddTo(ref unRegister);
+            slider.SetValueWithoutNotify(property.Value);
         }
         /// <summary>
         /// Bind <see cref="R3.ReactiveProperty{bool}"/> to toggle
@@ -93,8 +94,9 @@ namespace Kurisu.Framework.React
         /// <param name="unRegister"></param>
         public static void BindProperty<T>(this Toggle toggle, R3.ReactiveProperty<bool> property, ref T unRegister) where T : struct, IUnRegister
         {
-            toggle.onValueChanged.AsObservable().Subscribe(e => property.Value = e).AddTo(unRegister);
-            property.Subscribe(e => toggle.SetIsOnWithoutNotify(e)).AddTo(unRegister);
+            toggle.onValueChanged.AsObservable().Subscribe(e => property.Value = e).AddTo(ref unRegister);
+            property.Subscribe(e => toggle.SetIsOnWithoutNotify(e)).AddTo(ref unRegister);
+            toggle.SetIsOnWithoutNotify(property.Value);
         }
     }
 }
