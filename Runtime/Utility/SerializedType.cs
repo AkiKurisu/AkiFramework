@@ -3,7 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 namespace Kurisu.Framework
 {
-    public class SerializedType
+    // Code from Unity
+    public static class SerializedType
     {
         #region Private helpers
         private struct SerializedTypeData
@@ -213,12 +214,23 @@ namespace Kurisu.Framework
             return data.typeName == "T" || data.typeName == "T[]"; // no constraints right now
         }
     }
+    /// <summary>
+    /// Serialized type that will serialize metadata of class implementing T
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     [Serializable]
-    public class SerializedType<T>
+    public sealed class SerializedType<T>
     {
+        /// <summary>
+        /// Formatted type metadata, see <see cref="SerializedType"/>
+        /// </summary>
         public string serializedTypeString;
         private bool isInitialized;
         private T value;
+        /// <summary>
+        /// Get default object from metadata
+        /// </summary>
+        /// <returns></returns>
         public T GetObject()
         {
             if (!isInitialized)
