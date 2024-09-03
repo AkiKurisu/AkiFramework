@@ -15,5 +15,14 @@ namespace Kurisu.Framework.Mod.Editor
                     group.GetSchema<BundledAssetGroupSchema>().IncludeInBuild = true;
             }
         }
+
+        public override void Cleanup(ModExportConfig exportConfig)
+        {
+            foreach (var group in AddressableAssetSettingsDefaultObject.Settings.groups)
+            {
+                if (group.Name.StartsWith(exportConfig.Group.Name))
+                    group.GetSchema<BundledAssetGroupSchema>().IncludeInBuild = false;
+            }
+        }
     }
 }
