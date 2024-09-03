@@ -30,8 +30,8 @@ namespace Kurisu.Framework.React
         where TEventType : EventBase<TEventType>, new()
         {
             CancellationToken cancellationToken = default;
-            if (handler is IBehaviourScope behaviourScope && behaviourScope.AttachedBehaviour)
-                cancellationToken = behaviourScope.AttachedBehaviour.destroyCancellationToken;
+            if (handler is IBehaviourScope behaviourScope && behaviourScope.Behaviour)
+                cancellationToken = behaviourScope.Behaviour.destroyCancellationToken;
             return new FromEventHandler<TEventType>(static h => new(h),
             h => handler.RegisterCallback(h, trickleDown), h => handler.UnregisterCallback(h, trickleDown), cancellationToken);
         }
@@ -48,8 +48,8 @@ namespace Kurisu.Framework.React
         public static Observable<ChangeEvent<T>> ValueChangeAsObservable<T>(this IReadonlyReactiveProperty<T> handler)
         {
             CancellationToken cancellationToken = default;
-            if (handler is IBehaviourScope behaviourScope && behaviourScope.AttachedBehaviour)
-                cancellationToken = behaviourScope.AttachedBehaviour.destroyCancellationToken;
+            if (handler is IBehaviourScope behaviourScope && behaviourScope.Behaviour)
+                cancellationToken = behaviourScope.Behaviour.destroyCancellationToken;
             return new FromEventHandler<ChangeEvent<T>>(static h => new(h),
             h => handler.RegisterValueChangeCallback(h), h => handler.UnregisterValueChangeCallback(h), cancellationToken);
         }

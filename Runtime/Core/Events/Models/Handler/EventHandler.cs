@@ -162,7 +162,7 @@ namespace Kurisu.Framework.Events
                         {
                             using (new EventDebuggerLogExecuteDefaultAction(evt))
                             {
-                                if (evt.SkipDisabledElements && this is IBehaviourScope bs && !bs.AttachedBehaviour.isActiveAndEnabled)
+                                if (evt.SkipDisabledElements && this is IBehaviourScope bs && !bs.Behaviour.isActiveAndEnabled)
                                     ExecuteDefaultActionDisabledAtTarget(evt);
                                 else
                                     ExecuteDefaultActionAtTarget(evt);
@@ -177,7 +177,7 @@ namespace Kurisu.Framework.Events
                         {
                             using (new EventDebuggerLogExecuteDefaultAction(evt))
                             {
-                                if (evt.SkipDisabledElements && this is IBehaviourScope bs && !bs.AttachedBehaviour.isActiveAndEnabled)
+                                if (evt.SkipDisabledElements && this is IBehaviourScope bs && !bs.Behaviour.isActiveAndEnabled)
                                     ExecuteDefaultActionDisabled(evt);
                                 else
                                     ExecuteDefaultAction(evt);

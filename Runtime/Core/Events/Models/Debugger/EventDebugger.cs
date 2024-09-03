@@ -645,11 +645,11 @@ namespace Kurisu.Framework.Events
             // EventHandler attached to a MonoBehaviour
             else if (obj is IBehaviourScope bs)
             {
-                objectName += "#" + bs.AttachedBehaviour.gameObject.name;
+                objectName += "#" + bs.Behaviour.gameObject.name;
                 if (withHashCode)
                 {
                     //Prefer to use instanceID at runtime
-                    objectName += " (" + bs.AttachedBehaviour.GetInstanceID().ToString("x8") + ")";
+                    objectName += " (" + bs.Behaviour.GetInstanceID().ToString("x8") + ")";
                 }
             }
 

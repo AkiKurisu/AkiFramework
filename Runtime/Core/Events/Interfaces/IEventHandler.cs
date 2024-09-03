@@ -24,6 +24,9 @@ namespace Kurisu.Framework.Events
     /// </summary>
     public interface IBehaviourScope
     {
-        MonoBehaviour AttachedBehaviour { get; }
+        /// <summary>
+        /// Attached <see cref="MonoBehaviour"/>
+        /// </summary>
+        MonoBehaviour Behaviour { get; }
     }
 }

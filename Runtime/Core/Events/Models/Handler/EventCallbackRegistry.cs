@@ -334,7 +334,7 @@ namespace Kurisu.Framework.Events
             }
 
             m_IsInvoking++;
-            var requiresIncludeDisabledPolicy = evt.SkipDisabledElements && evt.CurrentTarget is IBehaviourScope ve && !ve.AttachedBehaviour.isActiveAndEnabled;
+            var requiresIncludeDisabledPolicy = evt.SkipDisabledElements && evt.CurrentTarget is IBehaviourScope ve && !ve.Behaviour.isActiveAndEnabled;
             for (var i = 0; i < m_Callbacks.Count; i++)
             {
                 if (evt.IsImmediatePropagationStopped)
@@ -406,7 +406,7 @@ namespace Kurisu.Framework.Events
             foreach (var eventRegistrationListener in listeners)
             {
                 var key = eventRegistrationListener.Key as IBehaviourScope; // Behavior that sends events
-                if (key?.AttachedBehaviour == null)
+                if (key?.Behaviour == null)
                     s_Listeners.Remove(eventRegistrationListener.Key);
             }
         }
