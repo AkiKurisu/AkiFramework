@@ -509,6 +509,26 @@ namespace Kurisu.Framework.Events
             t.Acquire();
             return t;
         }
+        /// <summary>
+        /// Gets a bubble up propagation event from the event pool, see <see cref="EventBase{T}.Bubbles"/>.
+        /// </summary>
+        /// <returns>An initialized event.</returns>
+        protected static T GetPooledBubbled()
+        {
+            T t = GetPooled();
+            t.Bubbles = true;
+            return t;
+        }
+        /// <summary>
+        /// Gets a trickles down propagation event from the event pool, see <see cref="EventBase{T}.TricklesDown"/>.
+        /// </summary>
+        /// <returns>An initialized event.</returns>
+        protected static T GetPooledTricklesDown()
+        {
+            T t = GetPooled();
+            t.TricklesDown = true;
+            return t;
+        }
 
         internal static T GetPooled(EventBase e)
         {
