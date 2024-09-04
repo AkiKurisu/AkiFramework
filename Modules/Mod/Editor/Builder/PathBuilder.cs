@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
@@ -53,6 +54,8 @@ namespace Kurisu.Framework.Mod.Editor
                     }
                 }
             }
+            EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
+            AssetDatabase.SaveAssetIfDirty(AddressableAssetSettingsDefaultObject.Settings);
             {
                 includeInBuildMap.Clear();
                 var group = exportConfig.Group;
