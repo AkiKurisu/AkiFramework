@@ -16,11 +16,6 @@ namespace Kurisu.Framework.Events
                 Behaviour = eventCoordinator;
                 this.eventCoordinator = eventCoordinator;
             }
-            public override void SendEvent(EventBase e)
-            {
-                e.Target = this;
-                eventCoordinator.Dispatch(e, DispatchMode.Default, MonoDispatchType.Update);
-            }
             public override void SendEvent(EventBase e, DispatchMode dispatchMode)
             {
                 e.Target = this;
@@ -40,13 +35,6 @@ namespace Kurisu.Framework.Events
                 this.monoDispatchType = monoDispatchType;
                 this.eventCoordinator = eventCoordinator;
                 Parent = parent;
-            }
-
-            public override void SendEvent(EventBase e)
-            {
-                e.Target = this;
-                e.Propagation |= EventPropagation.Bubbles;
-                eventCoordinator.Dispatch(e, DispatchMode.Default, monoDispatchType);
             }
             public override void SendEvent(EventBase e, DispatchMode dispatchMode)
             {

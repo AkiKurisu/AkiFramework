@@ -107,9 +107,8 @@ namespace Kurisu.Framework.Events
         /// Sends an event to the event handler.
         /// </summary>
         /// <param name="e">The event to send.</param>
-        public abstract void SendEvent(EventBase e);
-
-        public abstract void SendEvent(EventBase e, DispatchMode dispatchMode);
+        /// <param name="dispatchMode">The event dispatch mode.</param>
+        public abstract void SendEvent(EventBase e, DispatchMode dispatchMode = DispatchMode.Default);
 
         public void HandleEventAtTargetPhase(EventBase evt)
         {

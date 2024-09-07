@@ -1,20 +1,22 @@
 using System.Collections.Generic;
-using UnityEngine;
 using System.Linq;
-using UnityEngine.UI;
 using System;
+using UnityEngine;
+using Kurisu.Framework.Events;
 using Kurisu.Framework.React;
-using R3;
 using Kurisu.Framework.Resource;
+using R3;
+using UnityEngine.UI;
 namespace Kurisu.Framework.UI
 {
     public static class UIEntry
     {
         private static Transform root;
-        public static Transform VisualRoot{
+        public static Transform VisualRoot
+        {
             get
             {
-                if(!root)
+                if (!root)
                 {
                     root = new GameObject(nameof(UIEntry)).transform;
                     Disposable.Create(static () => root = null).AddTo(root);
@@ -61,7 +63,7 @@ namespace Kurisu.Framework.UI
     /// <summary>
     /// UI base element
     /// </summary>
-    public abstract class BaseField : IDisposable
+    public abstract class BaseField : CallbackEventHandler, IDisposable
     {
         public abstract class UIFactory<T> : UI.UIFactory<T> where T : BaseField
         {
@@ -71,26 +73,25 @@ namespace Kurisu.Framework.UI
         {
             Visible.Subscribe(b =>
             {
-                foreach (GameObject controlObject in ViewItems)
+                foreach (GameObject viewItem in ViewItems)
                 {
-                    controlObject.SetActive(b);
+                    viewItem.SetActive(b);
                 }
             });
         }
         public static readonly Color DefaultControlTextColor = new(0.922f, 0.886f, 0.843f);
         public Color TextColor { get; set; } = DefaultControlTextColor;
-        private readonly List<GameObject> _viewItems = new(1);
-        public List<GameObject> ViewItems => _viewItems;
+        public readonly List<GameObject> ViewItems = new(1);
         public ReactiveProperty<bool> Visible { get; } = new(true);
-        internal virtual void CreateView(Transform parent)
+        internal virtual void CreateView(Transform parent, BaseField parentField)
         {
             GameObject view = OnCreateView(parent);
-            if (view.TryGetComponent<LayoutElement>(out var layoutElement))
+            if (parentField != null)
             {
-                layoutElement.minWidth = 300f;
+                Parent = parentField;
             }
             view.SetActive(Visible.Value);
-            _viewItems.Add(view);
+            ViewItems.Add(view);
         }
         protected abstract GameObject OnCreateView(Transform parent);
 
@@ -98,18 +99,29 @@ namespace Kurisu.Framework.UI
         {
             Visible.Dispose();
         }
+        public TField Cast<TField>() where TField : BaseField
+        {
+            return this as TField;
+        }
+        #region Events Implementation
+        public override void SendEvent(EventBase e, DispatchMode dispatchMode = DispatchMode.Default)
+        {
+            e.Target = this;
+            EventSystem.Instance.Dispatch(e, dispatchMode, MonoDispatchType.Update);
+        }
+        public override IEventCoordinator Root => EventSystem.Instance;
+        #endregion
     }
     /// <summary>
     /// UI generic base element
     /// </summary>
-    public abstract class BaseField<TValue> : BaseField
+    public abstract class BaseField<TValue> : BaseField, INotifyValueChanged<TValue>
     {
         protected BaseField(TValue initialValue) : base()
         {
             _value = new ReactiveProperty<TValue>(initialValue);
-            _onValueChanged = new Subject<TValue>();
         }
-        
+
         public TValue Value
         {
             get
@@ -121,15 +133,7 @@ namespace Kurisu.Framework.UI
                 SetValue(value);
             }
         }
-        
-        public Observable<TValue> OnValueChanged
-        {
-            get
-            {
-                return _onValueChanged;
-            }
-        }
-        
+
         protected Observable<TValue> OnNotifyViewChanged
         {
             get
@@ -137,38 +141,45 @@ namespace Kurisu.Framework.UI
                 return _value;
             }
         }
-        
+
         public void SetValue(TValue newValue)
         {
-            SetValue(newValue, true);
+            TValue lastValue = _value.Value;
+            if (Equals(newValue, lastValue))
+            {
+                return;
+            }
+            _value.OnNext(newValue);
+            if (_canFireEvents)
+            {
+                using var evt = ChangeEvent<TValue>.GetPooled(lastValue, newValue);
+                SendEvent(evt);
+            }
         }
-        
-        public void SetValue(TValue newValue, bool fireEvents)
+
+        public void SetValueWithoutNotify(TValue newValue)
         {
             if (Equals(newValue, _value.Value))
             {
                 return;
             }
             _value.OnNext(newValue);
-            if (_canFireEvents && fireEvents)
-            {
-                _onValueChanged.OnNext(newValue);
-            }
         }
 
-        internal override void CreateView(Transform parent)
+        internal override void CreateView(Transform parent, BaseField parentField)
         {
-            bool wasCreated = ViewItems.Any(x=>x!=null);
+            bool wasCreated = ViewItems.Any(x => x != null);
             _canFireEvents = false;
-            base.CreateView(parent);
+            base.CreateView(parent, parentField);
             _canFireEvents = true;
             if (wasCreated) return;
             _value.OnNext(_value.Value);
-            _onValueChanged.OnNext(_value.Value);
+            using var evt = ChangeEvent<TValue>.GetPooled(default, _value.Value);
+            SendEvent(evt);
         }
-        public BaseField<TValue> BindProperty<T>(R3.ReactiveProperty<TValue> property, ref T unRegister) where T : struct, IUnRegister
+        public BaseField<TValue> BindProperty<T>(ReactiveProperty<TValue> property, ref T unRegister) where T : struct, IUnRegister
         {
-            _onValueChanged.AsObservable().Subscribe(e => property.Value = e).AddTo(ref unRegister);
+            this.AsObservable<ChangeEvent<TValue>>().SubscribeSafe(e => property.Value = e.NewValue).AddTo(ref unRegister);
             property.Subscribe(e => _value.OnNext(e)).AddTo(ref unRegister);
             _value.OnNext(property.Value);
             return this;
@@ -176,12 +187,178 @@ namespace Kurisu.Framework.UI
         public override void Dispose()
         {
             _value.Dispose();
-            _onValueChanged.Dispose();
             base.Dispose();
         }
 
         private readonly ReactiveProperty<TValue> _value;
-        private readonly Subject<TValue> _onValueChanged;
         private bool _canFireEvents;
     }
+    #region UI Elements
+    public class PanelField : BaseField
+    {
+        protected override GameObject OnCreateView(Transform parent)
+        {
+            _isInitialized = true;
+            foreach (var field in _fields)
+            {
+                field.CreateView(Panel.transform, this);
+            }
+            return Panel.gameObject;
+        }
+        public UIPanel Panel { get; }
+        public PanelField(UIPanel panelObject) : base()
+        {
+            Panel = panelObject;
+        }
+        private bool _isInitialized;
+        private readonly List<BaseField> _fields = new();
+        /// <summary>
+        /// Add a field to the panel
+        /// </summary>
+        /// <param name="field"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public T Add<T>(T field) where T : BaseField
+        {
+            _fields.Add(field);
+            if (_isInitialized)
+            {
+                field.CreateView(Panel.transform, this);
+            }
+            return field;
+        }
+        /// <summary>
+        /// Add fields to the panel
+        /// </summary>
+        /// <param name="fields"></param>
+        public void AddRange(IEnumerable<BaseField> fields)
+        {
+            _fields.AddRange(fields);
+            if (_isInitialized)
+            {
+                foreach (var field in fields)
+                {
+                    field.CreateView(Panel.transform, this);
+                }
+            }
+        }
+        public override void Dispose()
+        {
+            foreach (var field in _fields)
+            {
+                field.Dispose();
+            }
+            _fields.Clear();
+            base.Dispose();
+        }
+    }
+    /// <summary>
+    /// Field that draws empty space
+    /// </summary>
+    public class SpaceField : BaseField
+    {
+        public class UIFactory : UIFactory<SpaceField>
+        {
+
+        }
+        protected override GameObject OnCreateView(Transform parent)
+        {
+            GameObject s = UIFactory.Instantiate(parent);
+            s.name = nameof(SpaceField);
+            s.GetComponent<LayoutElement>().minHeight = Space;
+            return s;
+        }
+        public const int DefaultSpace = 18;
+        public int Space { get; }
+        public SpaceField(int space = DefaultSpace) : base()
+        {
+            Space = space;
+        }
+    }
+    /// <summary>
+    /// Field that draws a toggle
+    /// </summary>
+    public class ToggleField : BaseField<bool>
+    {
+        public class UIFactory : UIFactory<ToggleField>
+        {
+
+        }
+        public ToggleField(string displayName) : this(displayName, false)
+        {
+        }
+
+        public ToggleField(string displayName, bool initialValue) : base(initialValue)
+        {
+            DisplayName = displayName;
+        }
+
+        /// <summary>
+        /// Text shown next to the checkbox
+        /// </summary>
+        public string DisplayName { get; }
+        protected override GameObject OnCreateView(Transform parent)
+        {
+            GameObject tr = UIFactory.Instantiate(parent);
+            Toggle tgl = tr.GetComponentInChildren<Toggle>();
+            tgl.onValueChanged.AddListener(SetValue);
+            OnNotifyViewChanged.Subscribe(b =>
+            {
+                tgl.isOn = b;
+            });
+            Text text = tr.GetComponentInChildren<Text>();
+            text.text = DisplayName;
+            text.color = TextColor;
+            text.SetAutosize();
+            return tr;
+        }
+    }
+    /// <summary>
+    /// Field that draws a horizontal separator
+    /// </summary>
+    public class SeparatorField : BaseField
+    {
+        public class UIFactory : UIFactory<SeparatorField>
+        {
+
+        }
+        protected override GameObject OnCreateView(Transform parent)
+        {
+            GameObject s = UIFactory.Instantiate(parent);
+            s.name = nameof(SeparatorField);
+            return s;
+        }
+        public SeparatorField() : base()
+        {
+        }
+    }
+    /// <summary>
+    /// Field that draws a label
+    /// </summary>
+    public class LabelField : BaseField
+    {
+        public class UIFactory : UIFactory<LabelField>
+        {
+
+        }
+        protected override GameObject OnCreateView(Transform parent)
+        {
+            GameObject label = UIFactory.Instantiate(parent);
+            label.name = nameof(LabelField);
+            Text text = label.GetComponentInChildren<Text>();
+            text.text = DisplayName;
+            text.color = TextColor;
+            text.SetAutosize();
+            return label;
+        }
+        /// <summary>
+        /// Text shown in the label
+        /// </summary>
+        public string DisplayName { get; }
+        public LabelField(string displayName) : base()
+        {
+            DisplayName = displayName;
+        }
+    }
+    #endregion
 }

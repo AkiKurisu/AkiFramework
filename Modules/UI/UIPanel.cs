@@ -1,10 +1,12 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 namespace Kurisu.Framework.UI
 {
+    /// <summary>
+    /// Virtual panel item data structure
+    /// </summary>
     public struct PanelItem
     {
         /// <summary>
@@ -16,6 +18,9 @@ namespace Kurisu.Framework.UI
         /// </summary>
         public List<BaseField> Fields;
     }
+    /// <summary>
+    /// Interface to create virtual panel item
+    /// </summary>
     public interface IPanelItem
     {
         /// <summary>
@@ -32,26 +37,36 @@ namespace Kurisu.Framework.UI
         /// </summary>
         [SerializeField]
         private SerializedType<IPanelItem>[] initialItems;
-        private readonly List<BaseField> _fields = new();
-        private bool _isInitialized;
-#pragma warning disable IDE0051, UNT0006
-        private async UniTaskVoid Start()
+        /// <summary>
+        /// Space between each panel item, not include custom fields
+        /// </summary>
+        public int ItemSpace = SpaceField.DefaultSpace;
+        private PanelField panelField;
+        protected virtual void Awake()
+        {
+            panelField ??= new PanelField(this);
+        }
+        protected virtual void Start()
+        {
+            InitializePanel().Forget();
+        }
+        protected async UniTask InitializePanel()
         {
             await UniTask.Yield();
             CreateFields();
-            _isInitialized = true;
         }
-#pragma warning restore IDE0051, UNT0006
         private void OnDestroy()
         {
-            foreach (var field in _fields)
-            {
-                field.Dispose();
-            }
-            _fields.Clear();
+            panelField.Dispose();
+        }
+        public PanelField GetRootPanel()
+        {
+            panelField ??= new PanelField(this);
+            return panelField;
         }
         private void CreateFields()
         {
+            // Inject virtual panel items
             var items = new PanelItem[initialItems.Length];
             for (var i = 0; i < items.Length; ++i)
             {
@@ -61,30 +76,25 @@ namespace Kurisu.Framework.UI
                 initialItems[i].GetObject().CreatePanelItem(this, ref items[i]);
             }
             items = items.OrderBy(x => x.Order).ToArray();
+
+            // Layout
+            bool isFirst = true;
             foreach (var item in items)
             {
-                _fields.AddRange(item.Fields);
+                if (!isFirst)
+                {
+                    panelField.Add(new SpaceField(ItemSpace));
+                }
+                panelField.AddRange(item.Fields);
+                isFirst = false;
             }
-            
-            foreach (var field in _fields)
-            {
-                field.CreateView(transform);
-            }
+
+            // Create view
+            panelField.CreateView(transform, null);
         }
-        /// <summary>
-        /// Add a field to the panel
-        /// </summary>
-        /// <param name="field"></param>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
-        public T Add<T>(T field) where T : BaseField
+        public TPanel Cast<TPanel>() where TPanel : UIPanel
         {
-            _fields.Add(field);
-            if (_isInitialized)
-            {
-                field.CreateView(transform);
-            }
-            return field;
+            return this as TPanel;
         }
     }
 }

@@ -36,24 +36,6 @@ namespace Kurisu.Framework.React
             h => handler.RegisterCallback(h, trickleDown), h => handler.UnregisterCallback(h, trickleDown), cancellationToken);
         }
         #endregion
-        #region IReadonlyReactiveProperty<T>
-        /// <summary>
-        /// Create Observable for <see cref="IReadonlyReactiveProperty{T}"/>
-        /// </summary>
-        /// <param name="handler"></param>
-        /// <param name="trickleDown"></param>
-        /// <param name="skipFrame">Skip frames for debugger</param>
-        /// <typeparam name="TEventType"></typeparam>
-        /// <returns></returns>
-        public static Observable<ChangeEvent<T>> ValueChangeAsObservable<T>(this IReadonlyReactiveProperty<T> handler)
-        {
-            CancellationToken cancellationToken = default;
-            if (handler is IBehaviourScope behaviourScope && behaviourScope.Behaviour)
-                cancellationToken = behaviourScope.Behaviour.destroyCancellationToken;
-            return new FromEventHandler<ChangeEvent<T>>(static h => new(h),
-            h => handler.RegisterValueChangeCallback(h), h => handler.UnregisterValueChangeCallback(h), cancellationToken);
-        }
-        #endregion
         /// <summary>
         /// Subscribe <see cref="Observable{TEventType}"/> and finally dispose event, better performance for <see cref="EventBase"/>
         /// </summary>

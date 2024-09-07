@@ -11,7 +11,7 @@ namespace Kurisu.Framework.UI
         /// <param name="panel"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T AddToPanel<T>(this T field, UIPanel panel) where T : BaseField
+        public static T AddToPanel<T>(this T field, PanelField panel) where T : BaseField
         {
             return panel.Add(field);
         }
