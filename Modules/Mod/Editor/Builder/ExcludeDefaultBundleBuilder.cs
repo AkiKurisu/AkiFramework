@@ -13,11 +13,11 @@ namespace Kurisu.Framework.Mod.Editor
         public override void Build(ModExportConfig exportConfig, string buildPath)
         {
             defaultGroup = AddressableAssetSettingsDefaultObject.Settings.groups.FirstOrDefault(x => !x.HasSchema<BundledAssetGroupSchema>());
-            if (defaultGroup != null) AddressableAssetSettingsDefaultObject.Settings.groups.Remove(defaultGroup);
+            if (defaultGroup) AddressableAssetSettingsDefaultObject.Settings.groups.Remove(defaultGroup);
         }
         public override void Cleanup(ModExportConfig exportConfig)
         {
-            if (defaultGroup != null) AddressableAssetSettingsDefaultObject.Settings.groups.Insert(0, defaultGroup);
+            if (defaultGroup) AddressableAssetSettingsDefaultObject.Settings.groups.Insert(0, defaultGroup);
         }
     }
 }

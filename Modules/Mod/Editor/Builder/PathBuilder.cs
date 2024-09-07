@@ -22,20 +22,27 @@ namespace Kurisu.Framework.Mod.Editor
             AddressableAssetSettingsDefaultObject.Settings.RemoteCatalogBuildPath.SetVariableByName(AddressableAssetSettingsDefaultObject.Settings, AddressableAssetSettings.kRemoteBuildPath);
             AddressableAssetSettingsDefaultObject.Settings.RemoteCatalogLoadPath.SetVariableByName(AddressableAssetSettingsDefaultObject.Settings, AddressableAssetSettings.kRemoteLoadPath);
             includeInBuildMap = new();
+            string groupName = exportConfig.Group.Name;
             foreach (var group in AddressableAssetSettingsDefaultObject.Settings.groups)
             {
                 if (group.HasSchema<BundledAssetGroupSchema>())
                 {
                     var schema = group.GetSchema<BundledAssetGroupSchema>();
                     includeInBuildMap[schema] = schema.IncludeInBuild;
-                    schema.IncludeInBuild = false;
+                    if (group.Name.StartsWith(groupName))
+                    {
+                        schema.IncludeInBuild = true;
+                    }
+                    else
+                    {
+                        schema.IncludeInBuild = false;
+                    }
                 }
             }
             {
-                var group = exportConfig.Group;
-                group.GetSchema<BundledAssetGroupSchema>().IncludeInBuild = true;
-                group.Settings.profileSettings.SetValue(group.Settings.activeProfileId, "Remote.LoadPath", ImportConstants.DynamicLoadPath);
-                group.Settings.profileSettings.SetValue(group.Settings.activeProfileId, "Remote.BuildPath", buildPath);
+                var settings = exportConfig.Group.Settings;
+                settings.profileSettings.SetValue(settings.activeProfileId, "Remote.LoadPath", ImportConstants.DynamicLoadPath);
+                settings.profileSettings.SetValue(settings.activeProfileId, "Remote.BuildPath", buildPath);
             }
         }
         public void Cleanup(ModExportConfig exportConfig)
@@ -43,23 +50,26 @@ namespace Kurisu.Framework.Mod.Editor
             //Reset build setting
             AddressableAssetSettingsDefaultObject.Settings.BuildRemoteCatalog = buildRemoteCatalog;
             //Exclude all mod groups
+            string groupName = exportConfig.Group.Name;
             foreach (var group in AddressableAssetSettingsDefaultObject.Settings.groups)
             {
                 if (group.HasSchema<BundledAssetGroupSchema>())
                 {
-                    if(!group.Name.StartsWith("Mod_"))
+                    var schema = group.GetSchema<BundledAssetGroupSchema>();
+                    if (group.Name.StartsWith(groupName))
                     {
-                        var schema = group.GetSchema<BundledAssetGroupSchema>();
+                        schema.IncludeInBuild = false;
+                    }
+                    else
+                    {
                         schema.IncludeInBuild = includeInBuildMap[schema];
                     }
                 }
             }
+            includeInBuildMap.Clear();
             EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
             AssetDatabase.SaveAssetIfDirty(AddressableAssetSettingsDefaultObject.Settings);
             {
-                includeInBuildMap.Clear();
-                var group = exportConfig.Group;
-                group.GetSchema<BundledAssetGroupSchema>().IncludeInBuild = false;
                 var bundles = Directory.GetFiles(Addressables.BuildPath, "*.bundle", SearchOption.AllDirectories);
                 var bundleNames = bundles.Select(x => Path.GetFileName(x)).ToList();
                 //Copy default bundles to build path
