@@ -13,7 +13,15 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
+    "defineConstraints": [
+        "AF_ADDRESSABLES_INSATLL"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.addressables",
+            "expression": "1.21.0",
+            "define": "AF_ADDRESSABLES_INSATLL"
+        }
+    ],
     "noEngineReferences": false
 }
