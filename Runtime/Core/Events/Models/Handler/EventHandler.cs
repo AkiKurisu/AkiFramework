@@ -107,9 +107,8 @@ namespace Kurisu.Framework.Events
         /// Sends an event to the event handler.
         /// </summary>
         /// <param name="e">The event to send.</param>
-        public abstract void SendEvent(EventBase e);
-
-        public abstract void SendEvent(EventBase e, DispatchMode dispatchMode);
+        /// <param name="dispatchMode">The event dispatch mode.</param>
+        public abstract void SendEvent(EventBase e, DispatchMode dispatchMode = DispatchMode.Default);
 
         public void HandleEventAtTargetPhase(EventBase evt)
         {
@@ -162,7 +161,7 @@ namespace Kurisu.Framework.Events
                         {
                             using (new EventDebuggerLogExecuteDefaultAction(evt))
                             {
-                                if (evt.SkipDisabledElements && this is IBehaviourScope bs && !bs.AttachedBehaviour.isActiveAndEnabled)
+                                if (evt.SkipDisabledElements && this is IBehaviourScope bs && !bs.Behaviour.isActiveAndEnabled)
                                     ExecuteDefaultActionDisabledAtTarget(evt);
                                 else
                                     ExecuteDefaultActionAtTarget(evt);
@@ -177,7 +176,7 @@ namespace Kurisu.Framework.Events
                         {
                             using (new EventDebuggerLogExecuteDefaultAction(evt))
                             {
-                                if (evt.SkipDisabledElements && this is IBehaviourScope bs && !bs.AttachedBehaviour.isActiveAndEnabled)
+                                if (evt.SkipDisabledElements && this is IBehaviourScope bs && !bs.Behaviour.isActiveAndEnabled)
                                     ExecuteDefaultActionDisabled(evt);
                                 else
                                     ExecuteDefaultAction(evt);

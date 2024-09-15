@@ -10,7 +10,8 @@ namespace Kurisu.Framework.Events
         /// Sends an event to the event handler.
         /// </summary>
         /// <param name="e">The event to send.</param>
-        void SendEvent(EventBase e);
+        /// <param name="dispatchMode">The event dispatch mode.</param>
+        public abstract void SendEvent(EventBase e, DispatchMode dispatchMode = DispatchMode.Default);
 
         /// <summary>
         /// Handle an event.
@@ -24,6 +25,9 @@ namespace Kurisu.Framework.Events
     /// </summary>
     public interface IBehaviourScope
     {
-        MonoBehaviour AttachedBehaviour { get; }
+        /// <summary>
+        /// Attached <see cref="MonoBehaviour"/>
+        /// </summary>
+        MonoBehaviour Behaviour { get; }
     }
 }

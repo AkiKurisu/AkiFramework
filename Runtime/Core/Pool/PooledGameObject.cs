@@ -216,6 +216,7 @@ namespace Kurisu.Framework.Pool
             else if (createEmptyIfNotExist)
             {
                 obj = new GameObject(address.ToString());
+                obj.transform.SetParent(parent);
             }
             return obj;
         }

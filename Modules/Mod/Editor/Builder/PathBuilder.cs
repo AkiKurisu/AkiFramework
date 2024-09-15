@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
@@ -11,6 +13,7 @@ namespace Kurisu.Framework.Mod.Editor
     public class PathBuilder : IModBuilder
     {
         private bool buildRemoteCatalog;
+        private Dictionary<BundledAssetGroupSchema, bool> includeInBuildMap;
         public void Build(ModExportConfig exportConfig, string buildPath)
         {
             //Force enable remote catalog
@@ -18,16 +21,28 @@ namespace Kurisu.Framework.Mod.Editor
             AddressableAssetSettingsDefaultObject.Settings.BuildRemoteCatalog = true;
             AddressableAssetSettingsDefaultObject.Settings.RemoteCatalogBuildPath.SetVariableByName(AddressableAssetSettingsDefaultObject.Settings, AddressableAssetSettings.kRemoteBuildPath);
             AddressableAssetSettingsDefaultObject.Settings.RemoteCatalogLoadPath.SetVariableByName(AddressableAssetSettingsDefaultObject.Settings, AddressableAssetSettings.kRemoteLoadPath);
+            includeInBuildMap = new();
+            string groupName = exportConfig.Group.Name;
             foreach (var group in AddressableAssetSettingsDefaultObject.Settings.groups)
             {
                 if (group.HasSchema<BundledAssetGroupSchema>())
-                    group.GetSchema<BundledAssetGroupSchema>().IncludeInBuild = false;
+                {
+                    var schema = group.GetSchema<BundledAssetGroupSchema>();
+                    includeInBuildMap[schema] = schema.IncludeInBuild;
+                    if (group.Name.StartsWith(groupName))
+                    {
+                        schema.IncludeInBuild = true;
+                    }
+                    else
+                    {
+                        schema.IncludeInBuild = false;
+                    }
+                }
             }
             {
-                var group = exportConfig.Group;
-                group.GetSchema<BundledAssetGroupSchema>().IncludeInBuild = true;
-                group.Settings.profileSettings.SetValue(group.Settings.activeProfileId, "Remote.LoadPath", ImportConstants.DynamicLoadPath);
-                group.Settings.profileSettings.SetValue(group.Settings.activeProfileId, "Remote.BuildPath", buildPath);
+                var settings = exportConfig.Group.Settings;
+                settings.profileSettings.SetValue(settings.activeProfileId, "Remote.LoadPath", ImportConstants.DynamicLoadPath);
+                settings.profileSettings.SetValue(settings.activeProfileId, "Remote.BuildPath", buildPath);
             }
         }
         public void Cleanup(ModExportConfig exportConfig)
@@ -35,14 +50,26 @@ namespace Kurisu.Framework.Mod.Editor
             //Reset build setting
             AddressableAssetSettingsDefaultObject.Settings.BuildRemoteCatalog = buildRemoteCatalog;
             //Exclude all mod groups
+            string groupName = exportConfig.Group.Name;
             foreach (var group in AddressableAssetSettingsDefaultObject.Settings.groups)
             {
                 if (group.HasSchema<BundledAssetGroupSchema>())
-                    group.GetSchema<BundledAssetGroupSchema>().IncludeInBuild = !group.Name.StartsWith("Mod_");
+                {
+                    var schema = group.GetSchema<BundledAssetGroupSchema>();
+                    if (group.Name.StartsWith(groupName))
+                    {
+                        schema.IncludeInBuild = false;
+                    }
+                    else
+                    {
+                        schema.IncludeInBuild = includeInBuildMap[schema];
+                    }
+                }
             }
+            includeInBuildMap.Clear();
+            EditorUtility.SetDirty(AddressableAssetSettingsDefaultObject.Settings);
+            AssetDatabase.SaveAssetIfDirty(AddressableAssetSettingsDefaultObject.Settings);
             {
-                var group = exportConfig.Group;
-                group.GetSchema<BundledAssetGroupSchema>().IncludeInBuild = false;
                 var bundles = Directory.GetFiles(Addressables.BuildPath, "*.bundle", SearchOption.AllDirectories);
                 var bundleNames = bundles.Select(x => Path.GetFileName(x)).ToList();
                 //Copy default bundles to build path
