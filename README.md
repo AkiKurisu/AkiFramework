@@ -46,5 +46,3 @@ Modules are based on core features.
 [Unity Timer](https://github.com/akbiggs/UnityTimer)
 
 [QFramework](https://github.com/liangxiegame/QFramework)
-
-[Unity-SerializeReferenceExtensions](https://github.com/mackysoft/Unity-SerializeReferenceExtensions)
