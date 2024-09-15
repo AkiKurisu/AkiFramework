@@ -1,6 +1,6 @@
 # UI
 
-Build UGUI in script easily.
+Build UGUI in script easily, useful for creating dynamic setting UI and debug menu.
 
 ### Setup
 

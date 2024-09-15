@@ -113,38 +113,6 @@ public class MonoDispatchExample : MonoBehaviour
 }
 ```
 
-### ReactiveProperty
+### Customize Dispatching Strategy
 
-```C#
-public class ReactiveValueExample : MonoBehaviour
-{
-    private readonly ReactiveVector3 reactiveVector = new(default);
-    private readonly ReactiveBool reactiveBool = new(default);
-    private void Awake()
-    {
-        reactiveVector.RegisterValueChangeCallback(OnVectorChange);
-        reactiveBool.RegisterValueChangeCallback(OnBoolChange);
-    }
-    private void Start()
-    {        
-        // Will send event
-        reactiveVector.Value += Vector3.one;
-        reactiveBool.Value = !reactiveBool.Value;
-        // Not send event
-        reactiveBool.SetValueWithoutNotify(false);
-    }
-    private void OnDestroy()
-    {
-        reactiveVector.UnregisterValueChangeCallback(OnVectorChange);
-        reactiveBool.UnregisterValueChangeCallback(OnBoolChange);
-    }
-    private void OnVectorChange(ChangeEvent<Vector3> e)
-    {
-        Debug.Log($"Vector: {e.PreviousValue} => {e.NewValue}", gameObject);
-    }
-    private void OnBoolChange(ChangeEvent<bool> e)
-    {
-        Debug.Log($"Bool: {e.PreviousValue} => {e.NewValue}", gameObject);
-    }
-}
-```
+Useful for GamePlay level event customization.
