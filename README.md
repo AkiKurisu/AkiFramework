@@ -19,6 +19,9 @@ I supposed these code are useful but also not-must-be-included, which is my pers
 [Scheduler](./Docs/Scheduler.md) 
 > Zero allocation timer/frame counter. 
 
+[Serialization](./Docs/Serialization.md)
+> Powerful serialization tool for workflow.
+
 ## Modules
 
 Modules are based on core features.
@@ -30,9 +33,11 @@ Modules are based on core features.
 [Mod](./Docs/Mod.md) 
 > Simple mod system based on Addressables. 
 
-
 [Resource](./Docs/Resource.md) 
 > Resource loading system, effect system based on Addressables. 
+
+[UI](./Docs/UI.md) 
+> Build UGUI in script easily, useful for creating dynamic setting UI and debug menu.
 
 
 ## Reference

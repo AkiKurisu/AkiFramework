@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using UnityEngine;
 namespace Kurisu.Framework
 {
     // Code from Unity
@@ -228,7 +230,7 @@ namespace Kurisu.Framework
         private bool isInitialized;
         private T value;
         /// <summary>
-        /// Get default object from metadata
+        /// Get default object from <see cref="SerializedType{T}"/>
         /// </summary>
         /// <returns></returns>
         public T GetObject()
@@ -236,13 +238,94 @@ namespace Kurisu.Framework
             if (!isInitialized)
             {
                 Type type = SerializedType.FromString(serializedTypeString);
-                if(type != null)
+                if (type != null)
                 {
                     value = (T)Activator.CreateInstance(type);
                 }
                 isInitialized = true;
             }
             return value;
+        }
+        /// <summary>
+        /// Create <see cref="SerializedType{T}"/> from type
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static SerializedType<T> FromType(Type type)
+        {
+            return new SerializedType<T>()
+            {
+                serializedTypeString = SerializedType.ToString(type)
+            };
+        }
+    }
+    /// <summary>
+    /// Serialized object wrapper for custom object.
+    /// Should set public since emit code need access to constructor.
+    /// </summary>
+    public abstract class SerializedObjectWrapper : ScriptableObject
+    {
+        public abstract object Value
+        {
+            get;
+            set;
+        }
+    }
+    /// <summary>
+    /// Serialized object that will serialize metadata and fields of object implementing T
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    [Serializable]
+    public sealed class SerializedObject<T>
+    {
+        /// <summary>
+        /// Formatted type metadata, see <see cref="SerializedType"/>
+        /// </summary>
+        public string serializedTypeString;
+        /// <summary>
+        /// Serialized object data
+        /// </summary>
+        public string jsonData;
+        private bool isInitialized;
+        private T value;
+#if UNITY_EDITOR
+        /// <summary>
+        /// Editor wrapper, used in SerializedObjectDrawer
+        /// </summary>
+        [SerializeField]
+        internal SerializedObjectWrapper container;
+#endif
+        /// <summary>
+        /// Get default object from <see cref="SerializedObject{T}"/>
+        /// </summary>
+        /// <returns></returns>
+        public T GetObject()
+        {
+            if (!isInitialized)
+            {
+                var type = SerializedType.FromString(serializedTypeString);
+                if (type == null)
+                {
+                    Debug.LogWarning($"Missing type {type} when deserialize {nameof(T)}");
+                    return default;
+                }
+                value = (T)JsonConvert.DeserializeObject(jsonData, type);
+                isInitialized = true;
+            }
+            return value;
+        }
+        /// <summary>
+        /// Create <see cref="SerializedObject{T}"/> from object
+        /// </summary>
+        /// <param name="object"></param>
+        /// <returns></returns>
+        public static SerializedObject<T> FromObject(object @object)
+        {
+            return new SerializedObject<T>()
+            {
+                serializedTypeString = SerializedType.ToString(@object.GetType()),
+                jsonData = JsonConvert.SerializeObject(@object)
+            };
         }
     }
 }
