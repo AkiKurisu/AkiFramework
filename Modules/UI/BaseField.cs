@@ -25,11 +25,25 @@ namespace Kurisu.Framework.UI
             }
         }
     }
+    public interface IUIFactory
+    {
+        GameObject Instantiate(Transform parent);
+        ref UIStyle GetUIStyle();
+    }
+    public struct UIStyle
+    {
+        private static readonly Color DefaultTextColor = new(0.922f, 0.886f, 0.843f);
+        public Color TextColor;
+        public static UIStyle DefaultSyle = new()
+        {
+            TextColor = DefaultTextColor
+        };
+    }
     /// <summary>
     /// UI factory loading prefab by type name
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class UIFactory<T>
+    public abstract class UIFactory<T> : IUIFactory
     {
         public static GameObject Prefab
         {
@@ -43,19 +57,42 @@ namespace Kurisu.Framework.UI
             }
         }
         private static GameObject prefab;
-        private static readonly string address;
+        private static string address;
+        private static ResourceHandle<GameObject> resourceHandle;
+        private UIStyle _uiStyle;
         static UIFactory()
         {
-            address = typeof(T).Name;
+            SetAddress(typeof(T).Name);
+        }
+        public UIFactory(UIStyle style)
+        {
+            _uiStyle = style;
+        }
+        public UIFactory()
+        {
+            _uiStyle = UIStyle.DefaultSyle;
+        }
+        public ref UIStyle GetUIStyle()
+        {
+            return ref _uiStyle;
+        }
+        protected static void SetAddress(string inAddress)
+        {
+            address = inAddress;
         }
         private static void LoadPrefab()
         {
-            var handle = ResourceSystem.AsyncInstantiate(address, UIEntry.VisualRoot);
-            prefab = handle.WaitForCompletion();
-            // Release (decrease ref count) after destroy
-            Disposable.Create(() => { prefab = null; handle.Dispose(); }).AddTo(prefab);
+            resourceHandle = ResourceSystem.AsyncInstantiate(address, UIEntry.VisualRoot);
+            prefab = resourceHandle.WaitForCompletion();
+            Disposable.Create(ReleasePrefab).AddTo(prefab);
         }
-        public static GameObject Instantiate(Transform parent)
+        private static void ReleasePrefab()
+        {
+            // Release (decrease ref count) after destroy
+            prefab = null;
+            resourceHandle.Dispose();
+        }
+        public GameObject Instantiate(Transform parent)
         {
             return UnityEngine.Object.Instantiate(Prefab, parent);
         }
@@ -67,10 +104,18 @@ namespace Kurisu.Framework.UI
     {
         public abstract class UIFactory<T> : UI.UIFactory<T> where T : BaseField
         {
+            public UIFactory() : base()
+            {
 
+            }
+            public UIFactory(UIStyle style) : base(style)
+            {
+
+            }
         }
-        public BaseField()
+        public BaseField(IUIFactory factory)
         {
+            _factory = factory;
             Visible.Subscribe(b =>
             {
                 foreach (GameObject viewItem in ViewItems)
@@ -79,10 +124,9 @@ namespace Kurisu.Framework.UI
                 }
             });
         }
-        public static readonly Color DefaultControlTextColor = new(0.922f, 0.886f, 0.843f);
-        public Color TextColor { get; set; } = DefaultControlTextColor;
         public readonly List<GameObject> ViewItems = new(1);
         public ReactiveProperty<bool> Visible { get; } = new(true);
+        private readonly IUIFactory _factory;
         internal virtual void CreateView(Transform parent, BaseField parentField)
         {
             GameObject view = OnCreateView(parent);
@@ -94,7 +138,6 @@ namespace Kurisu.Framework.UI
             ViewItems.Add(view);
         }
         protected abstract GameObject OnCreateView(Transform parent);
-
         public virtual void Dispose()
         {
             Visible.Dispose();
@@ -102,6 +145,14 @@ namespace Kurisu.Framework.UI
         public TField Cast<TField>() where TField : BaseField
         {
             return this as TField;
+        }
+        public GameObject Instantiate(Transform parent)
+        {
+            return _factory.Instantiate(parent);
+        }
+        public ref UIStyle GetUIStyle()
+        {
+            return ref _factory.GetUIStyle();
         }
         #region Events Implementation
         public override void SendEvent(EventBase e, DispatchMode dispatchMode = DispatchMode.Default)
@@ -117,7 +168,7 @@ namespace Kurisu.Framework.UI
     /// </summary>
     public abstract class BaseField<TValue> : BaseField, INotifyValueChanged<TValue>
     {
-        protected BaseField(TValue initialValue) : base()
+        protected BaseField(TValue initialValue, IUIFactory factory) : base(factory)
         {
             _value = new ReactiveProperty<TValue>(initialValue);
         }
@@ -201,12 +252,12 @@ namespace Kurisu.Framework.UI
             _isInitialized = true;
             foreach (var field in _fields)
             {
-                field.CreateView(Panel.transform, this);
+                field.CreateView(Panel.ContentContainer, this);
             }
             return Panel.gameObject;
         }
         public UIPanel Panel { get; }
-        public PanelField(UIPanel panelObject) : base()
+        public PanelField(UIPanel panelObject) : base(null)
         {
             Panel = panelObject;
         }
@@ -223,7 +274,7 @@ namespace Kurisu.Framework.UI
             _fields.Add(field);
             if (_isInitialized)
             {
-                field.CreateView(Panel.transform, this);
+                field.CreateView(Panel.ContentContainer, this);
             }
             return field;
         }
@@ -238,7 +289,7 @@ namespace Kurisu.Framework.UI
             {
                 foreach (var field in fields)
                 {
-                    field.CreateView(Panel.transform, this);
+                    field.CreateView(Panel.ContentContainer, this);
                 }
             }
         }
@@ -261,19 +312,24 @@ namespace Kurisu.Framework.UI
         {
 
         }
+        public SpaceField(IUIFactory factory, int space = DefaultSpace) : base(factory)
+        {
+            Space = space;
+        }
+        public SpaceField(int space = DefaultSpace) : base(defaultFactory)
+        {
+            Space = space;
+        }
         protected override GameObject OnCreateView(Transform parent)
         {
-            GameObject s = UIFactory.Instantiate(parent);
+            GameObject s = Instantiate(parent);
             s.name = nameof(SpaceField);
             s.GetComponent<LayoutElement>().minHeight = Space;
             return s;
         }
+        private static readonly UIFactory defaultFactory = new();
         public const int DefaultSpace = 18;
         public int Space { get; }
-        public SpaceField(int space = DefaultSpace) : base()
-        {
-            Space = space;
-        }
     }
     /// <summary>
     /// Field that draws a toggle
@@ -288,7 +344,11 @@ namespace Kurisu.Framework.UI
         {
         }
 
-        public ToggleField(string displayName, bool initialValue) : base(initialValue)
+        public ToggleField(string displayName, bool initialValue) : base(initialValue, defaultFactory)
+        {
+            DisplayName = displayName;
+        }
+        public ToggleField(IUIFactory factory, string displayName, bool initialValue) : base(initialValue, factory)
         {
             DisplayName = displayName;
         }
@@ -297,20 +357,75 @@ namespace Kurisu.Framework.UI
         /// Text shown next to the checkbox
         /// </summary>
         public string DisplayName { get; }
+        private Toggle toggle;
+        private static readonly UIFactory defaultFactory = new();
         protected override GameObject OnCreateView(Transform parent)
         {
-            GameObject tr = UIFactory.Instantiate(parent);
-            Toggle tgl = tr.GetComponentInChildren<Toggle>();
-            tgl.onValueChanged.AddListener(SetValue);
+            GameObject tr = Instantiate(parent);
+            toggle = tr.GetComponentInChildren<Toggle>();
+            toggle.onValueChanged.AddListener(SetValue);
             OnNotifyViewChanged.Subscribe(b =>
             {
-                tgl.isOn = b;
+                toggle.isOn = b;
             });
             Text text = tr.GetComponentInChildren<Text>();
             text.text = DisplayName;
-            text.color = TextColor;
+            text.color = GetUIStyle().TextColor;
             text.SetAutosize();
             return tr;
+        }
+        public override void Dispose()
+        {
+            if (toggle) toggle.onValueChanged.RemoveListener(SetValue);
+            base.Dispose();
+        }
+    }
+    /// <summary>
+    /// Field that draws a button
+    /// </summary>
+    public class ButtonField : BaseField
+    {
+        public class UIFactory : UIFactory<ButtonField>
+        {
+
+        }
+        public ButtonField(string displayName, Action onClicked) : base(defaultFactory)
+        {
+            DisplayName = displayName;
+            OnClicked = onClicked;
+        }
+        public ButtonField(IUIFactory factory, string displayName, Action onClicked) : base(factory)
+        {
+            DisplayName = displayName;
+            OnClicked = onClicked;
+        }
+
+        /// <summary>
+        /// Text shown next to the checkbox
+        /// </summary>
+        public string DisplayName { get; }
+        public Action OnClicked { get; }
+        private Button button;
+        private static readonly UIFactory defaultFactory = new();
+        protected override GameObject OnCreateView(Transform parent)
+        {
+            GameObject tr = Instantiate(parent);
+            button = tr.GetComponentInChildren<Button>();
+            button.onClick.AddListener(OnButtonClicked);
+            Text text = tr.GetComponentInChildren<Text>();
+            text.text = DisplayName;
+            text.color = GetUIStyle().TextColor;
+            text.SetAutosize();
+            return tr;
+        }
+        private void OnButtonClicked()
+        {
+            OnClicked?.Invoke();
+        }
+        public override void Dispose()
+        {
+            if (button) button.onClick.RemoveListener(OnButtonClicked);
+            base.Dispose();
         }
     }
     /// <summary>
@@ -322,14 +437,18 @@ namespace Kurisu.Framework.UI
         {
 
         }
+        public SeparatorField() : base(defaultFactory)
+        {
+        }
+        public SeparatorField(IUIFactory factory) : base(factory)
+        {
+        }
+        private static readonly UIFactory defaultFactory = new();
         protected override GameObject OnCreateView(Transform parent)
         {
-            GameObject s = UIFactory.Instantiate(parent);
+            GameObject s = Instantiate(parent);
             s.name = nameof(SeparatorField);
             return s;
-        }
-        public SeparatorField() : base()
-        {
         }
     }
     /// <summary>
@@ -341,13 +460,22 @@ namespace Kurisu.Framework.UI
         {
 
         }
+        public LabelField(string displayName) : base(defaultFactory)
+        {
+            DisplayName = displayName;
+        }
+        public LabelField(IUIFactory factory, string displayName) : base(factory)
+        {
+            DisplayName = displayName;
+        }
+        private static readonly UIFactory defaultFactory = new();
         protected override GameObject OnCreateView(Transform parent)
         {
-            GameObject label = UIFactory.Instantiate(parent);
+            GameObject label = Instantiate(parent);
             label.name = nameof(LabelField);
             Text text = label.GetComponentInChildren<Text>();
             text.text = DisplayName;
-            text.color = TextColor;
+            text.color = GetUIStyle().TextColor;
             text.SetAutosize();
             return label;
         }
@@ -355,10 +483,6 @@ namespace Kurisu.Framework.UI
         /// Text shown in the label
         /// </summary>
         public string DisplayName { get; }
-        public LabelField(string displayName) : base()
-        {
-            DisplayName = displayName;
-        }
     }
     #endregion
 }

@@ -41,7 +41,20 @@ namespace Kurisu.Framework.UI
         /// Space between each panel item, not include custom fields
         /// </summary>
         public int ItemSpace = SpaceField.DefaultSpace;
+        [SerializeField, Tooltip("Set to override content container, default use self transform")]
+        private Transform contentContainer;
         private PanelField panelField;
+        public Transform ContentContainer
+        {
+            get
+            {
+                if (contentContainer)
+                {
+                    return contentContainer;
+                }
+                return transform;
+            }
+        }
         protected virtual void Awake()
         {
             panelField ??= new PanelField(this);
