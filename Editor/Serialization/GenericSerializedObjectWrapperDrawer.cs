@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEditor;
-namespace Kurisu.Framework.Editor
+namespace Kurisu.Framework.Serialization.Editor
 {
     // Modified from https://gist.github.com/tomkail/ba4136e6aa990f4dc94e0d39ec6a058c
     [CustomPropertyDrawer(typeof(SerializedObjectWrapper), true)]

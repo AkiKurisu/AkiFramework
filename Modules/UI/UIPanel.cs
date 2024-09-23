@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
+using Kurisu.Framework.Serialization;
 using UnityEngine;
 namespace Kurisu.Framework.UI
 {

@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-namespace Kurisu.Framework.Editor
+namespace Kurisu.Framework.Serialization.Editor
 {
     [Serializable]
     public class GenericSerializedObjectWrapper<T> : SerializedObjectWrapper

@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-namespace Kurisu.Framework.Editor
+namespace Kurisu.Framework.Serialization.Editor
 {
     [CustomPropertyDrawer(typeof(SerializedType<>))]
     public class SerializedTypeDrawer : PropertyDrawer
@@ -38,7 +38,7 @@ namespace Kurisu.Framework.Editor
                 {
                     fieldType = fieldType.GetElementType();
                 }
-                provider.Initialize(fieldType.GetGenericArguments()[0],(selectType) =>
+                provider.Initialize(fieldType.GetGenericArguments()[0], (selectType) =>
                 {
                     reference.stringValue = selectType != null ? SerializedType.ToString(selectType) : NullType;
                     property.serializedObject.ApplyModifiedProperties();
