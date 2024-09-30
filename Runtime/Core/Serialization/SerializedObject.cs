@@ -4,18 +4,6 @@ using UnityEngine;
 namespace Kurisu.Framework.Serialization
 {
     /// <summary>
-    /// Serialized object wrapper for custom object.
-    /// Should set public since emit code need access to constructor.
-    /// </summary>
-    public abstract class SerializedObjectWrapper : ScriptableObject
-    {
-        public abstract object Value
-        {
-            get;
-            set;
-        }
-    }
-    /// <summary>
     /// Serialized object that will serialize metadata and fields of object implementing T
     /// </summary>
     /// <typeparam name="T"></typeparam>
@@ -37,7 +25,7 @@ namespace Kurisu.Framework.Serialization
         /// Editor wrapper, used in SerializedObjectDrawer
         /// </summary>
         [SerializeField]
-        internal SerializedObjectWrapper container;
+        ulong objectHandle;
 #endif
         /// <summary>
         /// Get default object from <see cref="SerializedObject{T}"/>

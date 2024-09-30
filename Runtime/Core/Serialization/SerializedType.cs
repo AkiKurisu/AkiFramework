@@ -227,6 +227,7 @@ namespace Kurisu.Framework.Serialization
         public string serializedTypeString;
         private bool isInitialized;
         private T value;
+        private Type type;
         /// <summary>
         /// Get default object from <see cref="SerializedType{T}"/>
         /// </summary>
@@ -235,7 +236,7 @@ namespace Kurisu.Framework.Serialization
         {
             if (!isInitialized)
             {
-                Type type = SerializedType.FromString(serializedTypeString);
+                type ??= SerializedType.FromString(serializedTypeString);
                 if (type != null)
                 {
                     value = (T)Activator.CreateInstance(type);
@@ -243,6 +244,14 @@ namespace Kurisu.Framework.Serialization
                 isInitialized = true;
             }
             return value;
+        }
+        /// <summary>
+        /// Get object type from <see cref="SerializedType{T}"/>
+        /// </summary>
+        /// <returns></returns>
+        public Type GetObjectType()
+        {
+            return type ??= SerializedType.FromString(serializedTypeString);
         }
         /// <summary>
         /// Create <see cref="SerializedType{T}"/> from type

@@ -1,5 +1,3 @@
-using System;
-using Newtonsoft.Json;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -11,27 +9,45 @@ namespace Kurisu.Framework.Serialization.Editor
         private const string NullType = "Null";
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
+            var reference = property.FindPropertyRelative("serializedTypeString");
+            var objectHandleProp = property.FindPropertyRelative("objectHandle");
+            var handle = new SoftObjectHandle(objectHandleProp.ulongValue);
+            var type = SerializedType.FromString(reference.stringValue);
+            var wrapper = SerializationEditorManager.CreateWrapper(type, ref handle);
+            if (objectHandleProp.ulongValue != handle.Handle)
+            {
+                objectHandleProp.ulongValue = handle.Handle;
+                property.serializedObject.ApplyModifiedProperties();
+            }
+
             return EditorGUIUtility.singleLineHeight
-            + GenericSerializedObjectWrapperDrawer.CalculatePropertyHeight(property.FindPropertyRelative("container"))
+            + SerializedObjectWrapperDrawer.CalculatePropertyHeight(wrapper)
             + EditorGUIUtility.standardVerticalSpacing;
         }
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            EditorGUI.BeginProperty(position, label, property);
-            var totalHeight = position.height;
-            position.height = EditorGUIUtility.singleLineHeight;
-
+            DrawGUI(position, property, label);
+        }
+        private void DrawGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
             var reference = property.FindPropertyRelative("serializedTypeString");
             var json = property.FindPropertyRelative("jsonData");
-            var container = property.FindPropertyRelative("container");
+            var objectHandleProp = property.FindPropertyRelative("objectHandle");
+            var handle = new SoftObjectHandle(objectHandleProp.ulongValue);
+            ScriptableObject wrapper = SerializationEditorManager.GetWrapper(handle);
 
             var type = SerializedType.FromString(reference.stringValue);
             string id = type != null ? type.Name : NullType;
-            if (type != null && container.objectReferenceValue == null)
+            if (type != null && wrapper == null)
             {
-                container.objectReferenceValue = SerializedObjectEditorUtils.Wrap(Activator.CreateInstance(type));
+                wrapper = SerializationEditorManager.CreateWrapper(type, ref handle);
+                objectHandleProp.ulongValue = handle.Handle;
                 property.serializedObject.ApplyModifiedProperties();
             }
+
+            EditorGUI.BeginProperty(position, label, property);
+            var totalHeight = position.height;
+            position.height = EditorGUIUtility.singleLineHeight;
 
             float width = position.width;
             float x = position.x;
@@ -49,34 +65,38 @@ namespace Kurisu.Framework.Serialization.Editor
                 }
                 provider.Initialize(fieldType.GetGenericArguments()[0], (selectType) =>
                 {
-                    reference.stringValue = selectType != null ? SerializedType.ToString(selectType) : NullType;
+                    reference.stringValue = selectType != null ? SerializedType.ToString(selectType) : string.Empty;
                     if (selectType != null)
                     {
-                        container.objectReferenceValue = SerializedObjectEditorUtils.Wrap(Activator.CreateInstance(selectType));
+                        wrapper = SerializationEditorManager.CreateWrapper(type, ref handle);
                     }
                     else
                     {
-                        container.objectReferenceValue = null;
+                        wrapper = null;
+                        SerializationEditorManager.DestroyWrapper(handle);
                     }
+                    objectHandleProp.ulongValue = handle.Handle;
                     property.serializedObject.ApplyModifiedProperties();
                 });
                 SearchWindow.Open(new SearchWindowContext(GUIUtility.GUIToScreenPoint(Event.current.mousePosition)), provider);
             }
-            if (container.objectReferenceValue != null)
+            if (wrapper != null && !string.IsNullOrEmpty(json.stringValue))
             {
-                JsonConvert.PopulateObject(json.stringValue, container.objectReferenceValue);
+                JsonUtility.FromJsonOverwrite(json.stringValue, wrapper);
             }
-
-            position.x = x;
-            position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
-            position.height = totalHeight - position.height - EditorGUIUtility.standardVerticalSpacing;
-            position.width = width;
-            GUI.Box(position, "", "Box");
-            EditorGUI.BeginChangeCheck();
-            EditorGUI.PropertyField(position, container, true);
-            if (EditorGUI.EndChangeCheck())
+            if (wrapper)
             {
-                json.stringValue = JsonConvert.SerializeObject(container.objectReferenceValue);
+                position.x = x;
+                position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
+                position.height = totalHeight - position.height - EditorGUIUtility.standardVerticalSpacing;
+                position.width = width;
+                GUI.Box(position, "", "Box");
+                EditorGUI.BeginChangeCheck();
+                SerializedObjectWrapperDrawer.DrawGUI(position, wrapper);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    json.stringValue = JsonUtility.ToJson(wrapper);
+                }
             }
             EditorGUI.EndProperty();
         }

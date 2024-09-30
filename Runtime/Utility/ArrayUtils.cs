@@ -68,6 +68,11 @@ namespace Kurisu.Framework
             array = a.ToArray(typeof(T)) as T[];
         }
 
+        public static void Swarp<T>(ref T[] array, int fromIndex, int toIndex)
+        {
+            (array[toIndex], array[fromIndex]) = (array[fromIndex], array[toIndex]);
+        }
+
         //removes ''item'' from ''array''
         public static void Remove<T>(ref T[] array, T item)
         {

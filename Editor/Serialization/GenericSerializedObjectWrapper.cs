@@ -14,9 +14,34 @@ namespace Kurisu.Framework.Serialization.Editor
             set { m_Value = (T)value; }
         }
     }
-    internal class SerializedObjectEditorUtils
+
+    /// <summary>
+    /// Api for editor serialization
+    /// </summary>
+    public static class SerializationEditorManager
     {
-        internal static SerializedObjectWrapper Wrap(object value = null)
+        public static SerializedObjectWrapper CreateWrapper(Type type, ref SoftObjectHandle softObjectHandle)
+        {
+            if (type == null) return null;
+
+            var wrapper = GlobalObjectManager.GetObject(softObjectHandle) as SerializedObjectWrapper;
+            if (!wrapper)
+            {
+                wrapper = Wrap(Activator.CreateInstance(type));
+                GlobalObjectManager.UnregisterObject(softObjectHandle);
+                GlobalObjectManager.RegisterObject(wrapper, ref softObjectHandle);
+            }
+            return wrapper;
+        }
+        public static void DestroyWrapper(SoftObjectHandle softObjectHandle)
+        {
+            GlobalObjectManager.UnregisterObject(softObjectHandle);
+        }
+        public static SerializedObjectWrapper GetWrapper(SoftObjectHandle softObjectHandle)
+        {
+            return GlobalObjectManager.GetObject(softObjectHandle) as SerializedObjectWrapper;
+        }
+        private static SerializedObjectWrapper Wrap(object value = null)
         {
             Type type = value.GetType();
             Type genericType = typeof(GenericSerializedObjectWrapper<>).MakeGenericType(type);
