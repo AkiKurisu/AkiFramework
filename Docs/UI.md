@@ -34,3 +34,27 @@ public class RenderQualitygSettingsPanelItem : IPanelItem
 ```
 
 ![UIPanel View](./Images/ui_panel_view.png)
+
+### How to customize
+
+```C#
+// Example to inherit from ToggleField
+public class MyToggleField : ToggleField
+{
+    public new class UIFactory : UIFactory<VolumeToggleField>
+    {
+        // Override default ui style
+        public UIFactory() : base(new UIStyle()
+        {
+            TextColor = new Color(0.9294118f, 0.945098f, 1)
+        })
+        { }
+    }
+    private static readonly IUIFactory defaultFactory = new UIFactory();
+
+    // Override default ui factory of ToggleField
+    public MyToggleField(string displayName, bool initialValue) : base(defaultFactory, displayName, initialValue)
+    {
+    }
+}
+```

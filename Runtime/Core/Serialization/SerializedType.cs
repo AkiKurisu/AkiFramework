@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Newtonsoft.Json;
-using UnityEngine;
-namespace Kurisu.Framework
+namespace Kurisu.Framework.Serialization
 {
     // Code from Unity
     public static class SerializedType
@@ -227,24 +225,36 @@ namespace Kurisu.Framework
         /// Formatted type metadata, see <see cref="SerializedType"/>
         /// </summary>
         public string serializedTypeString;
-        private bool isInitialized;
-        private T value;
+#pragma warning disable CS8632
+        private T? value;
+#pragma warning restore CS8632
         /// <summary>
         /// Get default object from <see cref="SerializedType{T}"/>
         /// </summary>
         /// <returns></returns>
         public T GetObject()
         {
-            if (!isInitialized)
+            if (value == null)
             {
-                Type type = SerializedType.FromString(serializedTypeString);
+                var type = SerializedType.FromString(serializedTypeString);
                 if (type != null)
                 {
                     value = (T)Activator.CreateInstance(type);
                 }
-                isInitialized = true;
             }
             return value;
+        }
+        /// <summary>
+        /// Get object type from <see cref="SerializedType{T}"/>
+        /// </summary>
+        /// <returns></returns>
+        public Type GetObjectType()
+        {
+            if (value != null)
+            {
+                return value.GetType();
+            }
+            return SerializedType.FromString(serializedTypeString);
         }
         /// <summary>
         /// Create <see cref="SerializedType{T}"/> from type
@@ -258,74 +268,12 @@ namespace Kurisu.Framework
                 serializedTypeString = SerializedType.ToString(type)
             };
         }
-    }
-    /// <summary>
-    /// Serialized object wrapper for custom object.
-    /// Should set public since emit code need access to constructor.
-    /// </summary>
-    public abstract class SerializedObjectWrapper : ScriptableObject
-    {
-        public abstract object Value
+        internal void InternalUpdate()
         {
-            get;
-            set;
-        }
-    }
-    /// <summary>
-    /// Serialized object that will serialize metadata and fields of object implementing T
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    [Serializable]
-    public sealed class SerializedObject<T>
-    {
-        /// <summary>
-        /// Formatted type metadata, see <see cref="SerializedType"/>
-        /// </summary>
-        public string serializedTypeString;
-        /// <summary>
-        /// Serialized object data
-        /// </summary>
-        public string jsonData;
-        private bool isInitialized;
-        private T value;
-#if UNITY_EDITOR
-        /// <summary>
-        /// Editor wrapper, used in SerializedObjectDrawer
-        /// </summary>
-        [SerializeField]
-        internal SerializedObjectWrapper container;
-#endif
-        /// <summary>
-        /// Get default object from <see cref="SerializedObject{T}"/>
-        /// </summary>
-        /// <returns></returns>
-        public T GetObject()
-        {
-            if (!isInitialized)
+            if (value != null && SerializedType.ToString(value.GetType()) != serializedTypeString)
             {
-                var type = SerializedType.FromString(serializedTypeString);
-                if (type == null)
-                {
-                    Debug.LogWarning($"Missing type {type} when deserialize {nameof(T)}");
-                    return default;
-                }
-                value = (T)JsonConvert.DeserializeObject(jsonData, type);
-                isInitialized = true;
+                value = default;
             }
-            return value;
-        }
-        /// <summary>
-        /// Create <see cref="SerializedObject{T}"/> from object
-        /// </summary>
-        /// <param name="object"></param>
-        /// <returns></returns>
-        public static SerializedObject<T> FromObject(object @object)
-        {
-            return new SerializedObject<T>()
-            {
-                serializedTypeString = SerializedType.ToString(@object.GetType()),
-                jsonData = JsonConvert.SerializeObject(@object)
-            };
         }
     }
 }

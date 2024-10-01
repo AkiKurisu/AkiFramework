@@ -7,6 +7,7 @@ using Kurisu.Framework.Editor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using System.Collections.Generic;
+using Kurisu.Framework.Serialization.Editor;
 namespace Kurisu.Framework.Resource.Editor
 {
     public abstract class AssetReferenceDrawer : PropertyDrawer
@@ -184,7 +185,9 @@ namespace Kurisu.Framework.Resource.Editor
             AddressableAssetSettingsDefaultObject.Settings.GetAllAssets(entries, false, null,
                                     e =>
                                     {
+                                        if (e == null) return false;
                                         var type = AssetDatabase.GetMainAssetTypeAtPath(e.AssetPath);
+                                        if (type == null) return false;
                                         return type == assetType || type.IsSubclassOf(assetType);
                                     });
             string path = AssetDatabase.GetAssetPath(asset);
@@ -196,10 +199,12 @@ namespace Kurisu.Framework.Resource.Editor
             AddressableAssetSettingsDefaultObject.Settings.GetAllAssets(entries, false, null,
                                     e =>
                                     {
+                                        if (e == null) return false;
                                         var type = AssetDatabase.GetMainAssetTypeAtPath(e.AssetPath);
-                                        return type == assetType || type.IsSubclassOf(assetType);
+                                        if (type == null) return false;
+                                        return (type == assetType || type.IsSubclassOf(assetType)) && e.address == address;
                                     });
-            return entries.FirstOrDefault(x => x.address == address);
+            return entries.FirstOrDefault();
         }
 
         public static string GetAssetGUID(this UnityEngine.Object asset)

@@ -4,12 +4,13 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-namespace Kurisu.Framework.Editor
+namespace Kurisu.Framework.Serialization.Editor
 {
     [CustomPropertyDrawer(typeof(SerializedType<>))]
     public class SerializedTypeDrawer : PropertyDrawer
     {
         private const string NullType = "Null";
+        private static readonly GUIStyle DropdownStyle = new("ExposablePopupMenu");
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             return EditorGUIUtility.singleLineHeight;
@@ -30,7 +31,13 @@ namespace Kurisu.Framework.Editor
                 type = null;
             }
             string id = type != null ? type.Name : NullType;
-            if (EditorGUI.DropdownButton(position, new GUIContent(id), FocusType.Keyboard))
+            float width = position.width;
+            float x = position.x;
+            position.width = GUI.skin.label.CalcSize(label).x;
+            GUI.Label(position, label);
+            position.x += position.width + 10;
+            position.width = width - position.width - 10;
+            if (EditorGUI.DropdownButton(position, new GUIContent(id), FocusType.Keyboard, DropdownStyle))
             {
                 var provider = ScriptableObject.CreateInstance<TypeSearchWindow>();
                 var fieldType = fieldInfo.FieldType;
@@ -38,7 +45,7 @@ namespace Kurisu.Framework.Editor
                 {
                     fieldType = fieldType.GetElementType();
                 }
-                provider.Initialize(fieldType.GetGenericArguments()[0],(selectType) =>
+                provider.Initialize(fieldType.GetGenericArguments()[0], (selectType) =>
                 {
                     reference.stringValue = selectType != null ? SerializedType.ToString(selectType) : NullType;
                     property.serializedObject.ApplyModifiedProperties();
