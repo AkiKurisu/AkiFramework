@@ -133,9 +133,11 @@ namespace Kurisu.Framework.DataDriven
         }
         internal void InternalUpdate()
         {
+            m_rowType.InternalUpdate();
             for (int i = 0; i < m_rows.Length; ++i)
             {
                 m_rows[i].RowData.serializedTypeString = m_rowType.serializedTypeString;
+                m_rows[i].RowData.InternalUpdate();
             }
         }
         internal bool InsertRow(int index, string RowName, IDataTableRow row)

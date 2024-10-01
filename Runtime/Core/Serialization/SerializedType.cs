@@ -225,23 +225,22 @@ namespace Kurisu.Framework.Serialization
         /// Formatted type metadata, see <see cref="SerializedType"/>
         /// </summary>
         public string serializedTypeString;
-        private bool isInitialized;
-        private T value;
-        private Type type;
+#pragma warning disable CS8632
+        private T? value;
+#pragma warning restore CS8632
         /// <summary>
         /// Get default object from <see cref="SerializedType{T}"/>
         /// </summary>
         /// <returns></returns>
         public T GetObject()
         {
-            if (!isInitialized)
+            if (value == null)
             {
-                type ??= SerializedType.FromString(serializedTypeString);
+                var type = SerializedType.FromString(serializedTypeString);
                 if (type != null)
                 {
                     value = (T)Activator.CreateInstance(type);
                 }
-                isInitialized = true;
             }
             return value;
         }
@@ -251,7 +250,11 @@ namespace Kurisu.Framework.Serialization
         /// <returns></returns>
         public Type GetObjectType()
         {
-            return type ??= SerializedType.FromString(serializedTypeString);
+            if (value != null)
+            {
+                return value.GetType();
+            }
+            return SerializedType.FromString(serializedTypeString);
         }
         /// <summary>
         /// Create <see cref="SerializedType{T}"/> from type
@@ -264,6 +267,13 @@ namespace Kurisu.Framework.Serialization
             {
                 serializedTypeString = SerializedType.ToString(type)
             };
+        }
+        internal void InternalUpdate()
+        {
+            if (value != null && SerializedType.ToString(value.GetType()) != serializedTypeString)
+            {
+                value = default;
+            }
         }
     }
 }

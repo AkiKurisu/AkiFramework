@@ -14,7 +14,7 @@ namespace Kurisu.Framework.Serialization.Editor
             var objectHandleProp = property.FindPropertyRelative("objectHandle");
             var handle = new SoftObjectHandle(objectHandleProp.ulongValue);
             var type = SerializedType.FromString(reference.stringValue);
-            var wrapper = SerializationEditorManager.CreateWrapper(type, ref handle);
+            var wrapper = SerializedObjectWrapperManager.CreateWrapper(type, ref handle);
             if (objectHandleProp.ulongValue != handle.Handle)
             {
                 objectHandleProp.ulongValue = handle.Handle;
@@ -35,13 +35,12 @@ namespace Kurisu.Framework.Serialization.Editor
             var json = property.FindPropertyRelative("jsonData");
             var objectHandleProp = property.FindPropertyRelative("objectHandle");
             var handle = new SoftObjectHandle(objectHandleProp.ulongValue);
-            SerializedObjectWrapper wrapper = SerializationEditorManager.GetWrapper(handle);
-
             var type = SerializedType.FromString(reference.stringValue);
+            SerializedObjectWrapper wrapper = SerializedObjectWrapperManager.GetWrapper(type, handle);
             string id = type != null ? type.Name : NullType;
             if (type != null && wrapper == null)
             {
-                wrapper = SerializationEditorManager.CreateWrapper(type, ref handle);
+                wrapper = SerializedObjectWrapperManager.CreateWrapper(type, ref handle);
                 objectHandleProp.ulongValue = handle.Handle;
                 property.serializedObject.ApplyModifiedProperties();
             }
@@ -69,12 +68,12 @@ namespace Kurisu.Framework.Serialization.Editor
                     reference.stringValue = selectType != null ? SerializedType.ToString(selectType) : string.Empty;
                     if (selectType != null)
                     {
-                        wrapper = SerializationEditorManager.CreateWrapper(type, ref handle);
+                        wrapper = SerializedObjectWrapperManager.CreateWrapper(type, ref handle);
                     }
                     else
                     {
                         wrapper = null;
-                        SerializationEditorManager.DestroyWrapper(handle);
+                        SerializedObjectWrapperManager.DestroyWrapper(handle);
                     }
                     objectHandleProp.ulongValue = handle.Handle;
                     property.serializedObject.ApplyModifiedProperties();

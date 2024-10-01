@@ -46,6 +46,18 @@ namespace Kurisu.Framework.Serialization
             return value;
         }
         /// <summary>
+        /// Get object type from <see cref="SerializedObject{T}"/>
+        /// </summary>
+        /// <returns></returns>
+        public Type GetObjectType()
+        {
+            if (value != null)
+            {
+                return value.GetType();
+            }
+            return SerializedType.FromString(serializedTypeString);
+        }
+        /// <summary>
         /// Create <see cref="SerializedObject{T}"/> from object
         /// </summary>
         /// <param name="object"></param>
@@ -57,6 +69,14 @@ namespace Kurisu.Framework.Serialization
                 serializedTypeString = SerializedType.ToString(@object.GetType()),
                 jsonData = JsonUtility.ToJson(@object)
             };
+        }
+        internal void InternalUpdate()
+        {
+            if (value != null && SerializedType.ToString(value.GetType()) != serializedTypeString)
+            {
+                value = default;
+            }
+            objectHandle = 0;
         }
     }
 }
