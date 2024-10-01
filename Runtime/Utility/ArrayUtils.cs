@@ -68,9 +68,14 @@ namespace Kurisu.Framework
             array = a.ToArray(typeof(T)) as T[];
         }
 
-        public static void Swarp<T>(ref T[] array, int fromIndex, int toIndex)
+        public static void Reorder<T>(ref T[] array, int fromIndex, int toIndex)
         {
-            (array[toIndex], array[fromIndex]) = (array[fromIndex], array[toIndex]);
+            ArrayList a = new();
+            a.AddRange(array);
+            var item = array[fromIndex];
+            a.RemoveAt(fromIndex);
+            a.Insert(toIndex, item);
+            array = a.ToArray(typeof(T)) as T[];
         }
 
         //removes ''item'' from ''array''

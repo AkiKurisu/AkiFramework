@@ -7,6 +7,7 @@ namespace Kurisu.Framework.Serialization.Editor
     public class SerializedObjectDrawer : PropertyDrawer
     {
         private const string NullType = "Null";
+        private static readonly GUIStyle DropdownStyle = new("ExposablePopupMenu");
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             var reference = property.FindPropertyRelative("serializedTypeString");
@@ -34,7 +35,7 @@ namespace Kurisu.Framework.Serialization.Editor
             var json = property.FindPropertyRelative("jsonData");
             var objectHandleProp = property.FindPropertyRelative("objectHandle");
             var handle = new SoftObjectHandle(objectHandleProp.ulongValue);
-            ScriptableObject wrapper = SerializationEditorManager.GetWrapper(handle);
+            SerializedObjectWrapper wrapper = SerializationEditorManager.GetWrapper(handle);
 
             var type = SerializedType.FromString(reference.stringValue);
             string id = type != null ? type.Name : NullType;
@@ -51,11 +52,11 @@ namespace Kurisu.Framework.Serialization.Editor
 
             float width = position.width;
             float x = position.x;
-            position.width *= 0.25f;
+            position.width = GUI.skin.label.CalcSize(label).x;
             GUI.Label(position, label);
             position.x += position.width + 10;
             position.width = width - position.width - 10;
-            if (EditorGUI.DropdownButton(position, new GUIContent(id), FocusType.Keyboard))
+            if (EditorGUI.DropdownButton(position, new GUIContent(id), FocusType.Keyboard, DropdownStyle))
             {
                 var provider = ScriptableObject.CreateInstance<TypeSearchWindow>();
                 var fieldType = fieldInfo.FieldType;
@@ -80,9 +81,10 @@ namespace Kurisu.Framework.Serialization.Editor
                 });
                 SearchWindow.Open(new SearchWindowContext(GUIUtility.GUIToScreenPoint(Event.current.mousePosition)), provider);
             }
+            position.x = x;
             if (wrapper != null && !string.IsNullOrEmpty(json.stringValue))
             {
-                JsonUtility.FromJsonOverwrite(json.stringValue, wrapper);
+                JsonUtility.FromJsonOverwrite(json.stringValue, wrapper.Value);
             }
             if (wrapper)
             {
@@ -95,7 +97,7 @@ namespace Kurisu.Framework.Serialization.Editor
                 SerializedObjectWrapperDrawer.DrawGUI(position, wrapper);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    json.stringValue = JsonUtility.ToJson(wrapper);
+                    json.stringValue = JsonUtility.ToJson(wrapper.Value);
                 }
             }
             EditorGUI.EndProperty();

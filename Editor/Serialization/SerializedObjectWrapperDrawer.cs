@@ -61,18 +61,16 @@ namespace Kurisu.Framework.Serialization.Editor
                 serializedObject.Dispose();
             }
         }
-        public static void DrawGUIHorizontal(Rect rect, int columNum, ScriptableObject data)
+        public static void DrawGUIHorizontal(Rect startRect, int space, ScriptableObject data)
         {
             var serializedObject = new SerializedObject(data);
             SerializedProperty property = serializedObject.FindProperty("m_Value");
-            rect.width /= columNum;
-            rect.width -= 5;
             if (property != null && property.NextVisible(true))
             {
                 do
                 {
-                    EditorGUI.PropertyField(rect, property, GUIContent.none, true);
-                    rect.x += rect.width + 5;
+                    EditorGUI.PropertyField(startRect, property, GUIContent.none, true);
+                    startRect.x += startRect.width + space;
                 }
                 while (property.NextVisible(false));
             }

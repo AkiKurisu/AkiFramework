@@ -1,5 +1,4 @@
 using System;
-using Newtonsoft.Json;
 using UnityEngine;
 namespace Kurisu.Framework.Serialization
 {
@@ -18,8 +17,9 @@ namespace Kurisu.Framework.Serialization
         /// Serialized object data
         /// </summary>
         public string jsonData;
-        private bool isInitialized;
-        private T value;
+#pragma warning disable CS8632
+        private T? value;
+#pragma warning restore CS8632 
 #if UNITY_EDITOR
         /// <summary>
         /// Editor wrapper, used in SerializedObjectDrawer
@@ -33,7 +33,7 @@ namespace Kurisu.Framework.Serialization
         /// <returns></returns>
         public T GetObject()
         {
-            if (!isInitialized)
+            if (value == null)
             {
                 var type = SerializedType.FromString(serializedTypeString);
                 if (type == null)
@@ -41,8 +41,7 @@ namespace Kurisu.Framework.Serialization
                     Debug.LogWarning($"Missing type {type} when deserialize {nameof(T)}");
                     return default;
                 }
-                value = (T)JsonConvert.DeserializeObject(jsonData, type);
-                isInitialized = true;
+                value = (T)JsonUtility.FromJson(jsonData, type);
             }
             return value;
         }
@@ -56,7 +55,7 @@ namespace Kurisu.Framework.Serialization
             return new SerializedObject<T>()
             {
                 serializedTypeString = SerializedType.ToString(@object.GetType()),
-                jsonData = JsonConvert.SerializeObject(@object)
+                jsonData = JsonUtility.ToJson(@object)
             };
         }
     }

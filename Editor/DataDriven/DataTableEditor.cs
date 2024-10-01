@@ -8,25 +8,37 @@ using System;
 using System.Linq;
 using UnityEditorInternal;
 using Kurisu.Framework.Serialization;
+using System.IO;
 namespace Kurisu.Framework.Editor
 {
     [CustomEditor(typeof(DataTable))]
     public class DataTableEditor : UnityEditor.Editor
     {
+        private const int ColumSpace = 5;
         private ReorderableList reorderableList;
         private DataTable Table => target as DataTable;
         public override void OnInspectorGUI()
         {
+            GUILayout.Label("DataTable", new GUIStyle(GUI.skin.label)
+            {
+                fontSize = 20,
+                alignment = TextAnchor.MiddleCenter
+            });
+            DrawToolBar();
+            GUILayout.Space(10);
+
             var typeProp = serializedObject.FindProperty("m_rowType");
             var rowsProp = serializedObject.FindProperty("m_rows");
             bool canEdit = true;
             EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(typeProp);
+            EditorGUILayout.PropertyField(typeProp, new GUIContent("Row Type", "Set DataTable Row Type"));
+            GUILayout.Space(5);
 
             var rowStructType = Table.GetRowStructType();
             if (rowStructType != null)
             {
                 var header = GetFieldsName(rowStructType);
+                header.Insert(0, "Row Id");
                 var rows = Table.GetAllRows();
                 reorderableList ??= new ReorderableList(Table.GetAllRows(), rowStructType, true, true, true, true);
                 reorderableList.multiSelect = true;
@@ -46,7 +58,7 @@ namespace Kurisu.Framework.Editor
                 };
                 reorderableList.onAddCallback = list =>
                 {
-                    Table.AddRow((IDataTableRow)Activator.CreateInstance(rowStructType));
+                    Table.AddRow(Table.NewRowId(), (IDataTableRow)Activator.CreateInstance(rowStructType));
                     canEdit = false;
                     RefreshTableView();
                 };
@@ -65,7 +77,7 @@ namespace Kurisu.Framework.Editor
                 };
                 reorderableList.onReorderCallbackWithDetails = (list, oldIndex, newIndex) =>
                 {
-                    Table.SwarpRow(oldIndex, newIndex);
+                    Table.ReorderRow(oldIndex, newIndex);
                     canEdit = false;
                     RefreshTableView();
                 };
@@ -93,7 +105,37 @@ namespace Kurisu.Framework.Editor
         }
 
         #endregion
+        private void DrawToolBar()
+        {
+            var ToolBarStyle = new GUIStyle("LargeButton");
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Export to Json", ToolBarStyle))
+            {
+                var jsonData = Table.ExportJson();
+                string path = EditorUtility.SaveFilePanel("Select json file export path", Application.dataPath, Table.name, "json");
+                if (!string.IsNullOrEmpty(path))
+                {
+                    File.WriteAllText(path, jsonData);
+                    Debug.Log($"<color=#3aff48>DataTable</color>: Save to json file succeed!");
+                    AssetDatabase.SaveAssets();
+                    AssetDatabase.Refresh();
+                }
+            }
+            GUILayout.FlexibleSpace();
 
+            if (GUILayout.Button("Import from Json", ToolBarStyle))
+            {
+                string path = EditorUtility.OpenFilePanel("Select json file to import", Application.dataPath, "json");
+                if (!string.IsNullOrEmpty(path))
+                {
+                    AssetDatabase.SaveAssets();
+                    var data = File.ReadAllText(path);
+                    Table.ImportJson(data);
+                    RefreshTableView();
+                }
+            }
+            GUILayout.EndHorizontal();
+        }
         private void RefreshTableView()
         {
             Table.InternalUpdate();
@@ -119,10 +161,21 @@ namespace Kurisu.Framework.Editor
         }
         private void DrawDataTableRows(Rect rect, int columNum, Type elementType, SerializedProperty property)
         {
+            rect.width /= columNum;
+            rect.width -= ColumSpace;
+            var height = rect.height;
+            rect.height = EditorGUIUtility.singleLineHeight;
+            var rowNameProp = property.FindPropertyRelative("RowId");
+            EditorGUI.PropertyField(rect, rowNameProp, GUIContent.none);
+            // TODO: Add row id validation
+            rect.x += rect.width + ColumSpace;
+            rect.height = height;
+
+            property = property.FindPropertyRelative("RowData");
             var jsonProp = property.FindPropertyRelative("jsonData");
             var objectHandleProp = property.FindPropertyRelative("objectHandle");
             var handle = new SoftObjectHandle(objectHandleProp.ulongValue);
-            ScriptableObject wrapper = SerializationEditorManager.CreateWrapper(elementType, ref handle);
+            SerializedObjectWrapper wrapper = SerializationEditorManager.CreateWrapper(elementType, ref handle);
             if (objectHandleProp.ulongValue != handle.Handle)
             {
                 objectHandleProp.ulongValue = handle.Handle;
@@ -132,27 +185,28 @@ namespace Kurisu.Framework.Editor
 
             if (!string.IsNullOrEmpty(jsonProp.stringValue))
             {
-                JsonUtility.FromJsonOverwrite(jsonProp.stringValue, wrapper);
+                JsonUtility.FromJsonOverwrite(jsonProp.stringValue, wrapper.Value);
             }
             EditorGUI.BeginChangeCheck();
-            SerializedObjectWrapperDrawer.DrawGUIHorizontal(rect, columNum, wrapper);
+            SerializedObjectWrapperDrawer.DrawGUIHorizontal(rect, ColumSpace, wrapper);
             if (EditorGUI.EndChangeCheck())
             {
-                jsonProp.stringValue = JsonUtility.ToJson(wrapper);
+                jsonProp.stringValue = JsonUtility.ToJson(wrapper.Value);
             }
         }
         private void DrawDataTableHeader(Rect rect, List<string> header)
         {
             rect.width /= header.Count;
-            rect.width -= 5;
+            rect.width -= ColumSpace;
             for (int i = 0; i < header.Count; ++i)
             {
                 GUI.Label(rect, header[i]);
-                rect.x += rect.width + 5;
+                rect.x += rect.width + ColumSpace;
             }
         }
         private float GetDataTableRowHeight(Type elementType, SerializedProperty property)
         {
+            property = property.FindPropertyRelative("RowData");
             var objectHandleProp = property.FindPropertyRelative("objectHandle");
             var handle = new SoftObjectHandle(objectHandleProp.ulongValue);
             ScriptableObject wrapper = SerializationEditorManager.CreateWrapper(elementType, ref handle);
