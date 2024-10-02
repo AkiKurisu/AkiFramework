@@ -96,12 +96,35 @@ namespace Kurisu.Framework.DataDriven
             return true;
         }
         /// <summary>
+        /// Update a data row from the table
+        /// </summary>
+        /// <param name="RowName"></param>
+        /// <param name="newRow"></param>
+        /// <returns></returns>
+        public bool UpdateRow(string RowName, IDataTableRow newRow)
+        {
+            var internalMap = GetInternalRowMap();
+            if (!internalMap.TryGetValue(RowName, out var row))
+            {
+                return false;
+            }
+            row.RowData = SerializedObject<IDataTableRow>.FromObject(newRow);
+            return true;
+        }
+        /// <summary>
         /// Remove data rows from the table
         /// </summary>
         /// <param name="rowIndexs"></param>
         public void RemoveRow(List<int> rowIndexs)
         {
             m_rows = m_rows.Where((x, id) => !rowIndexs.Contains(id)).ToArray();
+        }
+        /// <summary>
+        /// Remove all data rows from the table
+        /// </summary>
+        public void RemoveAllRows()
+        {
+            m_rows = new DataTableRow[0];
         }
         /// <summary>
         /// Get all data rows as map with RowId as key
@@ -111,15 +134,19 @@ namespace Kurisu.Framework.DataDriven
         {
             return m_rows.ToDictionary(x => x.RowId, x => x.RowData.GetObject());
         }
-        public string ExportJson()
-        {
-            return JsonUtility.ToJson(this);
-        }
-        public void ImportJson(string jsonData)
-        {
-            JsonUtility.FromJsonOverwrite(jsonData, this);
-        }
         #region Internal API
+        internal Dictionary<string, DataTableRow> GetInternalRowMap()
+        {
+            return m_rows.ToDictionary(x => x.RowId, x => x);
+        }
+        /// <summary>
+        /// Internal use only, since we should ensure incomming row type is valid
+        /// </summary>
+        /// <param name="rowStructType"></param>
+        internal void SetRowStruct(Type rowStructType)
+        {
+            m_rowType = SerializedType<IDataTableRow>.FromType(rowStructType);
+        }
         internal string NewRowId()
         {
             var map = GetRowMap();

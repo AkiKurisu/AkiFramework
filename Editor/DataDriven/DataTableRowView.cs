@@ -17,17 +17,20 @@ namespace Kurisu.Framework.DataDriven.Editor
         private const int ColumSpace = 5;
         private ReorderableList reorderableList;
         public DataTable Table { get; }
+        private SerializedObject serializedObject;
         public DataTableRowView(DataTable dataTable)
         {
             Table = dataTable;
         }
         public void DrawGUI()
         {
-            using var serializedObject = new SerializedObject(Table);
+            serializedObject = new SerializedObject(Table);
             DrawGUI(serializedObject);
+            serializedObject.Dispose();
         }
         public void DrawGUI(SerializedObject serializedObject)
         {
+            this.serializedObject = serializedObject;
             var rowsProp = serializedObject.FindProperty("m_rows");
             bool canEdit = true;
             EditorGUI.BeginChangeCheck();
@@ -37,7 +40,7 @@ namespace Kurisu.Framework.DataDriven.Editor
                 var header = GetSerializedFieldsName(rowStructType);
                 header.Insert(0, "Row Id");
                 var rows = Table.GetAllRows();
-                reorderableList ??= new ReorderableList(Table.GetAllRows(), rowStructType, true, true, true, true);
+                reorderableList ??= new ReorderableList(rows, rowStructType, true, true, true, true);
                 reorderableList.multiSelect = true;
                 reorderableList.elementHeightCallback = (int index) =>
                 {
@@ -57,7 +60,8 @@ namespace Kurisu.Framework.DataDriven.Editor
                 {
                     Table.AddRow(Table.NewRowId(), (IDataTableRow)Activator.CreateInstance(rowStructType));
                     canEdit = false;
-                    Rebuild();
+                    RequestDataTableUpdate();
+                    GUIUtility.ExitGUI();
                 };
                 reorderableList.onRemoveCallback = list =>
                 {
@@ -70,13 +74,14 @@ namespace Kurisu.Framework.DataDriven.Editor
                     }
                     Table.RemoveRow(indexsToRemove);
                     canEdit = false;
-                    Rebuild();
+                    RequestDataTableUpdate();
+                    GUIUtility.ExitGUI();
                 };
                 reorderableList.onReorderCallbackWithDetails = (list, oldIndex, newIndex) =>
                 {
                     Table.ReorderRow(oldIndex, newIndex);
                     canEdit = false;
-                    Rebuild();
+                    RequestDataTableUpdate();
                 };
                 reorderableList.DoLayoutList();
             }
@@ -84,8 +89,14 @@ namespace Kurisu.Framework.DataDriven.Editor
             if (EditorGUI.EndChangeCheck() && canEdit)
             {
                 serializedObject.ApplyModifiedProperties();
-                Rebuild();
+                RequestDataTableUpdate();
             }
+        }
+        protected void RequestDataTableUpdate()
+        {
+            DataTableEditorUtils.OnDataTablePreUpdate?.Invoke(Table);
+            Rebuild();
+            DataTableEditorUtils.OnDataTablePostUpdate?.Invoke(Table);
         }
         /// <summary>
         /// Rebuild rows view
@@ -96,6 +107,7 @@ namespace Kurisu.Framework.DataDriven.Editor
             Table.InternalUpdate();
             // rebuild reorderable list next editor frame
             reorderableList = null;
+            serializedObject.Update();
         }
         /// <summary>
         /// Get all fields of type that Unity can serialize
@@ -104,29 +116,52 @@ namespace Kurisu.Framework.DataDriven.Editor
         /// <returns></returns>
         private static List<string> GetSerializedFieldsName(Type type)
         {
-            return type.GetFields(BindingFlags.Public | BindingFlags.Instance)
-                            .Concat(GetAllFields(type))
-                            .Where(field => field.IsInitOnly == false)
+            List<FieldInfo> fieldInfos = new();
+            GetAllSerializableFields(type, fieldInfos);
+            return fieldInfos.Where(field => field.IsInitOnly == false)
                             .Select(x => x.Name)
                             .ToList();
         }
-        private static IEnumerable<FieldInfo> GetAllFields(Type t)
+        private static void GetAllSerializableFields(Type type, List<FieldInfo> fieldInfos)
         {
-            if (t == null)
-                return Enumerable.Empty<FieldInfo>();
+            if (type.BaseType != null)
+            {
+                GetAllSerializableFields(type.BaseType, fieldInfos);
+            }
 
-            return t.GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
-                .Where(field => field.GetCustomAttribute<SerializeField>() != null).Concat(GetAllFields(t.BaseType));
+
+            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+
+            foreach (FieldInfo field in fields)
+            {
+                if (field.IsStatic) continue;
+
+                if (!field.FieldType.IsSerializable && !typeof(UnityEngine.Object).IsAssignableFrom(field.FieldType) && !field.FieldType.IsPrimitive && !field.FieldType.IsEnum
+                    && !typeof(List<>).IsAssignableFrom(field.FieldType) && !field.FieldType.IsArray
+                    && !field.FieldType.IsGenericType
+                    && !Attribute.IsDefined(field, typeof(SerializableAttribute), false))
+                    continue;
+
+                if (!field.IsPublic && !Attribute.IsDefined(field, typeof(SerializeField), false)) continue;
+
+                fieldInfos.Add(field);
+            }
         }
+
         private void DrawDataTableRows(Rect rect, int columNum, Type elementType, SerializedProperty property)
         {
             rect.width /= columNum;
             rect.width -= ColumSpace;
             var height = rect.height;
             rect.height = EditorGUIUtility.singleLineHeight;
-            var rowNameProp = property.FindPropertyRelative("RowId");
-            EditorGUI.PropertyField(rect, rowNameProp, GUIContent.none);
-            // TODO: Add row id validation
+            var rowIdProp = property.FindPropertyRelative("RowId");
+            string rowId = rowIdProp.stringValue;
+            EditorGUI.PropertyField(rect, rowIdProp, GUIContent.none);
+            if (rowId != rowIdProp.stringValue)
+            {
+                DataTableEditorUtils.ValidNewRowId(Table, rowId, rowIdProp.stringValue, out string validId);
+                rowIdProp.stringValue = validId;
+            }
             rect.x += rect.width + ColumSpace;
             rect.height = height;
 

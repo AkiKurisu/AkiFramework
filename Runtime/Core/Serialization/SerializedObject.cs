@@ -76,7 +76,6 @@ namespace Kurisu.Framework.Serialization
             {
                 value = default;
             }
-            objectHandle = 0;
         }
     }
 }

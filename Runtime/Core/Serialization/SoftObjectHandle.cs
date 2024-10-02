@@ -1,4 +1,5 @@
 using UnityEngine.Assertions;
+using UObject = UnityEngine.Object;
 namespace Kurisu.Framework.Serialization
 {
     public readonly struct SoftObjectHandle
@@ -14,7 +15,7 @@ namespace Kurisu.Framework.Serialization
         {
             return Handle != 0;
         }
-        public SoftObjectHandle(ulong handle)
+        internal SoftObjectHandle(ulong handle)
         {
             Handle = handle;
         }
@@ -43,6 +44,14 @@ namespace Kurisu.Framework.Serialization
         public override int GetHashCode()
         {
             return Handle.GetHashCode();
+        }
+        /// <summary>
+        /// Get object if has been loaded
+        /// </summary>
+        /// <returns></returns>
+        public UObject GetObject()
+        {
+            return GlobalObjectManager.GetObject(this);
         }
     }
 }
