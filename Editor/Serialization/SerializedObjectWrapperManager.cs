@@ -23,7 +23,7 @@ namespace Kurisu.Framework.Serialization.Editor
         {
             if (type == null) return null;
 
-            var wrapper = GlobalObjectManager.GetObject(softObjectHandle) as SerializedObjectWrapper;
+            var wrapper = softObjectHandle.GetObject() as SerializedObjectWrapper;
             // Validate wrapped type
             if (!wrapper || wrapper.Value.GetType() != type)
             {
@@ -39,7 +39,7 @@ namespace Kurisu.Framework.Serialization.Editor
         }
         public static SerializedObjectWrapper GetWrapper(Type type, SoftObjectHandle softObjectHandle)
         {
-            var wrapper = GlobalObjectManager.GetObject(softObjectHandle) as SerializedObjectWrapper;
+            var wrapper = softObjectHandle.GetObject() as SerializedObjectWrapper;
             // Validate wrapped type
             if (wrapper && wrapper.Value.GetType() != type)
             {
