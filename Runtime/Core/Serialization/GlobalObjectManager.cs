@@ -3,7 +3,7 @@ using UObject = UnityEngine.Object;
 namespace Kurisu.Framework.Serialization
 {
     /// <summary>
-    /// Class for managing dynamically created <see cref="UObject"/> 
+    /// Class for managing dynamically load/created <see cref="UObject"/> 
     /// </summary>
     public static class GlobalObjectManager
     {

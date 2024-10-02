@@ -7,13 +7,14 @@ using Kurisu.Framework.Editor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using System.Collections.Generic;
-using Kurisu.Framework.Serialization.Editor;
+using UObject = UnityEngine.Object;
+using Kurisu.Framework.Serialization;
 namespace Kurisu.Framework.Resource.Editor
 {
     public abstract class AssetReferenceDrawer : PropertyDrawer
     {
         private const string AddressPropertyName = "Address";
-        private const string ObjectPropertyName = "Object";
+        private const string GuidPropertyName = "Guid";
         private const string LockPropertyName = "Locked";
         private static readonly GUIContent LockedContent = new("", "when address is in locked, validation will prefer to use Object value");
         private static readonly GUIStyle LockedStyle = new("IN LockButton");
@@ -40,11 +41,13 @@ namespace Kurisu.Framework.Resource.Editor
                 }
             }
             var addressProp = property.FindPropertyRelative(AddressPropertyName);
-            var objectProp = property.FindPropertyRelative(ObjectPropertyName);
+            var guidProp = property.FindPropertyRelative(GuidPropertyName);
             var lockProp = property.FindPropertyRelative(LockPropertyName);
-            // Get cache asset or find real asset
-            UnityEngine.Object Object = objectProp.objectReferenceValue;
 
+            // Get cache asset from hard reference
+            UObject Object = SoftAssetReferenceEditorUtils.GetAssetFromGUID(guidProp.stringValue);
+
+            // TODO: Only need validate once
             ValidateAddress();
 
             EditorGUI.BeginProperty(position, label, property);
@@ -60,7 +63,7 @@ namespace Kurisu.Framework.Resource.Editor
                 else
                 {
                     addressProp.stringValue = string.Empty;
-                    objectProp.objectReferenceValue = null;
+                    guidProp.stringValue = string.Empty;
                 }
             }
             position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
@@ -75,7 +78,7 @@ namespace Kurisu.Framework.Resource.Editor
             if (EditorGUI.EndChangeCheck())
             {
                 Object = ResourceEditorExtension.FindAssetEntry(addressProp.stringValue, assetType)?.MainAsset;
-                objectProp.objectReferenceValue = Object;
+                guidProp.stringValue = Object.GetAssetGUID();
             }
             EditorGUI.EndProperty();
 
@@ -84,7 +87,7 @@ namespace Kurisu.Framework.Resource.Editor
                 if (!Object && !string.IsNullOrEmpty(addressProp.stringValue))
                 {
                     Object = ResourceEditorExtension.FindAssetEntry(addressProp.stringValue, assetType)?.MainAsset;
-                    objectProp.objectReferenceValue = Object;
+                    guidProp.stringValue = Object.GetAssetGUID();
                 }
                 else if (Object && string.IsNullOrEmpty(addressProp.stringValue))
                 {
@@ -96,7 +99,7 @@ namespace Kurisu.Framework.Resource.Editor
                     else
                     {
                         Object = null;
-                        objectProp.objectReferenceValue = null;
+                        guidProp.stringValue = string.Empty;
                     }
                 }
             }
@@ -108,7 +111,7 @@ namespace Kurisu.Framework.Resource.Editor
                 if (existingEntry != null)
                 {
                     addressProp.stringValue = existingEntry.address;
-                    objectProp.objectReferenceValue = Object;
+                    guidProp.stringValue = Object.GetAssetGUID();
                 }
                 else
                 {
@@ -124,10 +127,13 @@ namespace Kurisu.Framework.Resource.Editor
                                             .GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
                                             .Where(m => m.GetParameters().Length == 1)
                                             .Where(x => x.Name == processMethod)
-                                            .First();
-                        addressProp.stringValue = (string)method.Invoke(target, new object[1] { Object });
+                                            .FirstOrDefault();
+                        if (method != null)
+                            addressProp.stringValue = (string)method.Invoke(target, new object[1] { Object });
+                        else
+                            addressProp.stringValue = path;
                     }
-                    objectProp.objectReferenceValue = Object;
+                    guidProp.stringValue = Object.GetAssetGUID();
                     var entry = assetGroup.AddAsset(Object);
                     entry.address = addressProp.stringValue;
                     assetGroup.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, false, true);
@@ -157,18 +163,118 @@ namespace Kurisu.Framework.Resource.Editor
     {
         protected override Type GetAssetType()
         {
-            return typeof(UnityEngine.Object);
+            return typeof(UObject);
+        }
+    }
+    public static class SoftAssetReferenceEditorUtils
+    {
+        private static readonly Dictionary<string, SoftObjectHandle> refDic = new();
+
+        /// <summary>
+        /// Optimized fast api for load asset from guid in editor
+        /// </summary>
+        /// <param name="guid"></param>
+        /// <returns></returns>
+        public static UObject GetAssetFromGUID(string guid)
+        {
+            if (string.IsNullOrEmpty(guid)) return null;
+
+            if (!refDic.TryGetValue(guid, out var handle))
+            {
+                var uObject = AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(guid), typeof(UObject));
+                if (uObject)
+                {
+                    GlobalObjectManager.RegisterObject(uObject, ref handle);
+                    refDic[guid] = handle;
+                    return uObject;
+                }
+                return null;
+            }
+            var cacheObject = handle.GetObject();
+            if (cacheObject) return cacheObject;
+
+            GlobalObjectManager.UnregisterObject(handle);
+            var newObject = AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(guid), typeof(UObject));
+            if (newObject)
+            {
+                GlobalObjectManager.RegisterObject(newObject, ref handle);
+                refDic[guid] = handle;
+            }
+            return newObject;
+        }
+        /// <summary>
+        /// Create a soft asset reference from object
+        /// </summary>
+        /// <param name="asset"></param>
+        /// <returns></returns>
+        public static SoftAssetReference FromObject(UObject asset)
+        {
+            if (!asset)
+            {
+                return new SoftAssetReference();
+            }
+            var reference = new SoftAssetReference() { Guid = asset.GetAssetGUID(), Locked = true };
+            var existingEntry = asset.ToAddressableAssetEntry();
+            if (existingEntry != null)
+            {
+                reference.Address = existingEntry.address;
+            }
+            else
+            {
+                AddressableAssetGroup assetGroup = AddressableAssetSettingsDefaultObject.Settings.DefaultGroup;
+                var entry = assetGroup.AddAsset(asset);
+                assetGroup.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, false, true);
+                reference.Address = entry.address;
+            }
+            return reference;
+        }
+        /// <summary>
+        /// Create a generic soft asset reference from object
+        /// </summary>
+        /// <param name="asset"></param>
+        /// <returns></returns>
+        public static SoftAssetReference<T> FromTObject<T>(T asset) where T : UObject
+        {
+            if (!asset)
+            {
+                return new SoftAssetReference<T>();
+            }
+            var reference = new SoftAssetReference<T>() { Guid = asset.GetAssetGUID(), Locked = true };
+            var existingEntry = asset.ToAddressableAssetEntry();
+            if (existingEntry != null)
+            {
+                reference.Address = existingEntry.address;
+            }
+            else
+            {
+                AddressableAssetGroup assetGroup = AddressableAssetSettingsDefaultObject.Settings.DefaultGroup;
+                var entry = assetGroup.AddAsset(asset);
+                assetGroup.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, false, true);
+                reference.Address = entry.address;
+            }
+            return reference;
+        }
+        /// <summary>
+        /// Move reference object safe in editor
+        /// </summary>
+        /// <param name="reference"></param>
+        public static void MoveSoftReferenceObject(ref SoftAssetReference reference, AddressableAssetGroup group, params string[] labels)
+        {
+            var uObject = GetAssetFromGUID(reference.Guid);
+            if (!uObject) return;
+            var newEntry = group.AddAsset(uObject, labels);
+            reference.Address = newEntry.address;
         }
     }
     public static class ResourceEditorExtension
     {
-        public static AddressableAssetEntry AddAsset(this AddressableAssetGroup group, UnityEngine.Object asset, params string[] labels)
+        public static AddressableAssetEntry AddAsset(this AddressableAssetGroup group, UObject asset, params string[] labels)
         {
             if (asset == null) return null;
             var guid = asset.GetAssetGUID();
             if (guid == null)
             {
-                Debug.Log($"Can't find {asset} !");
+                Debug.LogError($"[Resource Editor] Can't find {asset} !");
                 return null;
             }
             var entry = AddressableAssetSettingsDefaultObject.Settings.CreateOrMoveEntry(guid, group, false, false);
@@ -178,7 +284,7 @@ namespace Kurisu.Framework.Resource.Editor
             }
             return entry;
         }
-        public static AddressableAssetEntry ToAddressableAssetEntry(this UnityEngine.Object asset)
+        public static AddressableAssetEntry ToAddressableAssetEntry(this UObject asset)
         {
             var entries = new List<AddressableAssetEntry>();
             var assetType = asset.GetType();
@@ -207,7 +313,7 @@ namespace Kurisu.Framework.Resource.Editor
             return entries.FirstOrDefault();
         }
 
-        public static string GetAssetGUID(this UnityEngine.Object asset)
+        public static string GetAssetGUID(this UObject asset)
         {
             return AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(asset));
         }

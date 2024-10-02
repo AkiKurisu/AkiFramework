@@ -36,10 +36,11 @@ namespace Kurisu.Framework.Resource
         public string Address;
 #if UNITY_EDITOR
         [SerializeField]
-        internal T Object;
+        internal string Guid;
         [SerializeField]
         internal bool Locked;
 #endif
+
         /// <summary>
         /// Create asset reference from address
         /// </summary>
@@ -48,17 +49,13 @@ namespace Kurisu.Framework.Resource
         {
             Address = address;
 #if UNITY_EDITOR
-            Object = null;
+            Guid = string.Empty;
             Locked = false;
 #endif
         }
         public readonly T Load<FUnregister>(ref FUnregister unregister) where FUnregister : struct, IUnRegister
         {
 #if UNITY_EDITOR
-            if (Object)
-            {
-                return Object;
-            }
             ResourceSystem.SafeCheck<T>(Address);
 #endif
             return ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(ref unregister).WaitForCompletion();
@@ -67,10 +64,6 @@ namespace Kurisu.Framework.Resource
         public readonly async UniTask<T> LoadAsync<TUnregister>(IUnRegister unregister)
         {
 #if UNITY_EDITOR
-            if (Object)
-            {
-                return Object;
-            }
             await ResourceSystem.SafeCheckAsync<T>(Address);
 #endif
             return await ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(unregister);
@@ -84,6 +77,10 @@ namespace Kurisu.Framework.Resource
         {
             return Address;
         }
+        public readonly bool IsValid()
+        {
+            return !string.IsNullOrEmpty(Address);
+        }
     }
     /// <summary>
     /// A lightweight asset reference only use address as identifier
@@ -94,7 +91,7 @@ namespace Kurisu.Framework.Resource
         public string Address;
 #if UNITY_EDITOR
         [SerializeField]
-        internal Object Object;
+        internal string Guid;
         [SerializeField]
         internal bool Locked;
 #endif
@@ -106,17 +103,13 @@ namespace Kurisu.Framework.Resource
         {
             Address = address;
 #if UNITY_EDITOR
-            Object = null;
+            Guid = string.Empty;
             Locked = false;
 #endif
         }
         public readonly Object Load<FUnregister>(ref FUnregister unregister) where FUnregister : struct, IUnRegister
         {
 #if UNITY_EDITOR
-            if (Object)
-            {
-                return Object;
-            }
             ResourceSystem.SafeCheck<Object>(Address);
 #endif
             return ResourceSystem.AsyncLoadAsset<Object>(Address).AddTo(ref unregister).WaitForCompletion();
@@ -125,10 +118,6 @@ namespace Kurisu.Framework.Resource
         public readonly async UniTask<Object> LoadAsync<TUnregister>(IUnRegister unregister)
         {
 #if UNITY_EDITOR
-            if (Object)
-            {
-                return Object;
-            }
             await ResourceSystem.SafeCheckAsync<Object>(Address);
 #endif
             return await ResourceSystem.AsyncLoadAsset<Object>(Address).AddTo(unregister);
@@ -141,6 +130,10 @@ namespace Kurisu.Framework.Resource
         public override readonly string ToString()
         {
             return Address;
+        }
+        public readonly bool IsValid()
+        {
+            return !string.IsNullOrEmpty(Address);
         }
     }
 }
