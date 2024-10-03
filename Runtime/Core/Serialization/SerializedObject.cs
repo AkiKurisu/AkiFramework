@@ -25,7 +25,7 @@ namespace Kurisu.Framework.Serialization
         /// Editor wrapper, used in SerializedObjectDrawer
         /// </summary>
         [SerializeField]
-        ulong objectHandle;
+        internal ulong objectHandle;
 #endif
         /// <summary>
         /// Get default object from <see cref="SerializedObject{T}"/>

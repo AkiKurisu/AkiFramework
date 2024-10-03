@@ -66,6 +66,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         {
             GlobalObjectManager.Cleanup();
             Undo.undoRedoEvent -= OnUndo;
+            Table.Cleanup();
         }
 
         #endregion

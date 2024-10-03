@@ -7,6 +7,9 @@ namespace Kurisu.Framework.Serialization
     /// </summary>
     public static class GlobalObjectManager
     {
+        /// <summary>
+        /// Cleanup global objects
+        /// </summary>
 #if UNITY_EDITOR
         [UnityEditor.InitializeOnLoadMethod]
 #endif

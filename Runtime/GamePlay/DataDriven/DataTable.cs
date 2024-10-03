@@ -16,11 +16,6 @@ namespace Kurisu.Framework.DataDriven
             RowId = rowId;
             RowData = SerializedObject<IDataTableRow>.FromObject(row);
         }
-        public DataTableRow(string rowId, SerializedObject<IDataTableRow> rowData)
-        {
-            RowId = rowId;
-            RowData = rowData;
-        }
     }
     [CreateAssetMenu(fileName = "DataTable", menuName = "AkiFramework/DataTable")]
     public class DataTable : ScriptableObject
@@ -125,6 +120,32 @@ namespace Kurisu.Framework.DataDriven
             m_rows = new DataTableRow[0];
         }
         /// <summary>
+        /// Insert a row to dataTable
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="RowName"></param>
+        /// <param name="row"></param>
+        /// <returns></returns>
+        public bool InsertRow(int index, string RowName, IDataTableRow row)
+        {
+            var rowKeys = m_rows.Select(x => x.RowId).ToList();
+            if (rowKeys.Contains(RowName))
+            {
+                return false;
+            }
+            ArrayUtils.Insert(ref m_rows, index, new DataTableRow(RowName, row));
+            return true;
+        }
+        /// <summary>
+        /// Reorder a row
+        /// </summary>
+        /// <param name="fromIndex"></param>
+        /// <param name="toIndex"></param>
+        public void ReorderRow(int fromIndex, int toIndex)
+        {
+            ArrayUtils.Reorder(ref m_rows, fromIndex, toIndex);
+        }
+        /// <summary>
         /// Get all data rows as map with RowId as key
         /// </summary>
         /// <returns></returns>
@@ -133,6 +154,10 @@ namespace Kurisu.Framework.DataDriven
             return m_rows.ToDictionary(x => x.RowId, x => x.RowData.GetObject());
         }
         #region Internal API
+        /// <summary>
+        /// Get editable row map
+        /// </summary>
+        /// <returns></returns>
         internal Dictionary<string, DataTableRow> GetInternalRowMap()
         {
             return m_rows.ToDictionary(x => x.RowId, x => x);
@@ -145,6 +170,10 @@ namespace Kurisu.Framework.DataDriven
         {
             m_rowType = SerializedType<IDataTableRow>.FromType(rowStructType);
         }
+        /// <summary>
+        /// Get valid new row id
+        /// </summary>
+        /// <returns></returns>
         internal string NewRowId()
         {
             var map = GetRowMap();
@@ -156,6 +185,9 @@ namespace Kurisu.Framework.DataDriven
             }
             return id;
         }
+        /// <summary>
+        /// Editor update
+        /// </summary>
         internal void InternalUpdate()
         {
             m_rowType.InternalUpdate();
@@ -165,19 +197,18 @@ namespace Kurisu.Framework.DataDriven
                 m_rows[i].RowData.InternalUpdate();
             }
         }
-        internal bool InsertRow(int index, string RowName, IDataTableRow row)
+        /// <summary>
+        /// When use version control, update object handle will let file checkout.
+        /// So cleanup after editor completed use.
+        /// </summary>
+        internal void Cleanup()
         {
-            var rowKeys = m_rows.Select(x => x.RowId).ToList();
-            if (rowKeys.Contains(RowName))
+#if UNITY_EDITOR
+            for (int i = 0; i < m_rows.Length; ++i)
             {
-                return false;
+                m_rows[i].RowData.objectHandle = 0;
             }
-            ArrayUtils.Insert(ref m_rows, index, new DataTableRow(RowName, row));
-            return true;
-        }
-        internal void ReorderRow(int fromIndex, int toIndex)
-        {
-            ArrayUtils.Reorder(ref m_rows, fromIndex, toIndex);
+#endif
         }
         /// <summary>
         /// Get data rows from table without modify default object
