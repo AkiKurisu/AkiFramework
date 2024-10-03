@@ -121,7 +121,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         /// </summary>
         protected virtual void RebuildEditorView()
         {
-            dataTableRowView.Rebuild();
+            dataTableRowView?.Rebuild();
             serializedObject.Update();
         }
         private void OnUndo(in UndoRedoInfo undo)

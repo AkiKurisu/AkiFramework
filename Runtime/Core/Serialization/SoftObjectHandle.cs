@@ -2,6 +2,9 @@ using UnityEngine.Assertions;
 using UObject = UnityEngine.Object;
 namespace Kurisu.Framework.Serialization
 {
+    /// <summary>
+    /// Soft Ptr for UnityEngine.Object
+    /// </summary>
     public readonly struct SoftObjectHandle
     {
         public readonly ulong Handle { get; }

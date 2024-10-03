@@ -230,7 +230,7 @@ namespace Kurisu.Framework.DataDriven
         /// <returns></returns>
         internal Dictionary<string, IDataTableRow> GetRowMapSafe()
         {
-            return m_rows.ToDictionary(x => x.RowId, x => x.RowData.GetObject());
+            return m_rows.ToDictionary(x => x.RowId, x => x.RowData.NewObject());
         }
         #endregion
     }
