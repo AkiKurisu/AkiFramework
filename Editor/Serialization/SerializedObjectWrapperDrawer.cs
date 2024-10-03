@@ -95,18 +95,5 @@ namespace Kurisu.Framework.Serialization.Editor
             serializedObject.ApplyModifiedProperties();
             serializedObject.Dispose();
         }
-        private static bool AreAnySubPropertiesVisible(SerializedProperty property)
-        {
-            var data = (ScriptableObject)property.objectReferenceValue;
-            SerializedObject serializedObject = new(data);
-            SerializedProperty prop = serializedObject.GetIterator();
-            while (prop.NextVisible(true))
-            {
-                if (prop.name == "m_Script") continue;
-                return true;
-            }
-            serializedObject.Dispose();
-            return false;
-        }
     }
 }

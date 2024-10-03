@@ -62,4 +62,11 @@ namespace Kurisu.Framework.Serialization.Editor
             return (SerializedObjectWrapper)dynamicTypeInstance;
         }
     }
+    public static class SerializedObjectEditorUtils
+    {
+        public static void Cleanup(SerializedObjectBase serializedObjectBase)
+        {
+            serializedObjectBase.objectHandle = 0;
+        }
+    }
 }

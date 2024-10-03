@@ -171,7 +171,7 @@ namespace Kurisu.Framework.DataDriven
             m_rowType = SerializedType<IDataTableRow>.FromType(rowStructType);
         }
         /// <summary>
-        /// Get valid new row id
+        /// Get a valid new row id
         /// </summary>
         /// <returns></returns>
         internal string NewRowId()
@@ -186,7 +186,7 @@ namespace Kurisu.Framework.DataDriven
             return id;
         }
         /// <summary>
-        /// Editor update
+        /// Update dataTable struct and rows
         /// </summary>
         internal void InternalUpdate()
         {
@@ -198,8 +198,7 @@ namespace Kurisu.Framework.DataDriven
             }
         }
         /// <summary>
-        /// When use version control, update object handle will let file checkout.
-        /// So cleanup after editor completed use.
+        /// Clear editor object cache.
         /// </summary>
         internal void Cleanup()
         {
@@ -224,6 +223,14 @@ namespace Kurisu.Framework.DataDriven
         internal IDataTableRow[] GetAllRowsSafe()
         {
             return m_rows.Select(x => x.RowData.NewObject()).ToArray();
+        }
+        /// <summary>
+        /// Get all data rows as map with RowId as key without modify default object
+        /// </summary>
+        /// <returns></returns>
+        internal Dictionary<string, IDataTableRow> GetRowMapSafe()
+        {
+            return m_rows.ToDictionary(x => x.RowId, x => x.RowData.GetObject());
         }
         #endregion
     }
