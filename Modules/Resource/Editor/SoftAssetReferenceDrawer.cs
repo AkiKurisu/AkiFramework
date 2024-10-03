@@ -171,6 +171,11 @@ namespace Kurisu.Framework.Resource.Editor
     {
         private static readonly Dictionary<string, SoftObjectHandle> refDic = new();
 
+        static SoftAssetReferenceEditorUtils()
+        {
+            // Cleanup cache since SoftObjectHandle is not valid anymore
+            GlobalObjectManager.OnGlobalObjectCleanup += () => refDic.Clear();
+        }
         /// <summary>
         /// Optimized fast api for load asset from guid in editor
         /// </summary>

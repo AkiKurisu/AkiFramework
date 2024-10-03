@@ -15,9 +15,16 @@ namespace Kurisu.Framework.Serialization
 #endif
         public static void Cleanup()
         {
-            serialNum = 1;
+            // Should not reset, since some modules may still keeping old reference, so only increase serialNum.
+            serialNum += 1;
             GlobalObjects.Clear();
+            OnGlobalObjectCleanup?.Invoke();
         }
+        public delegate void GlobalObjectCleanupDelegate();
+        /// <summary>
+        /// Fired when GlobalObjectManager cleanup, subscribe this event to cleanup all references to SoftObjectHandle.
+        /// </summary>
+        public static event GlobalObjectCleanupDelegate OnGlobalObjectCleanup;
         /// <summary>
         /// Container for UObject
         /// </summary>
@@ -28,6 +35,19 @@ namespace Kurisu.Framework.Serialization
         }
         private static ulong serialNum = 1;
         private static readonly SparseList<ObjectStructure> GlobalObjects = new(10, SoftObjectHandle.MaxIndex);
+        /// <summary>
+        /// Get managed global objects count
+        /// </summary>
+        /// <returns></returns>
+        public static int GetObjectNum()
+        {
+            return GlobalObjects.Count;
+        }
+        /// <summary>
+        /// Get object by soft reference if exists
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
         public static UObject GetObject(SoftObjectHandle handle)
         {
             int index = handle.GetIndex();
@@ -39,6 +59,11 @@ namespace Kurisu.Framework.Serialization
             }
             return null;
         }
+        /// <summary>
+        /// Register object to global object manager
+        /// </summary>
+        /// <param name="uObject"></param>
+        /// <param name="handle"></param>
         public static void RegisterObject(UObject uObject, ref SoftObjectHandle handle)
         {
             if (GetObject(handle) != null)
@@ -50,6 +75,10 @@ namespace Kurisu.Framework.Serialization
             handle = new SoftObjectHandle(serialNum, index);
             structure.Handle = handle;
         }
+        /// <summary>
+        /// Unregister object from global object manager
+        /// </summary>
+        /// <param name="handle"></param>
         public static void UnregisterObject(SoftObjectHandle handle)
         {
             int index = handle.GetIndex();
