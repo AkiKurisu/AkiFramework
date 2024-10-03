@@ -1,3 +1,4 @@
+using Kurisu.Framework.Serialization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -36,6 +37,10 @@ namespace Kurisu.Framework.Editor
                     ScriptingSymbol.AddScriptingSymbol(StackTraceSchedulerDisableSymbol);
                 FrameworkSettings.Save();
             }
+            GUILayout.EndVertical();
+            GUILayout.BeginVertical("Serialization Settings", GUI.skin.box);
+            GUILayout.Space(EditorGUIUtility.singleLineHeight);
+            GUILayout.Label($"Current Global Objects: {GlobalObjectManager.GetObjectNum()}");
             GUILayout.EndVertical();
         }
         [SettingsProvider]

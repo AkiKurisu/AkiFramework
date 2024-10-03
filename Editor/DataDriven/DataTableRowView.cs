@@ -159,7 +159,7 @@ namespace Kurisu.Framework.DataDriven.Editor
             EditorGUI.PropertyField(rect, rowIdProp, GUIContent.none);
             if (rowId != rowIdProp.stringValue)
             {
-                DataTableEditorUtils.ValidNewRowId(Table, rowId, rowIdProp.stringValue, out string validId);
+                DataTableEditorUtils.ValidateNewRowId(Table, rowId, rowIdProp.stringValue, out string validId);
                 rowIdProp.stringValue = validId;
             }
             rect.x += rect.width + ColumSpace;

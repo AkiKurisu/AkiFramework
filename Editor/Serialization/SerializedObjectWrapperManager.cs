@@ -19,6 +19,12 @@ namespace Kurisu.Framework.Serialization.Editor
                 set { m_Value = (T)value; }
             }
         }
+        /// <summary>
+        /// Create an editor wrapper for providing type and track it by <see cref="SoftObjectHandle"/>
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="softObjectHandle"></param>
+        /// <returns></returns>
         public static SerializedObjectWrapper CreateWrapper(Type type, ref SoftObjectHandle softObjectHandle)
         {
             if (type == null) return null;
@@ -33,10 +39,20 @@ namespace Kurisu.Framework.Serialization.Editor
             }
             return wrapper;
         }
+        /// <summary>
+        /// Manually destroy wrapper
+        /// </summary>
+        /// <param name="softObjectHandle"></param>
         public static void DestroyWrapper(SoftObjectHandle softObjectHandle)
         {
             GlobalObjectManager.UnregisterObject(softObjectHandle);
         }
+        /// <summary>
+        /// Get editor wrapper if exists
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="softObjectHandle"></param>
+        /// <returns></returns>
         public static SerializedObjectWrapper GetWrapper(Type type, SoftObjectHandle softObjectHandle)
         {
             var wrapper = softObjectHandle.GetObject() as SerializedObjectWrapper;
@@ -60,6 +76,17 @@ namespace Kurisu.Framework.Serialization.Editor
             }
             wrapper.Value = value ?? default;
             return (SerializedObjectWrapper)dynamicTypeInstance;
+        }
+    }
+    public static class SerializedObjectEditorUtils
+    {
+        /// <summary>
+        /// Cleanup a serializedObjectBase object reference
+        /// </summary>
+        /// <param name="serializedObjectBase"></param>
+        public static void Cleanup(SerializedObjectBase serializedObjectBase)
+        {
+            serializedObjectBase.objectHandle = 0;
         }
     }
 }

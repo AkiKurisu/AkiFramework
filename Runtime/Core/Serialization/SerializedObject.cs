@@ -2,12 +2,7 @@ using System;
 using UnityEngine;
 namespace Kurisu.Framework.Serialization
 {
-    /// <summary>
-    /// Serialized object that will serialize metadata and fields of object implementing T
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    [Serializable]
-    public sealed class SerializedObject<T>
+    public class SerializedObjectBase
     {
         /// <summary>
         /// Formatted type metadata, see <see cref="SerializedType"/>
@@ -17,16 +12,24 @@ namespace Kurisu.Framework.Serialization
         /// Serialized object data
         /// </summary>
         public string jsonData;
-#pragma warning disable CS8632
-        private T? value;
-#pragma warning restore CS8632 
 #if UNITY_EDITOR
         /// <summary>
         /// Editor wrapper, used in SerializedObjectDrawer
         /// </summary>
         [SerializeField]
-        ulong objectHandle;
+        internal ulong objectHandle;
 #endif
+    }
+    /// <summary>
+    /// Serialized object that will serialize metadata and fields of object implementing T
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    [Serializable]
+    public sealed class SerializedObject<T> : SerializedObjectBase
+    {
+#pragma warning disable CS8632
+        private T? value;
+#pragma warning restore CS8632 
         /// <summary>
         /// Get default object from <see cref="SerializedObject{T}"/>
         /// </summary>
@@ -44,6 +47,20 @@ namespace Kurisu.Framework.Serialization
                 value = (T)JsonUtility.FromJson(jsonData, type);
             }
             return value;
+        }
+        /// <summary>
+        /// Instantiate new object from <see cref="SerializedObject{T}"/>
+        /// </summary>
+        /// <returns></returns>
+        public T NewObject()
+        {
+            var type = SerializedType.FromString(serializedTypeString);
+            if (type == null)
+            {
+                Debug.LogWarning($"Missing type {type} when deserialize {nameof(T)}");
+                return default;
+            }
+            return (T)JsonUtility.FromJson(jsonData, type);
         }
         /// <summary>
         /// Get object type from <see cref="SerializedObject{T}"/>
