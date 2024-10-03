@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Kurisu.Framework.Serialization;
 using UnityEngine;
-using UnityEngine.Assertions;
 namespace Kurisu.Framework.DataDriven
 {
     public interface IDataTableRow { }
@@ -51,7 +50,6 @@ namespace Kurisu.Framework.DataDriven
         /// </summary>
         public T[] GetAllRows<T>() where T : class, IDataTableRow
         {
-            Assert.IsTrue(m_rowType.GetObjectType() == typeof(T));
             return m_rows.Select(x => x.RowData.GetObject() as T).ToArray();
         }
         /// <summary>
@@ -180,6 +178,21 @@ namespace Kurisu.Framework.DataDriven
         internal void ReorderRow(int fromIndex, int toIndex)
         {
             ArrayUtils.Reorder(ref m_rows, fromIndex, toIndex);
+        }
+        /// <summary>
+        /// Get data rows from table without modify default object
+        /// </summary>
+        internal T[] GetAllRowsSafe<T>() where T : class, IDataTableRow
+        {
+            return m_rows.Select(x => x.RowData.NewObject() as T).ToArray();
+        }
+        /// <summary>
+        /// Get data rows from table without modify default object
+        /// </summary>
+        /// <returns></returns>
+        internal IDataTableRow[] GetAllRowsSafe()
+        {
+            return m_rows.Select(x => x.RowData.NewObject()).ToArray();
         }
         #endregion
     }

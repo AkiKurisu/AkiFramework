@@ -9,6 +9,7 @@ using UnityEditor.AddressableAssets.Settings;
 using System.Collections.Generic;
 using UObject = UnityEngine.Object;
 using Kurisu.Framework.Serialization;
+using UnityEngine.AddressableAssets;
 namespace Kurisu.Framework.Resource.Editor
 {
     public abstract class AssetReferenceDrawer : PropertyDrawer
@@ -201,6 +202,16 @@ namespace Kurisu.Framework.Resource.Editor
                 refDic[guid] = handle;
             }
             return newObject;
+        }
+        public static UObject GetAsset(SoftAssetReference softAssetReference)
+        {
+            if (string.IsNullOrEmpty(softAssetReference.Address)) return null;
+            var asset = GetAssetFromGUID(softAssetReference.Guid);
+            if (!asset)
+            {
+                asset = ResourceSystem.AsyncLoadAsset<UObject>(softAssetReference.Address).WaitForCompletion();
+            }
+            return asset;
         }
         /// <summary>
         /// Create a soft asset reference from object

@@ -46,6 +46,20 @@ namespace Kurisu.Framework.Serialization
             return value;
         }
         /// <summary>
+        /// Instantiate new object from <see cref="SerializedObject{T}"/>
+        /// </summary>
+        /// <returns></returns>
+        public T NewObject()
+        {
+            var type = SerializedType.FromString(serializedTypeString);
+            if (type == null)
+            {
+                Debug.LogWarning($"Missing type {type} when deserialize {nameof(T)}");
+                return default;
+            }
+            return (T)JsonUtility.FromJson(jsonData, type);
+        }
+        /// <summary>
         /// Get object type from <see cref="SerializedObject{T}"/>
         /// </summary>
         /// <returns></returns>

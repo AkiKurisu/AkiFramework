@@ -7,14 +7,14 @@ namespace Kurisu.Framework.Serialization.Editor
     {
         public static float CalculatePropertyHeight(ScriptableObject data)
         {
-            if (data == null) return EditorGUIUtility.singleLineHeight;
+            if (data == null) return 0;
             SerializedObject serializedObject = new(data);
             try
             {
                 SerializedProperty prop = serializedObject.FindProperty("m_Value");
                 if (prop == null)
                 {
-                    return EditorGUIUtility.singleLineHeight;
+                    return 0;
                 }
                 float totalHeight = 0;
                 if (prop.NextVisible(true))
@@ -35,14 +35,14 @@ namespace Kurisu.Framework.Serialization.Editor
         }
         public static float CalculatePropertyHeightLayout(ScriptableObject data)
         {
-            if (data == null) return EditorGUIUtility.singleLineHeight;
+            if (data == null) return 0;
             SerializedObject serializedObject = new(data);
             try
             {
                 SerializedProperty prop = serializedObject.FindProperty("m_Value");
                 if (prop == null)
                 {
-                    return EditorGUIUtility.singleLineHeight;
+                    return 0;
                 }
                 float totalHeight = 0;
                 if (prop.NextVisible(true))

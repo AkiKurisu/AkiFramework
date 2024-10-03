@@ -74,9 +74,8 @@ namespace Kurisu.Framework.DataDriven.Editor
         /// </summary>
         protected virtual void DrawToolBar()
         {
-            var ToolBarStyle = new GUIStyle("LargeButton");
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Export to Json", ToolBarStyle))
+            if (GUILayout.Button("Export to Json", DataTableEditorUtils.ToolBarButtonStyle))
             {
                 var jsonData = DataTableEditorUtils.ExportJson(Table);
                 string path = EditorUtility.SaveFilePanel("Select json file export path", Application.dataPath, Table.name, "json");
@@ -91,7 +90,7 @@ namespace Kurisu.Framework.DataDriven.Editor
             OnDrawLeftTooBar?.Invoke(this);
             GUILayout.FlexibleSpace();
 
-            if (GUILayout.Button("Import from Json", ToolBarStyle))
+            if (GUILayout.Button("Import from Json", DataTableEditorUtils.ToolBarButtonStyle))
             {
                 string path = EditorUtility.OpenFilePanel("Select json file to import", Application.dataPath, "json");
                 if (!string.IsNullOrEmpty(path))
