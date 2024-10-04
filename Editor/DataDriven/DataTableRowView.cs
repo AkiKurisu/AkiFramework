@@ -86,6 +86,20 @@ namespace Kurisu.Framework.DataDriven.Editor
                 reorderableList.DoLayoutList();
             }
 
+            Event evt = Event.current;
+            if (evt.type == EventType.ContextClick && GUILayoutUtility.GetLastRect().Contains(evt.mousePosition))
+            {
+                GenericMenu menu = new();
+                menu.AddItem(new GUIContent("Clear"), false, () =>
+                {
+                    Table.RemoveAllRows();
+                    canEdit = false;
+                    RequestDataTableUpdate();
+                });
+                menu.ShowAsContext();
+            }
+
+
             if (EditorGUI.EndChangeCheck() && canEdit)
             {
                 serializedObject.ApplyModifiedProperties();
