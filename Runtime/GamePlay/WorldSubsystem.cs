@@ -10,7 +10,7 @@ namespace Kurisu.Framework
         private readonly Dictionary<Type, SubsystemBase> systems = new();
         private SubsystemBase[] subsystems;
         private IDisposable actorsUpdateSubscription;
-        public WorldSubsystemCollection(ActorWorld world)
+        public WorldSubsystemCollection(GameWorld world)
         {
             var types = AppDomain.CurrentDomain
                     .GetAssemblies()
@@ -104,13 +104,13 @@ namespace Kurisu.Framework
         /// </summary>
         /// <value></value>
         protected bool IsDestroyed { get; private set; }
-        private ActorWorld world;
+        private GameWorld world;
         /// <summary>
         /// Whether system can create
         /// </summary>
         /// <param name="world"></param>
         /// <returns></returns>
-        public virtual bool CanCreate(ActorWorld world) => true;
+        public virtual bool CanCreate(GameWorld world) => true;
         /// <summary>
         /// Subsystem initialize phase, should bind callbacks and collect references in this phase
         /// </summary>
@@ -146,7 +146,7 @@ namespace Kurisu.Framework
             IsDestroyed = true;
             Release();
         }
-        internal void SetWorld(ActorWorld world)
+        internal void SetWorld(GameWorld world)
         {
             this.world = world;
         }
@@ -154,7 +154,7 @@ namespace Kurisu.Framework
         /// Get attached world
         /// </summary>
         /// <returns></returns>
-        public ActorWorld GetWorld() => world;
+        public GameWorld GetWorld() => world;
         /// <summary>
         /// Get all actors in world, readonly
         /// </summary>
@@ -198,7 +198,7 @@ namespace Kurisu.Framework
         /// <param name="world"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T Get<T>(ActorWorld world) where T : DynamicSubsystem, new()
+        public static T Get<T>(GameWorld world) where T : DynamicSubsystem, new()
         {
             var system = world.GetSubsystem<T>();
             if (system == null)

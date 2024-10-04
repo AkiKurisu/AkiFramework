@@ -8,7 +8,7 @@ namespace Kurisu.Framework
     /// </summary>
     public abstract class Actor : MonoBehaviour
     {
-        private ActorWorld world;
+        private GameWorld world;
         private ActorController controller;
         private ActorHandle handle;
         private readonly HashSet<ActorComponent> actorComponents = new();
@@ -25,7 +25,7 @@ namespace Kurisu.Framework
         /// Get actor's world
         /// </summary>
         /// <returns></returns>
-        public ActorWorld GetWorld() => world;
+        public GameWorld GetWorld() => world;
         /// <summary>
         /// Get actor's id according to actor's world
         /// </summary>
@@ -37,8 +37,8 @@ namespace Kurisu.Framework
         /// <param name="actor"></param>
         protected static void RegisterActor(Actor actor)
         {
-            actor.world = ActorWorld.Current;
-            ActorWorld.Current.RegisterActor(actor, ref actor.handle);
+            actor.world = GameWorld.Get();
+            actor.world.RegisterActor(actor, ref actor.handle);
         }
         /// <summary>
         /// Unregister an actor from world
@@ -46,7 +46,7 @@ namespace Kurisu.Framework
         /// <param name="actor"></param>
         protected static void UnregisterActor(Actor actor)
         {
-            if (actor.world == null || actor.world != ActorWorld.Current) return;
+            if (actor.world == null || actor.world != GameWorld.Get()) return;
             actor.world.UnregisterActor(actor);
             actor.world = null;
             actor.handle = default;

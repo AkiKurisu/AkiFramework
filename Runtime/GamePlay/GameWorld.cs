@@ -49,9 +49,9 @@ namespace Kurisu.Framework
         }
     }
     /// <summary>
-    /// World for GamePlay actor level.
+    /// World container in GamePlay level.
     /// </summary>
-    public class ActorWorld : MonoBehaviour
+    public class GameWorld : MonoBehaviour
     {
         private ulong serialNum = 1;
         private const int InitialCapacity = 100;
@@ -62,23 +62,7 @@ namespace Kurisu.Framework
         internal SparseList<Actor> actorsInWorld = new(InitialCapacity, ActorHandle.MaxIndex + 1);
         internal readonly Subject<Unit> onActorsUpdate = new();
         private WorldSubsystemCollection subsystemCollection;
-        private static ActorWorld current;
-        public static ActorWorld Current
-        {
-            get
-            {
-                if (!current)
-                {
-                    current = FindAnyObjectByType<ActorWorld>();
-                    if (!current)
-                    {
-
-                        current = new GameObject(nameof(ActorWorld)).AddComponent<ActorWorld>();
-                    }
-                }
-                return current;
-            }
-        }
+        private static GameWorld current;
         private bool isSystemDirty = false;
         private bool isDestroyed;
         private void Awake()
@@ -120,11 +104,24 @@ namespace Kurisu.Framework
             subsystemCollection.Dispose();
             onActorsUpdate.Dispose();
         }
+        public static GameWorld Get()
+        {
+            if (!current)
+            {
+                current = FindAnyObjectByType<GameWorld>();
+                if (!current)
+                {
+
+                    current = new GameObject(nameof(GameWorld)).AddComponent<GameWorld>();
+                }
+            }
+            return current;
+        }
         internal void RegisterActor(Actor actor, ref ActorHandle handle)
         {
             if (GetActor(handle) != null)
             {
-                Debug.LogError($"[ActorWorld] {actor.gameObject.name} is already registered to world!");
+                Debug.LogError($"[GameWorld] {actor.gameObject.name} is already registered to world!");
                 return;
             }
             int index = actorsInWorld.Add(actor);
@@ -140,7 +137,7 @@ namespace Kurisu.Framework
                 var current = actorsInWorld[index];
                 if (current.GetActorHandle().GetSerialNumber() != handle.GetSerialNumber())
                 {
-                    Debug.LogWarning($"[ActorWorld] Actor {handle.Handle} has already been removed from world!");
+                    Debug.LogWarning($"[GameWorld] Actor {handle.Handle} has already been removed from world!");
                     return;
                 }
                 // increase serial num as version update
@@ -172,7 +169,7 @@ namespace Kurisu.Framework
         {
             if (isDestroyed)
             {
-                Debug.LogError($"[ActorWorld] World is already destroyed!");
+                Debug.LogError($"[GameWorld] World is already destroyed!");
                 return;
             }
             subsystemCollection.RegisterSubsystem(subsystem);
