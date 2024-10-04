@@ -84,7 +84,7 @@ namespace Kurisu.Framework.AI.EQS
 
                 if (commands.Length == 0) return;
 
-                actorData = ActorWorld.Current.GetSubsystem<ActorQuerySystem>().GetAllActors(Allocator.TempJob);
+                actorData = GameWorld.Get().GetSubsystem<ActorQuerySystem>().GetAllActors(Allocator.TempJob);
                 results = new NativeParallelMultiHashMap<int, ActorHandle>(1024, Allocator.Persistent);
                 execution = commands.ToArray(Allocator.TempJob);
                 jobHandle = new OverlapFieldViewBatchJob()
