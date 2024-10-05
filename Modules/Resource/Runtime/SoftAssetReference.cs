@@ -20,11 +20,17 @@ namespace Kurisu.Framework.Resource
         /// Group to register referenced asset, default use AddressableAssetSettingsDefaultObject.Settings.DefaultGroup
         /// </summary>
         public string Group { get; private set; }
-        public AssetReferenceConstraintAttribute(Type AssetType = null, string Formatter = null, string Group = null)
+        /// <summary>
+        /// Enable to move asset entry to defined group if already in other asset group
+        /// </summary>
+        /// <value></value>
+        public bool ForceGroup { get; private set; }
+        public AssetReferenceConstraintAttribute(Type AssetType = null, string Formatter = null, string Group = null, bool ForceGroup = false)
         {
             this.AssetType = AssetType;
             this.Formatter = Formatter;
             this.Group = Group;
+            this.ForceGroup = ForceGroup;
         }
     }
     /// <summary>
@@ -55,20 +61,18 @@ namespace Kurisu.Framework.Resource
         }
         public readonly T Load<FUnregister>(ref FUnregister unregister) where FUnregister : struct, IUnRegister
         {
-#if UNITY_EDITOR
-            ResourceSystem.SafeCheck<T>(Address);
-#endif
             return ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(ref unregister).WaitForCompletion();
 
         }
+        public readonly T Load<FUnregister>(IUnRegister unregister)
+        {
+            return ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(unregister).WaitForCompletion();
+        }
         public readonly async UniTask<T> LoadAsync<TUnregister>(IUnRegister unregister)
         {
-#if UNITY_EDITOR
-            await ResourceSystem.SafeCheckAsync<T>(Address);
-#endif
             return await ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(unregister);
-
         }
+
         public static implicit operator SoftAssetReference<T>(string address)
         {
             return new SoftAssetReference<T>() { Address = address };
@@ -109,17 +113,15 @@ namespace Kurisu.Framework.Resource
         }
         public readonly Object Load<FUnregister>(ref FUnregister unregister) where FUnregister : struct, IUnRegister
         {
-#if UNITY_EDITOR
-            ResourceSystem.SafeCheck<Object>(Address);
-#endif
             return ResourceSystem.AsyncLoadAsset<Object>(Address).AddTo(ref unregister).WaitForCompletion();
+        }
 
+        public readonly Object Load<FUnregister>(IUnRegister unregister)
+        {
+            return ResourceSystem.AsyncLoadAsset<Object>(Address).AddTo(unregister).WaitForCompletion();
         }
         public readonly async UniTask<Object> LoadAsync<TUnregister>(IUnRegister unregister)
         {
-#if UNITY_EDITOR
-            await ResourceSystem.SafeCheckAsync<Object>(Address);
-#endif
             return await ResourceSystem.AsyncLoadAsset<Object>(Address).AddTo(unregister);
 
         }

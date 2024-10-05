@@ -12,9 +12,6 @@ namespace Kurisu.Framework.Serialization
         /// <summary>
         /// Cleanup global objects
         /// </summary>
-#if UNITY_EDITOR
-        [UnityEditor.InitializeOnLoadMethod]
-#endif
         public static void Cleanup()
         {
             // Should not reset, since some modules may still keeping old reference, so only increase serialNum.

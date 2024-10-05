@@ -9,7 +9,7 @@ using UnityEditor.AddressableAssets.Settings;
 using System.Collections.Generic;
 using UObject = UnityEngine.Object;
 using Kurisu.Framework.Serialization;
-using UnityEngine.AddressableAssets;
+using Object = UnityEngine.Object;
 namespace Kurisu.Framework.Resource.Editor
 {
     public abstract class AssetReferenceDrawer : PropertyDrawer
@@ -22,25 +22,7 @@ namespace Kurisu.Framework.Resource.Editor
         protected abstract Type GetAssetType();
         public sealed override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            // Get generic constraint type
-            AddressableAssetGroup assetGroup = AddressableAssetSettingsDefaultObject.Settings.DefaultGroup;
-            Type assetType = GetAssetType();
-
-            string processMethod = null;
-            var constraint = fieldInfo.GetCustomAttribute<AssetReferenceConstraintAttribute>(false);
-            if (constraint != null)
-            {
-                // Attribute constraint should match generic constraint
-                if (constraint.AssetType != null && constraint.AssetType.IsSubclassOf(assetType))
-                    assetType = constraint.AssetType;
-
-                processMethod = constraint.Formatter;
-                if (!string.IsNullOrEmpty(constraint.Group))
-                {
-                    var group = AddressableAssetSettingsDefaultObject.Settings.FindGroup(constraint.Group); ;
-                    if (group) assetGroup = group;
-                }
-            }
+            GetPropertyMetaData(out var assetGroup, out var assetType, out var processMethod, out var forceMoveToGroup);
             var addressProp = property.FindPropertyRelative(AddressPropertyName);
             var guidProp = property.FindPropertyRelative(GuidPropertyName);
             var lockProp = property.FindPropertyRelative(LockPropertyName);
@@ -51,6 +33,8 @@ namespace Kurisu.Framework.Resource.Editor
             // TODO: Only need validate once
             ValidateAddress();
 
+            ListenDragAndDrop(position, property);
+
             EditorGUI.BeginProperty(position, label, property);
             EditorGUI.BeginChangeCheck();
             position.height = EditorGUIUtility.singleLineHeight;
@@ -59,7 +43,7 @@ namespace Kurisu.Framework.Resource.Editor
             {
                 if (Object)
                 {
-                    GetOrCreateObjectAddress();
+                    AssignAddress(property, Object, processMethod, assetGroup, forceMoveToGroup);
                 }
                 else
                 {
@@ -78,7 +62,7 @@ namespace Kurisu.Framework.Resource.Editor
             lockProp.boolValue = GUI.Toggle(position, lockProp.boolValue, LockedContent, LockedStyle);
             if (EditorGUI.EndChangeCheck())
             {
-                Object = ResourceEditorExtension.FindAssetEntry(addressProp.stringValue, assetType)?.MainAsset;
+                Object = ResourceEditorUtils.FindAssetEntry(addressProp.stringValue, assetType)?.MainAsset;
                 guidProp.stringValue = Object.GetAssetGUID();
             }
             EditorGUI.EndProperty();
@@ -87,7 +71,7 @@ namespace Kurisu.Framework.Resource.Editor
             {
                 if (!Object && !string.IsNullOrEmpty(addressProp.stringValue))
                 {
-                    Object = ResourceEditorExtension.FindAssetEntry(addressProp.stringValue, assetType)?.MainAsset;
+                    Object = ResourceEditorUtils.FindAssetEntry(addressProp.stringValue, assetType)?.MainAsset;
                     guidProp.stringValue = Object.GetAssetGUID();
                 }
                 else if (Object && string.IsNullOrEmpty(addressProp.stringValue))
@@ -95,7 +79,7 @@ namespace Kurisu.Framework.Resource.Editor
                     // when reference is in locked mode, prefer to Object value
                     if (lockProp.boolValue)
                     {
-                        GetOrCreateObjectAddress();
+                        AssignAddress(property, Object, processMethod, assetGroup, forceMoveToGroup);
                     }
                     else
                     {
@@ -104,46 +88,124 @@ namespace Kurisu.Framework.Resource.Editor
                     }
                 }
             }
-            void GetOrCreateObjectAddress()
+        }
+        private static void AssignAddress(SerializedProperty property, Object Object, string processMethod, AddressableAssetGroup assetGroup, bool forceMoveToGroup)
+        {
+            var addressProp = property.FindPropertyRelative(AddressPropertyName);
+            var guidProp = property.FindPropertyRelative(GuidPropertyName);
+            // Alreay exists => use entry current address, ensure to not effect other references
+            string path = AssetDatabase.GetAssetPath(Object);
+            var existingEntry = Object.ToAddressableAssetEntry();
+            if (existingEntry != null && !(forceMoveToGroup && existingEntry.parentGroup != assetGroup))
             {
-                // Alreay exists => use entry current address, ensure to not effect other references
-                string path = AssetDatabase.GetAssetPath(Object);
-                var existingEntry = Object.ToAddressableAssetEntry();
-                if (existingEntry != null)
+                addressProp.stringValue = existingEntry.address;
+                guidProp.stringValue = Object.GetAssetGUID();
+            }
+            else
+            {
+                // Is new => format address and register it
+                if (string.IsNullOrEmpty(processMethod))
                 {
-                    addressProp.stringValue = existingEntry.address;
-                    guidProp.stringValue = Object.GetAssetGUID();
+                    addressProp.stringValue = path;
                 }
                 else
                 {
-                    // Is new => format address and register it
-                    if (string.IsNullOrEmpty(processMethod))
-                    {
-                        addressProp.stringValue = path;
-                    }
+                    object target = ReflectionUtility.GetTargetObjectWithProperty(property);
+                    var method = target.GetType()
+                                        .GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+                                        .Where(m => m.GetParameters().Length == 1)
+                                        .Where(x => x.Name == processMethod)
+                                        .FirstOrDefault();
+                    if (method != null)
+                        addressProp.stringValue = (string)method.Invoke(target, new object[1] { Object });
                     else
-                    {
-                        object target = ReflectionUtility.GetTargetObjectWithProperty(property);
-                        var method = target.GetType()
-                                            .GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-                                            .Where(m => m.GetParameters().Length == 1)
-                                            .Where(x => x.Name == processMethod)
-                                            .FirstOrDefault();
-                        if (method != null)
-                            addressProp.stringValue = (string)method.Invoke(target, new object[1] { Object });
-                        else
-                            addressProp.stringValue = path;
-                    }
-                    guidProp.stringValue = Object.GetAssetGUID();
-                    var entry = assetGroup.AddAsset(Object);
-                    entry.address = addressProp.stringValue;
-                    assetGroup.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, false, true);
+                        addressProp.stringValue = path;
                 }
+                guidProp.stringValue = Object.GetAssetGUID();
+                var entry = assetGroup.AddAsset(Object);
+                entry.address = addressProp.stringValue;
+                assetGroup.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, false, true);
             }
         }
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             return EditorGUIUtility.singleLineHeight * 2 + EditorGUIUtility.standardVerticalSpacing;
+        }
+        private void ListenDragAndDrop(Rect rect, SerializedProperty property)
+        {
+            if (!fieldInfo.FieldType.IsArray)
+            {
+                return;
+            }
+            int index = property.propertyPath.LastIndexOf(".Array.data[");
+            string parentPath = property.propertyPath[..index];
+            var parentProp = property.serializedObject.FindProperty(parentPath);
+            var evt = Event.current;
+            switch (evt.type)
+            {
+                case EventType.DragUpdated:
+                case EventType.DragPerform:
+                    if (!rect.Contains(evt.mousePosition))
+                    {
+                        break;
+                    }
+
+                    if (evt.type == EventType.DragPerform)
+                    {
+                        GetPropertyMetaData(out var assetGroup, out var assetType, out var processMethod, out var forceMoveToGroup);
+                        var array = DragAndDrop.objectReferences.Where(asset =>
+                        {
+                            return asset.GetType() == assetType || asset.GetType().IsSubclassOf(assetType);
+                        }).ToArray();
+
+                        if (array.Length <= 1) return;
+
+                        DragAndDrop.AcceptDrag();
+                        int startId = 0;
+                        var lstProp = parentProp.GetArrayElementAtIndex(parentProp.arraySize - 1);
+                        var lstGuid = lstProp.FindPropertyRelative(GuidPropertyName).stringValue;
+                        // If last slot is empty, assign it
+                        if (string.IsNullOrEmpty(lstGuid))
+                        {
+                            startId = 1;
+                            AssignAddress(lstProp, array[1], processMethod, assetGroup, forceMoveToGroup);
+                            lstProp.FindPropertyRelative(LockPropertyName).boolValue = true;
+                        }
+                        for (int i = startId; i < array.Length; ++i)
+                        {
+                            parentProp.InsertArrayElementAtIndex(parentProp.arraySize);
+                            var childProp = parentProp.GetArrayElementAtIndex(parentProp.arraySize - 1);
+                            AssignAddress(childProp, array[i], processMethod, assetGroup, forceMoveToGroup);
+                            childProp.FindPropertyRelative(LockPropertyName).boolValue = true;
+                        }
+                        Event.current.Use();
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        private void GetPropertyMetaData(out AddressableAssetGroup assetGroup, out Type assetType,
+                                out string processMethod, out bool forceMoveToGroup)
+        {
+            assetGroup = AddressableAssetSettingsDefaultObject.Settings.DefaultGroup;
+            assetType = GetAssetType();
+            processMethod = null;
+            forceMoveToGroup = false;
+            var constraint = fieldInfo.GetCustomAttribute<AssetReferenceConstraintAttribute>(false);
+            if (constraint != null)
+            {
+                // Attribute constraint should match generic constraint
+                if (constraint.AssetType != null && constraint.AssetType.IsSubclassOf(assetType))
+                    assetType = constraint.AssetType;
+
+                processMethod = constraint.Formatter;
+                forceMoveToGroup = constraint.ForceGroup;
+                if (!string.IsNullOrEmpty(constraint.Group))
+                {
+                    assetGroup = ResourceEditorUtils.GetOrCreateAssetGroup(constraint.Group);
+                }
+            }
         }
     }
     [CustomPropertyDrawer(typeof(SoftAssetReference<>))]
@@ -282,8 +344,14 @@ namespace Kurisu.Framework.Resource.Editor
             reference.Address = newEntry.address;
         }
     }
-    public static class ResourceEditorExtension
+    public static class ResourceEditorUtils
     {
+        public static AddressableAssetGroup GetOrCreateAssetGroup(string groupName)
+        {
+            var group = AddressableAssetSettingsDefaultObject.Settings.groups.FirstOrDefault(x => x.name == groupName);
+            if (group != null) return group;
+            return AddressableAssetSettingsDefaultObject.Settings.CreateGroup(groupName, false, false, true, AddressableAssetSettingsDefaultObject.Settings.DefaultGroup.Schemas);
+        }
         public static AddressableAssetEntry AddAsset(this AddressableAssetGroup group, UObject asset, params string[] labels)
         {
             if (asset == null) return null;
