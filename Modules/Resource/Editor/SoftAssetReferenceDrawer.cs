@@ -168,7 +168,7 @@ namespace Kurisu.Framework.Resource.Editor
                         if (string.IsNullOrEmpty(lstGuid))
                         {
                             startId = 1;
-                            AssignAddress(lstProp, array[1], processMethod, assetGroup, forceMoveToGroup);
+                            AssignAddress(lstProp, array[0], processMethod, assetGroup, forceMoveToGroup);
                             lstProp.FindPropertyRelative(LockPropertyName).boolValue = true;
                         }
                         for (int i = startId; i < array.Length; ++i)
