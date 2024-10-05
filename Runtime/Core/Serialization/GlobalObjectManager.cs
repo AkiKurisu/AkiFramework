@@ -1,4 +1,6 @@
+using System;
 using Kurisu.Framework.Collections;
+using UnityEngine.Assertions;
 using UObject = UnityEngine.Object;
 namespace Kurisu.Framework.Serialization
 {
@@ -19,6 +21,7 @@ namespace Kurisu.Framework.Serialization
             serialNum += 1;
             GlobalObjects.Clear();
             OnGlobalObjectCleanup?.Invoke();
+            isDirty = true;
         }
         public delegate void GlobalObjectCleanupDelegate();
         /// <summary>
@@ -28,13 +31,31 @@ namespace Kurisu.Framework.Serialization
         /// <summary>
         /// Container for UObject
         /// </summary>
-        private class ObjectStructure
+        internal class ObjectStructure
         {
             public UObject Object;
             public SoftObjectHandle Handle;
         }
         private static ulong serialNum = 1;
         private static readonly SparseList<ObjectStructure> GlobalObjects = new(10, SoftObjectHandle.MaxIndex);
+        private static bool isDirty;
+        internal static void ForEach(Action<ObjectStructure> func)
+        {
+            Assert.IsNotNull(func);
+            foreach (var gObject in GlobalObjects)
+            {
+                func(gObject);
+            }
+        }
+        internal static bool CheckAndResetDirty()
+        {
+            if (isDirty)
+            {
+                isDirty = false;
+                return true;
+            }
+            return false;
+        }
         /// <summary>
         /// Get managed global objects count
         /// </summary>
@@ -74,6 +95,7 @@ namespace Kurisu.Framework.Serialization
             int index = GlobalObjects.Add(structure);
             handle = new SoftObjectHandle(serialNum, index);
             structure.Handle = handle;
+            isDirty = true;
         }
         /// <summary>
         /// Unregister object from global object manager
@@ -92,6 +114,7 @@ namespace Kurisu.Framework.Serialization
                 // increase serial num as version update
                 ++serialNum;
                 GlobalObjects.RemoveAt(index);
+                isDirty = true;
             }
         }
     }
