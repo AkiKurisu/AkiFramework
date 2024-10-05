@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -83,6 +84,15 @@ namespace Kurisu.Framework.Serialization.Editor
                 var subGroups = group.GroupBy(x => x.Namespace);
                 foreach (var subGroup in subGroups)
                 {
+                    // No namespace
+                    if (string.IsNullOrEmpty(subGroup.Key))
+                    {
+                        foreach (var type in subGroup)
+                        {
+                            entries.Add(new SearchTreeEntry(new GUIContent(type.Name, _indentationIcon)) { level = 2, userData = type });
+                        }
+                        continue;
+                    }
                     entries.Add(new SearchTreeGroupEntry(new GUIContent($"Select {subGroup.Key}"), 2));
                     foreach (var type in subGroup)
                     {
@@ -102,7 +112,11 @@ namespace Kurisu.Framework.Serialization.Editor
         {
             return AppDomain.CurrentDomain.GetAssemblies()
                             .SelectMany(a => a.GetTypes())
-                            .Where(t => father.IsAssignableFrom(t) && !t.IsAbstract && t.IsClass);
+                            .Where(t =>
+                            {
+                                if (t.GetCustomAttribute<HideInSerializedTypeAttribute>() != null) return false;
+                                return father.IsAssignableFrom(t) && !t.IsAbstract && t.IsClass;
+                            });
         }
     }
 }
