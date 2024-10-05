@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 namespace Kurisu.Framework.Serialization
 {
-    // Code from Unity
+    // Modified from Unity
     public static class SerializedType
     {
         #region Private helpers
@@ -127,6 +129,10 @@ namespace Kurisu.Framework.Serialization
 
         public static Type FromString(string serializedTypeString)
         {
+            if (SerializedTypeRedirector.TryRedirect(serializedTypeString, out var type))
+            {
+                return type;
+            }
             if (string.IsNullOrEmpty(serializedTypeString) || IsGeneric(serializedTypeString))
                 return null;
             var data = SplitTypeString(serializedTypeString);
@@ -274,6 +280,48 @@ namespace Kurisu.Framework.Serialization
             {
                 value = default;
             }
+        }
+    }
+    /// <summary>
+    /// Attribute type that changed assembly, namespace or class name.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+    public class FormerlySerializedTypeAttribute : Attribute
+    {
+        private readonly string m_oldSerializedType;
+
+        public string OldSerializedType => m_oldSerializedType;
+        public FormerlySerializedTypeAttribute(string oldSerializedType)
+        {
+            m_oldSerializedType = oldSerializedType;
+        }
+    }
+    /// <summary>
+    /// Attribute type that will not show in SerializedType search window
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+    public class HideInSerializedTypeAttribute : Attribute { }
+    public static class SerializedTypeRedirector
+    {
+        private static readonly Lazy<Dictionary<string, Type>> updatableType;
+        static SerializedTypeRedirector()
+        {
+            updatableType = new Lazy<Dictionary<string, Type>>(() =>
+            {
+                return AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
+                                                    .Where(x => x.GetCustomAttribute<FormerlySerializedTypeAttribute>() != null)
+                                                    .ToDictionary(x => x.GetCustomAttribute<FormerlySerializedTypeAttribute>().OldSerializedType, x => x);
+            });
+        }
+        /// <summary>
+        /// Try get redirected type
+        /// </summary>
+        /// <param name="stringType"></param>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static bool TryRedirect(string stringType, out Type type)
+        {
+            return updatableType.Value.TryGetValue(stringType, out type);
         }
     }
 }

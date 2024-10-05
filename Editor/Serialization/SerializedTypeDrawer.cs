@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -102,7 +103,11 @@ namespace Kurisu.Framework.Serialization.Editor
         {
             return AppDomain.CurrentDomain.GetAssemblies()
                             .SelectMany(a => a.GetTypes())
-                            .Where(t => father.IsAssignableFrom(t) && !t.IsAbstract && t.IsClass);
+                            .Where(t =>
+                            {
+                                if (t.GetCustomAttribute<HideInSerializedTypeAttribute>() != null) return false;
+                                return father.IsAssignableFrom(t) && !t.IsAbstract && t.IsClass;
+                            });
         }
     }
 }

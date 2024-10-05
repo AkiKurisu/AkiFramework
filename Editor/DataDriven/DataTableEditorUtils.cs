@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Kurisu.Framework.Editor;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -47,10 +48,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         /// <returns></returns>
         public static string ExportJson(DataTable dataTable)
         {
-            var instance = Object.Instantiate(dataTable);
-            instance.InternalUpdate();
-            instance.Cleanup();
-            return JsonUtility.ToJson(instance);
+            return AkiFrameworkSettings.Instance.JsonSerializer.GetObject().Serialize(dataTable);
         }
         /// <summary>
         /// Import json and overwrite dataTable
@@ -60,9 +58,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         public static void ImportJson(DataTable dataTable, string jsonData)
         {
             Undo.RecordObject(dataTable, "Overwrite DataTable from Json");
-            JsonUtility.FromJsonOverwrite(jsonData, dataTable);
-            dataTable.InternalUpdate();
-            dataTable.Cleanup();
+            AkiFrameworkSettings.Instance.JsonSerializer.GetObject().Deserialize(dataTable, jsonData);
         }
         /// <summary>
         /// Validate input row id and out right one
@@ -117,15 +113,35 @@ namespace Kurisu.Framework.DataDriven.Editor
             return dataTable.GetRowMapSafe();
         }
         /// <summary>
-        /// Clear editor object cache.
+        /// Post processing after update DataTable, which will clear editor object cache and keep row struct type right.
         /// </summary>
         /// <remarks>
         /// When use version control, update object handle will let file checkout.
         /// So cleanup after editor completed use.
         /// </remarks>
-        public static void Cleanup(DataTable dataTable)
+        public static void Modify(DataTable dataTable)
         {
+            dataTable.InternalUpdate();
             dataTable.Cleanup();
+        }
+    }
+    public interface IDataTableJsonSerializer
+    {
+        string Serialize(DataTable dataTable);
+        void Deserialize(DataTable dataTable, string jsonData);
+    }
+    public class DataTableJsonSerializer : IDataTableJsonSerializer
+    {
+        public string Serialize(DataTable dataTable)
+        {
+            var instance = Object.Instantiate(dataTable);
+            DataTableEditorUtils.Modify(instance);
+            return JsonUtility.ToJson(instance);
+        }
+        public void Deserialize(DataTable dataTable, string jsonData)
+        {
+            JsonUtility.FromJsonOverwrite(jsonData, dataTable);
+            DataTableEditorUtils.Modify(dataTable);
         }
     }
 }
