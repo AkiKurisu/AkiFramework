@@ -84,6 +84,15 @@ namespace Kurisu.Framework.Serialization.Editor
                 var subGroups = group.GroupBy(x => x.Namespace);
                 foreach (var subGroup in subGroups)
                 {
+                    // No namespace
+                    if (string.IsNullOrEmpty(subGroup.Key))
+                    {
+                        foreach (var type in subGroup)
+                        {
+                            entries.Add(new SearchTreeEntry(new GUIContent(type.Name, _indentationIcon)) { level = 2, userData = type });
+                        }
+                        continue;
+                    }
                     entries.Add(new SearchTreeGroupEntry(new GUIContent($"Select {subGroup.Key}"), 2));
                     foreach (var type in subGroup)
                     {

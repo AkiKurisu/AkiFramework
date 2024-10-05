@@ -4,6 +4,7 @@ using System.Linq;
 using Kurisu.Framework.Editor;
 namespace Kurisu.Framework.Serialization.Editor
 {
+    // EditorWindow is modified from R3.Unity
     public class SerializationDebuggerEditorWindow : EditorWindow
     {
         static SerializationDebuggerEditorWindow window;
