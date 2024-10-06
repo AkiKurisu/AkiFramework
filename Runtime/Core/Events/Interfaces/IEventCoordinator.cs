@@ -6,9 +6,9 @@ namespace Kurisu.Framework.Events
     public interface IEventCoordinator
     {
         /// <summary>
-        /// Implement to set coordinator's root event handler, set null if not need
+        /// Get coordinator's default event handler
         /// </summary>
         /// <value></value>
-        CallbackEventHandler RootEventHandler { get; }
+        CallbackEventHandler GetCallbackEventHandler();
     }
 }

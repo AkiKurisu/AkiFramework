@@ -1,17 +1,18 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static Kurisu.Framework.Events.EventBase;
 namespace Kurisu.Framework.Events
 {
     public class EventSystem : MonoEventCoordinator
     {
-        private sealed class RootCallBackEventHandler : CallbackEventHandler, IBehaviourScope
+#pragma warning disable IDE1006
+        private sealed class _CallbackEventHandler : CallbackEventHandler, IBehaviourScope
+#pragma warning restore IDE1006
         {
             public sealed override bool IsCompositeRoot => true;
             private readonly EventSystem eventCoordinator;
             public sealed override IEventCoordinator Root => eventCoordinator;
             public MonoBehaviour Behaviour { get; }
-            public RootCallBackEventHandler(EventSystem eventCoordinator)
+            public _CallbackEventHandler(EventSystem eventCoordinator)
             {
                 Behaviour = eventCoordinator;
                 this.eventCoordinator = eventCoordinator;
@@ -21,54 +22,19 @@ namespace Kurisu.Framework.Events
                 e.Target = this;
                 eventCoordinator.Dispatch(e, dispatchMode, MonoDispatchType.Update);
             }
-        }
-        private sealed class MonoCallBackEventHandler : CallbackEventHandler, IBehaviourScope
-        {
-            public sealed override bool IsCompositeRoot => false;
-            private readonly MonoDispatchType monoDispatchType;
-            private readonly MonoEventCoordinator eventCoordinator;
-            public sealed override IEventCoordinator Root => eventCoordinator;
-            public MonoBehaviour Behaviour { get; }
-            public MonoCallBackEventHandler(MonoEventCoordinator eventCoordinator, MonoDispatchType monoDispatchType, CallbackEventHandler parent)
-            {
-                Behaviour = eventCoordinator;
-                this.monoDispatchType = monoDispatchType;
-                this.eventCoordinator = eventCoordinator;
-                Parent = parent;
-            }
-            public override void SendEvent(EventBase e, DispatchMode dispatchMode)
+            public void SendEvent(EventBase e, DispatchMode dispatchMode, MonoDispatchType monoDispatchType)
             {
                 e.Target = this;
-                e.Propagation |= EventPropagation.Bubbles;
                 eventCoordinator.Dispatch(e, dispatchMode, monoDispatchType);
             }
         }
         private static EventSystem instance;
         public static EventSystem Instance => instance != null ? instance : GetInstance();
-        private readonly Dictionary<MonoDispatchType, CallbackEventHandler> eventHandlers = new();
-        public override CallbackEventHandler RootEventHandler { get; protected set; }
+        private CallbackEventHandler eventHandler;
         /// <summary>
-        /// Get <see cref="CallbackEventHandler"/> for events dispatch on all frame (Update, FixedUpdate and LateUpdate), use <see cref="TrickleDown"/> to register calBack on children handlers.
+        /// Get event system <see cref="CallbackEventHandler"/>
         /// </summary>
-        /// <remarks>
-        /// Events send from this can not be received by children, to receive specified dispatch type events, sending of events should also use specified eventHandler.
-        /// </remarks>
-        public static CallbackEventHandler EventHandler => Instance.RootEventHandler;
-        /// <summary>
-        /// Get <see cref="CallbackEventHandler"/> for events dispatch on update
-        /// </summary>
-        /// <returns></returns>
-        public static CallbackEventHandler UpdateHandler => Instance.GetEventHandler(MonoDispatchType.Update);
-        /// <summary>
-        /// Get <see cref="CallbackEventHandler"/> for events dispatch on fixedUpdate
-        /// </summary>
-        /// <value></value>
-        public static CallbackEventHandler FixedUpdateHandler => Instance.GetEventHandler(MonoDispatchType.FixedUpdate);
-        /// <summary>
-        /// Get <see cref="CallbackEventHandler"/> for events dispatch on lateUpdate
-        /// </summary>
-        /// <value></value>
-        public static CallbackEventHandler LateUpdateHandler => Instance.GetEventHandler(MonoDispatchType.LateUpdate);
+        public static CallbackEventHandler EventHandler => Instance.eventHandler;
         private static EventSystem GetInstance()
         {
 #if UNITY_EDITOR
@@ -76,32 +42,49 @@ namespace Kurisu.Framework.Events
 #endif
             if (instance == null)
             {
-                EventSystem managerInScene = FindObjectOfType<EventSystem>();
-                if (managerInScene != null)
-                {
-                    instance = managerInScene;
-                }
-                else
-                {
-                    GameObject managerObject = new() { name = nameof(EventSystem) };
-                    instance = managerObject.AddComponent<EventSystem>();
-                }
+                GameObject managerObject = new() { name = nameof(EventSystem) };
+                instance = managerObject.AddComponent<EventSystem>();
+                DontDestroyOnLoad(instance);
             }
             return instance;
         }
         protected override void Awake()
         {
             base.Awake();
-            var root = new RootCallBackEventHandler(this);
-            RootEventHandler = root;
-            //Set parent to bubble up
-            eventHandlers[MonoDispatchType.Update] = new MonoCallBackEventHandler(this, MonoDispatchType.Update, RootEventHandler);
-            eventHandlers[MonoDispatchType.FixedUpdate] = new MonoCallBackEventHandler(this, MonoDispatchType.FixedUpdate, RootEventHandler);
-            eventHandlers[MonoDispatchType.LateUpdate] = new MonoCallBackEventHandler(this, MonoDispatchType.LateUpdate, RootEventHandler);
+            eventHandler = new _CallbackEventHandler(this);
         }
-        public CallbackEventHandler GetEventHandler(MonoDispatchType monoDispatchType)
+        /// <summary>
+        /// Adds an event handler to the instance. If the event handler has already been registered for the same phase (either TrickleDown or BubbleUp) then this method has no effect.
+        /// </summary>
+        /// <param name="callback">The event handler to add.</param>
+        public static void RegisterCallback<TEventType>(EventCallback<TEventType> callback, TrickleDown useTrickleDown = TrickleDown.NoTrickleDown) where TEventType : EventBase<TEventType>, new()
         {
-            return eventHandlers[monoDispatchType];
+            EventHandler.RegisterCallback(callback, useTrickleDown);
+        }
+        /// <summary>
+        /// Remove callback from the instance.
+        /// </summary>
+        /// <param name="callback">The callback to remove. If this callback was never registered, nothing happens.</param>
+        /// <param name="useTrickleDown">Set this parameter to true to remove the callback from the TrickleDown phase. Set this parameter to false to remove the callback from the BubbleUp phase.</param>
+        public static void UnregisterCallback<TEventType>(EventCallback<TEventType> callback, TrickleDown useTrickleDown = TrickleDown.NoTrickleDown) where TEventType : EventBase<TEventType>, new()
+        {
+            if (!instance) return;
+            EventHandler.UnregisterCallback(callback, useTrickleDown);
+        }
+        /// <summary>
+        /// Sends an event to the event handler.
+        /// </summary>
+        /// <param name="e">The event to send.</param>
+        /// <param name="dispatchMode">The event dispatch mode.</param>
+        /// <param name="monoDispatchType"></param>
+        public static void SendEvent(EventBase eventBase, DispatchMode dispatchMode = DispatchMode.Default, MonoDispatchType monoDispatchType = MonoDispatchType.Update)
+        {
+            (EventHandler as _CallbackEventHandler).SendEvent(eventBase, dispatchMode, monoDispatchType);
+        }
+
+        public sealed override CallbackEventHandler GetCallbackEventHandler()
+        {
+            return eventHandler;
         }
     }
 }
