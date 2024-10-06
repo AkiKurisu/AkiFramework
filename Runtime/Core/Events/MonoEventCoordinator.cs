@@ -17,7 +17,6 @@ namespace Kurisu.Framework.Events
     {
         public virtual EventDispatcher EventDispatcher { get; protected set; }
         public MonoDispatchType DispatchStatus { get; private set; }
-        public virtual CallbackEventHandler RootEventHandler { get; protected set; }
         private readonly HashSet<ICoordinatorDebugger> m_Debuggers = new();
         private readonly Queue<EventBase> updateQueue = new();
         private readonly Queue<EventBase> lateUpdateQueue = new();
@@ -144,5 +143,7 @@ namespace Kurisu.Framework.Events
                 debugger.PostProcessEvent(ev);
             }
         }
+
+        public abstract CallbackEventHandler GetCallbackEventHandler();
     }
 }

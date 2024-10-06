@@ -251,7 +251,7 @@ namespace Kurisu.Framework.Events
                     // If no propagation path, make sure EventDispatchUtilities.ExecuteDefaultAction has a target
                     if (evt.Target is not CallbackEventHandler target)
                     {
-                        evt.Target = target = coordinator.RootEventHandler;
+                        evt.Target = target = coordinator.GetCallbackEventHandler();
                     }
 
                     if (target?.Root == coordinator)
