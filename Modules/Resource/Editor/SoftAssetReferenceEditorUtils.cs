@@ -7,6 +7,7 @@ using UnityEditor.AddressableAssets.Settings;
 using System.Collections.Generic;
 using UObject = UnityEngine.Object;
 using Kurisu.Framework.Serialization;
+using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 namespace Kurisu.Framework.Resource.Editor
 {
     public static class SoftAssetReferenceEditorUtils
@@ -130,7 +131,11 @@ namespace Kurisu.Framework.Resource.Editor
         {
             var group = AddressableAssetSettingsDefaultObject.Settings.groups.FirstOrDefault(x => x.name == groupName);
             if (group != null) return group;
-            return AddressableAssetSettingsDefaultObject.Settings.CreateGroup(groupName, false, false, true, AddressableAssetSettingsDefaultObject.Settings.DefaultGroup.Schemas);
+            group = AddressableAssetSettingsDefaultObject.Settings.CreateGroup(groupName, false, false, true, AddressableAssetSettingsDefaultObject.Settings.DefaultGroup.Schemas);
+            // Ensure address is included in build
+            BundledAssetGroupSchema infoSchema = group.GetSchema<BundledAssetGroupSchema>();
+            infoSchema.IncludeAddressInCatalog = true;
+            return group;
         }
         public static AddressableAssetEntry AddAsset(this AddressableAssetGroup group, UObject asset, params string[] labels)
         {
