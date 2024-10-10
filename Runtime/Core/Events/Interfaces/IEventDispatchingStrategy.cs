@@ -61,6 +61,11 @@ namespace Kurisu.Framework.Events
         bool CanDispatchEvent(EventBase evt);
         void DispatchEvent(EventBase evt, IEventCoordinator coordinator);
     }
+    public interface IEventDispatchingListener
+    {
+        void OnPushDispatcherContext();
+        void OnPopDispatcherContext();
+    }
     internal static class EventDispatchUtilities
     {
         public static void PropagateEvent(EventBase evt)

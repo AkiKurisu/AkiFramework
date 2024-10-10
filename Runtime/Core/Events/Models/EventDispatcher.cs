@@ -84,10 +84,11 @@ namespace Kurisu.Framework.Events
             public uint m_GateCount;
             public Queue<EventRecord> m_Queue;
         }
-
+        private readonly List<IEventDispatchingListener> dispatchingListeners;
         private readonly Stack<DispatchContext> m_DispatchContexts = new();
         public EventDispatcher(IList<IEventDispatchingStrategy> strategies)
         {
+            dispatchingListeners = new List<IEventDispatchingListener>();
             m_DispatchingStrategies = new List<IEventDispatchingStrategy>();
 #if UNITY_EDITOR
             m_DebuggerEventDispatchingStrategy = new DebuggerEventDispatchingStrategy();
@@ -136,6 +137,11 @@ namespace Kurisu.Framework.Events
 
         public void PushDispatcherContext()
         {
+            foreach (var listener in dispatchingListeners)
+            {
+                listener.OnPushDispatcherContext();
+            }
+
             // Drain the event queue before pushing a new context.
             ProcessEventQueue();
 
@@ -154,6 +160,11 @@ namespace Kurisu.Framework.Events
             m_GateCount = m_DispatchContexts.Peek().m_GateCount;
             m_Queue = m_DispatchContexts.Peek().m_Queue;
             m_DispatchContexts.Pop();
+
+            foreach (var listener in dispatchingListeners)
+            {
+                listener.OnPopDispatcherContext();
+            }
         }
 
         internal void CloseGate()
@@ -281,6 +292,17 @@ namespace Kurisu.Framework.Events
                 }
             }
         }
-
+        public TListener GetEventDispatchingListener<TListener>() where TListener : IEventDispatchingListener
+        {
+            foreach (var listener in dispatchingListeners)
+            {
+                if (listener is TListener tlistener) return tlistener;
+            }
+            return default;
+        }
+        public void AddEventDispatchingListener(IEventDispatchingListener listener)
+        {
+            dispatchingListeners.Add(listener);
+        }
     }
 }

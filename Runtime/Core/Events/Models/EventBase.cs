@@ -353,7 +353,7 @@ namespace Kurisu.Framework.Events
         }
 
 
-        internal bool StopDispatch
+        public bool StopDispatch
         {
             get { return (Status & LifeCycleStatus.StopDispatch) != LifeCycleStatus.None; }
             set
@@ -447,7 +447,7 @@ namespace Kurisu.Framework.Events
             }
         }
 
-        internal abstract void Acquire();
+        public abstract void Acquire();
         /// <summary>
         /// Implementation of <see cref="IDisposable"/>.
         /// </summary>
@@ -554,7 +554,7 @@ namespace Kurisu.Framework.Events
             }
         }
 
-        internal override void Acquire()
+        public override void Acquire()
         {
             m_RefCount++;
         }
