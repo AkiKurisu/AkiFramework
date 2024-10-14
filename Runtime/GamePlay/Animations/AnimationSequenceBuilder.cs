@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
 using UnityEngine.Pool;
-namespace Kurisu.Framework.Playables.Tasks
+namespace Kurisu.Framework.Animations
 {
     /// <summary>
     /// Builder for creating sequence on animation clips, using UnityEngine.Playables API.

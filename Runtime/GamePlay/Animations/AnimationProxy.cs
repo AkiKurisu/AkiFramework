@@ -4,29 +4,40 @@ using Kurisu.Framework.Schedulers;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
-namespace Kurisu.Framework.Playables
+namespace Kurisu.Framework.Animations
 {
+    // TODO: Refactor: Release animator already blend out
+
     /// <summary>
-    /// Playable animator that can cross fade multi <see cref="RuntimeAnimatorController"/>
+    /// Animation proxy that can cross fade multi <see cref="RuntimeAnimatorController"/>
     /// </summary>
     /// <remarks>
     /// Useful to override default animation in cutscene and dialogue.
     /// </remarks>
-    public class PlayableAnimator : IDisposable
+    public class AnimationProxy : IDisposable
     {
         /// <summary>
         /// Bind animator
         /// </summary>
         /// <value></value>
         public Animator Animator { get; }
-        private RuntimeAnimatorController sourceController;
-        private PlayableGraph playableGraph;
-        private AnimationPlayableOutput playableOutput;
-        private Playable mixerPointer;
-        private Playable rootMixer;
-        private AnimatorControllerPlayable playablePointer;
-        public AnimatorControllerPlayable CurrentPlayable => playablePointer;
-        public RuntimeAnimatorController currentController;
+        protected RuntimeAnimatorController sourceController;
+        protected PlayableGraph playableGraph;
+        protected AnimationPlayableOutput playableOutput;
+        protected Playable mixerPointer;
+        protected Playable rootMixer;
+        protected AnimatorControllerPlayable playablePointer;
+        protected RuntimeAnimatorController currentController;
+        /// <summary>
+        /// Handle for root blending task
+        /// </summary>
+        protected SchedulerHandle rootHandle;
+        /// <summary>
+        /// Handle for subTree blending task
+        /// </summary>
+        /// <returns></returns>
+        protected readonly Dictionary<RuntimeAnimatorController, SchedulerHandle> subHandleMap = new();
+        protected bool isFadeOut;
         public bool IsPlaying
         {
             get
@@ -34,29 +45,25 @@ namespace Kurisu.Framework.Playables
                 return playableGraph.IsValid() && playableGraph.IsPlaying();
             }
         }
-        /// <summary>
-        /// Handle for root blending task
-        /// </summary>
-        private SchedulerHandle rootHandle;
-        /// <summary>
-        /// Handle for subTree blending task
-        /// </summary>
-        /// <returns></returns>
-        private readonly Dictionary<RuntimeAnimatorController, SchedulerHandle> subHandleMap = new();
-        private bool isFadeOut;
-        public PlayableAnimator(Animator animator)
+        public AnimationProxy(Animator animator)
         {
             Animator = animator;
-            CreateNewGraph();
+        }
+        public virtual void Dispose()
+        {
+            currentController = null;
+            sourceController = null;
+            if (playableGraph.IsValid())
+                playableGraph.Destroy();
         }
         private void CreateNewGraph()
         {
-            playableGraph = PlayableGraph.Create($"{Animator.gameObject.name}_VirtualAnimator");
+            playableGraph = PlayableGraph.Create($"{Animator.gameObject.name}_Playable");
             playableOutput = AnimationPlayableOutput.Create(playableGraph, "Animation", Animator);
             mixerPointer = rootMixer = AnimationMixerPlayable.Create(playableGraph, 2);
             playableOutput.SetSourcePlayable(rootMixer);
         }
-        public void Play(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
+        public void LoadAnimation(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
         {
             if (isFadeOut)
             {
@@ -64,12 +71,12 @@ namespace Kurisu.Framework.Playables
                 SetOutGraph();
             }
             if (IsPlaying && currentController == animatorController) return;
-            //If graph has root controller, destroy it
+            // If graph has root controller, destroy it
             if (playableGraph.IsValid())
             {
                 if (mixerPointer.GetInput(1).IsNull())
                 {
-                    PlayInternal(animatorController, fadeInTime);
+                    LoadAnimation_Imp(animatorController, fadeInTime);
                     return;
                 }
                 else
@@ -79,9 +86,9 @@ namespace Kurisu.Framework.Playables
                 }
             }
             CreateNewGraph();
-            PlayInternal(animatorController, fadeInTime);
+            LoadAnimation_Imp(animatorController, fadeInTime);
         }
-        private void PlayInternal(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
+        protected void LoadAnimation_Imp(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
         {
             sourceController = Animator.runtimeAnimatorController;
             playablePointer = AnimatorControllerPlayable.Create(playableGraph, currentController = animatorController);
@@ -91,16 +98,21 @@ namespace Kurisu.Framework.Playables
             rootMixer.SetInputWeight(1, 0);
             rootHandle.Cancel();
             if (fadeInTime > 0)
-                rootHandle = Scheduler.Delay(fadeInTime, SetInGraph, x => FadeIn(rootMixer, x / fadeInTime));
+                rootHandle = Scheduler.Delay(fadeInTime, SetInGraph, x => Blend(rootMixer, x / fadeInTime));
             else
                 SetInGraph();
             if (!IsPlaying) playableGraph.Play();
         }
         private void SetInGraph()
         {
-            FadeIn(rootMixer, 1);
+            Blend(rootMixer, 1);
             Animator.runtimeAnimatorController = null;
         }
+        /// <summary>
+        /// Cross fade to a new animator controller
+        /// </summary>
+        /// <param name="animatorController"></param>
+        /// <param name="fadeInTime"></param>
         public void CrossFade(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
         {
             if (isFadeOut)
@@ -113,13 +125,13 @@ namespace Kurisu.Framework.Playables
             if (!playableGraph.IsValid())
             {
                 CreateNewGraph();
-                PlayInternal(animatorController, fadeInTime);
+                LoadAnimation_Imp(animatorController, fadeInTime);
                 return;
             }
             //If has no animator controller, use play instead
             if (mixerPointer.GetInput(1).IsNull())
             {
-                PlayInternal(animatorController, fadeInTime);
+                LoadAnimation_Imp(animatorController, fadeInTime);
             }
             else
             {
@@ -132,15 +144,15 @@ namespace Kurisu.Framework.Playables
             // Layout as a binary tree
             var newMixer = AnimationMixerPlayable.Create(playableGraph, 2);
             var right = mixerPointer.GetInput(1);
-            //Disconnect leaf
+            // Disconnect leaf
             playableGraph.Disconnect(mixerPointer, 1);
-            //Right=>left
+            // Right=>left
             playableGraph.Connect(right, 0, newMixer, 0);
-            //New right leaf
+            // New right leaf
             playableGraph.Connect(playablePointer, 0, newMixer, 1);
-            //Connect to parent
+            // Connect to parent
             playableGraph.Connect(newMixer, 0, mixerPointer, 1);
-            //Update pointer
+            // Update pointer
             mixerPointer = newMixer;
             mixerPointer.SetInputWeight(0, 1);
             mixerPointer.SetInputWeight(1, 0);
@@ -149,11 +161,16 @@ namespace Kurisu.Framework.Playables
                 handle.Cancel();
             }
             if (fadeInTime > 0)
-                subHandleMap[animatorController] = Scheduler.Delay(fadeInTime, () => FadeIn(mixerPointer, 1), x => FadeIn(mixerPointer, x / fadeInTime));
+                subHandleMap[animatorController] = Scheduler.Delay(fadeInTime, () => Blend(mixerPointer, 1), x => Blend(mixerPointer, x / fadeInTime));
             else
-                FadeIn(mixerPointer, 1);
+                Blend(mixerPointer, 1);
         }
-        private void FadeIn(Playable playable, float weight)
+        /// <summary>
+        /// Utils function for blend playable with tow childs 
+        /// </summary>
+        /// <param name="playable"></param>
+        /// <param name="weight"></param>
+        public static void Blend(Playable playable, float weight)
         {
             playable.SetInputWeight(0, 1 - weight);
             playable.SetInputWeight(1, weight);
@@ -174,22 +191,19 @@ namespace Kurisu.Framework.Playables
                 return;
             }
             isFadeOut = true;
-            rootHandle = Scheduler.Delay(fadeOutTime, SetOutGraph, x => FadeIn(rootMixer, 1 - x / fadeOutTime));
+            rootHandle = Scheduler.Delay(fadeOutTime, SetOutGraph, x => Blend(rootMixer, 1 - x / fadeOutTime));
         }
-        private void SetOutGraph()
+        protected virtual void SetOutGraph()
         {
-            FadeIn(rootMixer, 0);
+            Blend(rootMixer, 0);
             isFadeOut = false;
             playableGraph.Stop();
             playableGraph.Destroy();
             currentController = null;
         }
-        public void Dispose()
+        public bool IsCurrent(RuntimeAnimatorController runtimeAnimatorController)
         {
-            currentController = null;
-            sourceController = null;
-            if (playableGraph.IsValid())
-                playableGraph.Destroy();
+            return currentController == runtimeAnimatorController;
         }
         #region Wrap
         public float GetFloat(string name)
