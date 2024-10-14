@@ -8,6 +8,15 @@ using Cysharp.Threading.Tasks;
 namespace Kurisu.Framework.Resource
 {
     /// <summary>
+    /// Exception thrown when request resource address is invalid
+    /// </summary>
+    public class InvalidResourceRequestException : Exception
+    {
+        public string InvalidAddress { get; }
+        public InvalidResourceRequestException() : base() { }
+        public InvalidResourceRequestException(string address, string message) : base(message) { InvalidAddress = address; }
+    }
+    /// <summary>
     /// Resource system that loads resource by address and label based on Addressables.
     /// </summary>
     public static class ResourceSystem
@@ -99,7 +108,7 @@ namespace Kurisu.Framework.Resource
             if (location.Status != AsyncOperationStatus.Succeeded || location.Result.Count == 0)
             {
                 string stringValue;
-                if (key is IEnumerable<string> list) stringValue = $"[{string.Join(",", list)}]";
+                if (key is IEnumerable<string> list) stringValue = $"[{string.Join(',', list)}]";
                 else stringValue = key.ToString();
                 throw new InvalidResourceRequestException(stringValue, $"Address {stringValue} not valid for loading {typeof(TAsset)} asset");
             }
@@ -118,7 +127,7 @@ namespace Kurisu.Framework.Resource
             if (location.Status != AsyncOperationStatus.Succeeded || location.Result.Count == 0)
             {
                 string stringValue;
-                if (key is IEnumerable<string> list) stringValue = $"[{string.Join(",", list)}]";
+                if (key is IEnumerable<string> list) stringValue = $"[{string.Join(',', list)}]";
                 else stringValue = key.ToString();
                 throw new InvalidResourceRequestException(stringValue, $"Address {stringValue} not valid for loading {typeof(TAsset)} asset");
             }
