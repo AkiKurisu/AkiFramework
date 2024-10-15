@@ -70,29 +70,33 @@ namespace Kurisu.Framework.Animations
                 rootHandle.Cancel();
                 SetOutGraph();
             }
-            if (IsPlaying && currentController == animatorController) return;
-            // If graph has root controller, destroy it
-            if (playableGraph.IsValid())
-            {
-                if (mixerPointer.GetInput(1).IsNull())
-                {
-                    LoadAnimation_Imp(animatorController, fadeInTime);
-                    return;
-                }
-                else
-                {
-                    playableGraph.Stop();
-                    playableGraph.Destroy();
-                }
-            }
-            CreateNewGraph();
             LoadAnimation_Imp(animatorController, fadeInTime);
         }
         protected void LoadAnimation_Imp(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
         {
+            if (IsPlaying && currentController == animatorController) return;
+            // If Graph is not created or already destroyed, create a new one and use play api
+            if (!playableGraph.IsValid())
+            {
+                CreateNewGraph();
+                PlayInternal(animatorController, fadeInTime);
+                return;
+            }
+            // If has no animator controller, use play instead
+            if (mixerPointer.GetInput(1).IsNull())
+            {
+                PlayInternal(animatorController, fadeInTime);
+            }
+            else
+            {
+                CrossFadeInternal(animatorController, fadeInTime);
+            }
+        }
+        private void PlayInternal(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
+        {
             sourceController = Animator.runtimeAnimatorController;
             playablePointer = AnimatorControllerPlayable.Create(playableGraph, currentController = animatorController);
-            //Connect to second input of mixer
+            // Connect to second input of mixer
             playableGraph.Connect(playablePointer, 0, rootMixer, 1);
             rootMixer.SetInputWeight(0, 1);
             rootMixer.SetInputWeight(1, 0);
@@ -107,36 +111,6 @@ namespace Kurisu.Framework.Animations
         {
             Blend(rootMixer, 1);
             Animator.runtimeAnimatorController = null;
-        }
-        /// <summary>
-        /// Cross fade to a new animator controller
-        /// </summary>
-        /// <param name="animatorController"></param>
-        /// <param name="fadeInTime"></param>
-        public void CrossFade(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
-        {
-            if (isFadeOut)
-            {
-                rootHandle.Cancel();
-                SetOutGraph();
-            }
-            if (IsPlaying && currentController == animatorController) return;
-            //Graph is destroyed, create new graph and play instead
-            if (!playableGraph.IsValid())
-            {
-                CreateNewGraph();
-                LoadAnimation_Imp(animatorController, fadeInTime);
-                return;
-            }
-            //If has no animator controller, use play instead
-            if (mixerPointer.GetInput(1).IsNull())
-            {
-                LoadAnimation_Imp(animatorController, fadeInTime);
-            }
-            else
-            {
-                CrossFadeInternal(animatorController, fadeInTime);
-            }
         }
         private void CrossFadeInternal(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
         {
