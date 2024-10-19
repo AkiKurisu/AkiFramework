@@ -80,7 +80,6 @@ namespace Kurisu.Framework.Tasks
         {
             mStatus = TaskStatus.Stopped;
         }
-
         public virtual void Stop()
         {
             mStatus = TaskStatus.Stopped;
@@ -97,6 +96,10 @@ namespace Kurisu.Framework.Tasks
         public virtual void Tick()
         {
 
+        }
+        protected void CompleteTask()
+        {
+            mStatus = TaskStatus.Completed;
         }
         protected virtual void Reset()
         {

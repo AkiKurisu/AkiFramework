@@ -16,7 +16,7 @@ I supposed these code are useful but also not-must-be-included, which is my pers
 [Pool](./Docs/Pool.md) 
 > Zero allocation GameObject/Component pooling. 
 
-[Scheduler](./Docs/Scheduler.md) 
+[Schedulers](./Docs/Schedulers.md) 
 > Zero allocation timer/frame counter. 
 
 [Serialization](./Docs/Serialization.md)
@@ -24,6 +24,9 @@ I supposed these code are useful but also not-must-be-included, which is my pers
 
 [Data Driven](./Docs/DataDriven.md)
 >Use Unreal-like DataTable workflow in Unity.
+
+[Animations](./Docs/Animations.md)
+>Create dynamic animation sequence and cutscene from script based on Playables.
 
 ## Modules
 

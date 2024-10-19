@@ -10,5 +10,10 @@ namespace Kurisu.Framework.Events
         /// </summary>
         /// <value></value>
         CallbackEventHandler GetCallbackEventHandler();
+        /// <summary>
+        /// Get coordinator's dispatcher
+        /// </summary>
+        /// <value></value>
+        EventDispatcher EventDispatcher { get; }
     }
 }

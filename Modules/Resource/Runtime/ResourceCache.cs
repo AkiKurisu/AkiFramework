@@ -5,12 +5,6 @@ using System.Collections;
 using Cysharp.Threading.Tasks;
 namespace Kurisu.Framework.Resource
 {
-    public class InvalidResourceRequestException : Exception
-    {
-        public string InvalidAddress { get; }
-        public InvalidResourceRequestException() : base() { }
-        public InvalidResourceRequestException(string address, string message) : base(message) { InvalidAddress = address; }
-    }
     /// <summary>
     /// Loading and cache specific asset as a group and release them by control version
     /// </summary>
@@ -20,15 +14,25 @@ namespace Kurisu.Framework.Resource
         private readonly Dictionary<string, ResourceHandle<TAsset>> internalHandles = new();
         private readonly Dictionary<string, TAsset> cacheMap = new();
         private readonly Dictionary<string, int> versionMap = new();
+
         /// <summary>
         /// Validate asset location before loading, throw <see cref="InvalidResourceRequestException"/> if not exist
         /// </summary>
         /// <value></value>
         public bool AddressSafeCheck { get; set; } = false;
+
+        /// <summary>
+        /// Current cache version
+        /// </summary>
+        /// <value></value>
         public int Version { get; private set; } = 0;
+
         public IEnumerable<string> Keys => cacheMap.Keys;
+
         public IEnumerable<TAsset> Values => cacheMap.Values;
+
         public int Count => cacheMap.Count;
+
         public TAsset this[string key] => cacheMap[key];
 
         /// <summary>
