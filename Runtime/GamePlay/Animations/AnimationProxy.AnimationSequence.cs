@@ -105,7 +105,7 @@ namespace Kurisu.Framework.Animations
                     Debug.LogWarning("Builder is invalid, rebuild is not allowed");
                     return sequence;
                 }
-                return BuildInternal(SequenceTask.GetPooled(Dispose));
+                return BuildInternal(SequenceTask.GetPooled());
             }
             /// <summary>
             /// Append animation sequence after an existed sequence
@@ -119,7 +119,6 @@ namespace Kurisu.Framework.Animations
                     return;
                 }
                 BuildInternal(sequenceTask);
-                sequenceTask.AppendCallBack(Dispose);
             }
             private SequenceTask BuildInternal(SequenceTask sequenceTask)
             {
