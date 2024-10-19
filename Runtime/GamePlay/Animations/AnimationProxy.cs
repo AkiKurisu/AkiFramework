@@ -1,386 +1,334 @@
 using System;
-using System.Collections.Generic;
-using Kurisu.Framework.Schedulers;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
 namespace Kurisu.Framework.Animations
 {
-    // TODO: Refactor: Release animator already blend out
-
     /// <summary>
     /// Animation proxy that can cross fade multi <see cref="RuntimeAnimatorController"/>
     /// </summary>
     /// <remarks>
     /// Useful to override default animation in cutscene and dialogue.
     /// </remarks>
-    public class AnimationProxy : IDisposable
+    public partial class AnimationProxy : IDisposable
     {
         /// <summary>
-        /// Bind animator
+        /// Get bound <see cref="Animator"/>
         /// </summary>
         /// <value></value>
         public Animator Animator { get; }
-        protected RuntimeAnimatorController sourceController;
-        protected PlayableGraph playableGraph;
-        protected AnimationPlayableOutput playableOutput;
-        protected Playable mixerPointer;
-        protected Playable rootMixer;
-        protected AnimatorControllerPlayable playablePointer;
-        protected RuntimeAnimatorController currentController;
         /// <summary>
-        /// Handle for root blending task
+        /// Cached <see cref="RuntimeAnimatorController"/> of <see cref="Animator"/>
         /// </summary>
-        protected SchedulerHandle rootHandle;
+        /// <value></value>
+        protected RuntimeAnimatorController SourceController { get; private set; }
         /// <summary>
-        /// Handle for subTree blending task
+        /// Cached input <see cref="RuntimeAnimatorController"/> of <see cref="LeafAnimatorPlayable"/>
         /// </summary>
-        /// <returns></returns>
-        protected readonly Dictionary<RuntimeAnimatorController, SchedulerHandle> subHandleMap = new();
-        protected bool isFadeOut;
+        /// <value></value>
+        protected RuntimeAnimatorController CurrentAnimatorController { get; private set; }
+        /// <summary>
+        /// Cached input <see cref="AnimationClip"/> of <see cref="LeafAnimationClipPlayable"/>
+        /// </summary>
+        /// <value></value>
+        protected AnimationClip CurrentAnimationClip { get; private set; }
+        /// <summary>
+        /// Get playing <see cref="PlayableGraph"/>
+        /// </summary>
+        /// <value></value>
+        protected PlayableGraph Graph { get; private set; }
+        /// <summary>
+        /// Get root montage node
+        /// </summary>
+        /// <value></value>
+        protected AnimationMontageNode RootMontage { get; private set; }
+        /// <summary>
+        /// Get leaf montage node
+        /// </summary>
+        /// <value></value>
+        protected AnimationMontageNode LeafMontage { get; private set; }
+        /// <summary>
+        /// Get leaf <see cref="Playable"/>
+        /// </summary>
+        /// <value></value>
+        protected Playable LeafPlayable { get; private set; }
+        /// <summary>
+        /// Get leaf <see cref="AnimatorControllerPlayable"/> if type matched
+        /// </summary>
+        /// <value></value>
+        protected AnimatorControllerPlayable LeafAnimatorPlayable
+        {
+            get
+            {
+                if (LeafPlayable.IsPlayableOfType<AnimatorControllerPlayable>())
+                {
+                    return (AnimatorControllerPlayable)LeafPlayable;
+                }
+                return AnimatorControllerPlayable.Null;
+            }
+        }
+        /// <summary>
+        /// Get leaf <see cref="AnimationClipPlayable"/> if type matched
+        /// </summary>
+        /// <value></value>
+        protected AnimationClipPlayable LeafAnimationClipPlayable
+        {
+            get
+            {
+                if (LeafPlayable.IsPlayableOfType<AnimationClipPlayable>())
+                {
+                    return (AnimationClipPlayable)LeafPlayable;
+                }
+                return default;
+            }
+        }
+        /// <summary>
+        /// Is proxy blendout
+        /// </summary>
+        /// <value></value>
+        protected bool IsBlendIn { get; private set; }
+        /// <summary>
+        /// Is proxy blendout
+        /// </summary>
+        /// <value></value>
+        protected bool IsBlendOut { get; private set; }
+        /// <summary>
+        /// Is proxy playing
+        /// </summary>
+        /// <value></value>
         public bool IsPlaying
         {
             get
             {
-                return playableGraph.IsValid() && playableGraph.IsPlaying();
+                return Graph.IsValid() && Graph.IsPlaying();
             }
         }
         public AnimationProxy(Animator animator)
         {
             Animator = animator;
         }
-        public virtual void Dispose()
+        /// <summary>
+        /// Load animator to the graph
+        /// </summary>
+        /// <param name="animatorController"></param>
+        /// <param name="blendInDuration"></param>
+        protected virtual void LoadAnimator_Implementation(RuntimeAnimatorController animatorController, float blendInDuration = 0.25f)
         {
-            currentController = null;
-            sourceController = null;
-            if (playableGraph.IsValid())
-                playableGraph.Destroy();
-        }
-        private void CreateNewGraph()
-        {
-            playableGraph = PlayableGraph.Create($"{Animator.gameObject.name}_Playable");
-            playableOutput = AnimationPlayableOutput.Create(playableGraph, "Animation", Animator);
-            mixerPointer = rootMixer = AnimationMixerPlayable.Create(playableGraph, 2);
-            playableOutput.SetSourcePlayable(rootMixer);
-        }
-        public void LoadAnimation(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
-        {
-            if (isFadeOut)
-            {
-                rootHandle.Cancel();
-                SetOutGraph();
-            }
-            LoadAnimation_Imp(animatorController, fadeInTime);
-        }
-        protected void LoadAnimation_Imp(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
-        {
-            if (IsPlaying && currentController == animatorController) return;
+            if (IsPlaying && CurrentAnimatorController == animatorController) return;
             // If Graph is not created or already destroyed, create a new one and use play api
-            if (!playableGraph.IsValid())
+            if (!Graph.IsValid())
             {
-                CreateNewGraph();
-                PlayInternal(animatorController, fadeInTime);
+                PlayAnimatorInternal(animatorController, blendInDuration);
                 return;
             }
-            // If has no animator controller, use play instead
-            if (mixerPointer.GetInput(1).IsNull())
-            {
-                PlayInternal(animatorController, fadeInTime);
-            }
-            else
-            {
-                CrossFadeInternal(animatorController, fadeInTime);
-            }
-        }
-        private void PlayInternal(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
-        {
-            sourceController = Animator.runtimeAnimatorController;
-            playablePointer = AnimatorControllerPlayable.Create(playableGraph, currentController = animatorController);
-            // Connect to second input of mixer
-            playableGraph.Connect(playablePointer, 0, rootMixer, 1);
-            rootMixer.SetInputWeight(0, 1);
-            rootMixer.SetInputWeight(1, 0);
-            rootHandle.Cancel();
-            if (fadeInTime > 0)
-                rootHandle = Scheduler.Delay(fadeInTime, SetInGraph, x => Blend(rootMixer, x / fadeInTime));
-            else
-                SetInGraph();
-            if (!IsPlaying) playableGraph.Play();
-        }
-        private void SetInGraph()
-        {
-            Blend(rootMixer, 1);
-            Animator.runtimeAnimatorController = null;
-        }
-        private void CrossFadeInternal(RuntimeAnimatorController animatorController, float fadeInTime = 0.25f)
-        {
-            playablePointer = AnimatorControllerPlayable.Create(playableGraph, currentController = animatorController);
-            // Layout as a binary tree
-            var newMixer = AnimationMixerPlayable.Create(playableGraph, 2);
-            var right = mixerPointer.GetInput(1);
-            // Disconnect leaf
-            playableGraph.Disconnect(mixerPointer, 1);
-            // Right=>left
-            playableGraph.Connect(right, 0, newMixer, 0);
-            // New right leaf
-            playableGraph.Connect(playablePointer, 0, newMixer, 1);
-            // Connect to parent
-            playableGraph.Connect(newMixer, 0, mixerPointer, 1);
-            // Update pointer
-            mixerPointer = newMixer;
-            mixerPointer.SetInputWeight(0, 1);
-            mixerPointer.SetInputWeight(1, 0);
-            if (subHandleMap.TryGetValue(animatorController, out var handle))
-            {
-                handle.Cancel();
-            }
-            if (fadeInTime > 0)
-                subHandleMap[animatorController] = Scheduler.Delay(fadeInTime, () => Blend(mixerPointer, 1), x => Blend(mixerPointer, x / fadeInTime));
-            else
-                Blend(mixerPointer, 1);
+            BlendAnimatorInternal(animatorController, blendInDuration);
         }
         /// <summary>
-        /// Utils function for blend playable with tow childs 
+        /// Load animator to the graph in play mode
         /// </summary>
-        /// <param name="playable"></param>
-        /// <param name="weight"></param>
-        public static void Blend(Playable playable, float weight)
+        /// <param name="animatorController"></param>
+        /// <param name="blendInDuration"></param>
+        protected void PlayAnimatorInternal(RuntimeAnimatorController animatorController, float blendInDuration = 0.25f)
         {
-            playable.SetInputWeight(0, 1 - weight);
-            playable.SetInputWeight(1, weight);
+            // Create new graph
+            SourceController = Animator.runtimeAnimatorController;
+            Graph = PlayableGraph.Create($"{Animator.gameObject.name}_Playable");
+            var playableOutput = AnimationPlayableOutput.Create(Graph, "Animation", Animator);
+            LeafPlayable = AnimatorControllerPlayable.Create(Graph, CurrentAnimatorController = animatorController);
+            LeafMontage = RootMontage = AnimationMontageNode.CreateRootMontage(LeafPlayable);
+            playableOutput.SetSourcePlayable(RootMontage.Montage);
+
+            // Start play graph
+            PlayInternal(blendInDuration);
         }
-        public void Stop(float fadeOutTime = 0.25f)
+        /// <summary>
+        /// Load animator to the graph in blend mode
+        /// </summary>
+        /// <param name="animatorController"></param>
+        /// <param name="blendInDuration"></param>
+        protected void BlendAnimatorInternal(RuntimeAnimatorController animatorController, float blendInDuration = 0.25f)
+        {
+            LeafPlayable = AnimatorControllerPlayable.Create(Graph, CurrentAnimatorController = animatorController);
+            LeafMontage |= new AnimationPlayableNode(LeafPlayable);
+            if (blendInDuration > 0)
+            {
+                LeafMontage.ScheduleBlendIn(blendInDuration, () => Shrink(LeafMontage));
+            }
+            else
+            {
+                LeafMontage.Blend(1);
+                Shrink(LeafMontage);
+            }
+        }
+        /// <summary>
+        /// Load animation clip to the graph
+        /// </summary>
+        /// <param name="animationClip"></param>
+        /// <param name="blendInDuration"></param>
+        protected virtual void LoadAnimationClip_Implementation(AnimationClip animationClip, float blendInDuration = 0.25f)
+        {
+            if (IsPlaying && CurrentAnimationClip == animationClip) return;
+            // If Graph is not created or already destroyed, create a new one and use play api
+            if (!Graph.IsValid())
+            {
+                PlayAnimationClipInternal(animationClip, blendInDuration);
+                return;
+            }
+            BlendAnimationClipInternal(animationClip, blendInDuration);
+        }
+        /// <summary>
+        /// Load animation clip to the graph in play mode
+        /// </summary>
+        /// <param name="animationClip"></param>
+        /// <param name="blendInDuration"></param>
+        protected void PlayAnimationClipInternal(AnimationClip animationClip, float blendInDuration = 0.25f)
+        {
+            // Create new graph
+            SourceController = Animator.runtimeAnimatorController;
+            Graph = PlayableGraph.Create($"{Animator.gameObject.name}_Playable");
+            var playableOutput = AnimationPlayableOutput.Create(Graph, "Animation", Animator);
+            LeafPlayable = AnimationClipPlayable.Create(Graph, CurrentAnimationClip = animationClip);
+            LeafMontage = RootMontage = AnimationMontageNode.CreateRootMontage(LeafPlayable);
+            playableOutput.SetSourcePlayable(RootMontage.Montage);
+
+            // Start play graph
+            PlayInternal(blendInDuration);
+        }
+        /// <summary>
+        /// Load animation clip to the graph in blend mode
+        /// </summary>
+        /// <param name="animationClip"></param>
+        /// <param name="blendInDuration"></param>
+        protected void BlendAnimationClipInternal(AnimationClip animationClip, float blendInDuration = 0.25f)
+        {
+            LeafPlayable = AnimationClipPlayable.Create(Graph, CurrentAnimationClip = animationClip);
+            LeafMontage |= new AnimationPlayableNode(LeafPlayable);
+            if (blendInDuration > 0)
+            {
+                LeafMontage.ScheduleBlendIn(blendInDuration, () => Shrink(LeafMontage));
+            }
+            else
+            {
+                LeafMontage.Blend(1);
+                Shrink(LeafMontage);
+            }
+        }
+        /// <summary>
+        /// Start play graph and montage
+        /// </summary>
+        /// <param name="blendInDuration"></param>
+        protected void PlayInternal(float blendInDuration)
+        {
+            IsBlendIn = true;
+            if (blendInDuration > 0)
+            {
+                RootMontage.ScheduleBlendIn(blendInDuration, SetInGraph);
+            }
+            else
+            {
+                RootMontage.Blend(1);
+                SetInGraph();
+            }
+            if (!IsPlaying) Graph.Play();
+        }
+        private void Shrink(AnimationMontageNode node)
+        {
+            if (LeafMontage != node) return; /* Has new montage in blend */
+            if (node.BlendWeight != 1)
+            {
+                Debug.LogWarning("[AnimationProxy] Montage is in use but try to release it.");
+                return;
+            }
+            LeafMontage = node.Shrink();
+        }
+        /// <summary>
+        /// Call this function after animation proxy completly blend in
+        /// </summary>
+        protected virtual void SetInGraph()
+        {
+            IsBlendIn = false;
+            Animator.runtimeAnimatorController = null;
+        }
+        /// <summary>
+        /// Call this function after animation proxy completly blend out
+        /// </summary>
+        protected virtual void SetOutGraph()
+        {
+            IsBlendOut = false;
+            Graph.Stop();
+            Graph.Destroy();
+            CurrentAnimatorController = null;
+        }
+        #region Public API
+        /// <summary>
+        /// Start playing animation from new <see cref="RuntimeAnimatorController"/> 
+        /// and blend in if <see cref="blendInDuration"/> greater than 0
+        /// </summary>
+        /// <param name="animatorController"></param>
+        /// <param name="blendInDuration"></param>
+        public void LoadAnimator(RuntimeAnimatorController animatorController, float blendInDuration = 0.25f)
+        {
+            // Ensure old graph is destroyed
+            if (IsBlendOut)
+            {
+                RootMontage.BlendHandle.Cancel();
+                SetOutGraph();
+            }
+            LoadAnimator_Implementation(animatorController, blendInDuration);
+        }
+        /// <summary>
+        /// Start playing animation from new <see cref="AnimationClip"/> 
+        /// and blend in if <see cref="blendInDuration"/> greater than 0
+        /// </summary>
+        /// <param name="animationClip"></param>
+        /// <param name="blendInDuration"></param>
+        public void LoadAnimationClip(AnimationClip animationClip, float blendInDuration = 0.25f)
+        {
+            // Ensure old graph is destroyed
+            if (IsBlendOut)
+            {
+                RootMontage.BlendHandle.Cancel();
+                SetOutGraph();
+            }
+            LoadAnimationClip_Implementation(animationClip, blendInDuration);
+        }
+        /// <summary>
+        /// Stop animation proxy montage and blend out if <see cref="blendOutDuration"/> greater than 0
+        /// </summary>
+        /// <param name="blendOutDuration"></param>
+        public void Stop(float blendOutDuration = 0.25f)
         {
             if (!IsPlaying) return;
-            foreach (var handle in subHandleMap.Values)
+            RootMontage.Dispose();
+            Animator.runtimeAnimatorController = SourceController;
+            IsBlendOut = true;
+            if (blendOutDuration <= 0)
             {
-                handle.Cancel();
-            }
-            subHandleMap.Clear();
-            rootHandle.Cancel();
-            Animator.runtimeAnimatorController = sourceController;
-            if (fadeOutTime < 0)
-            {
+                RootMontage.Blend(0);
                 SetOutGraph();
                 return;
             }
-            isFadeOut = true;
-            rootHandle = Scheduler.Delay(fadeOutTime, SetOutGraph, x => Blend(rootMixer, 1 - x / fadeOutTime));
+            RootMontage.ScheduleBlendOut(blendOutDuration, SetOutGraph);
         }
-        protected virtual void SetOutGraph()
+        /// <summary>
+        /// Release animation proxy
+        /// </summary>
+        public virtual void Dispose()
         {
-            Blend(rootMixer, 0);
-            isFadeOut = false;
-            playableGraph.Stop();
-            playableGraph.Destroy();
-            currentController = null;
+            CurrentAnimatorController = null;
+            SourceController = null;
+            if (Graph.IsValid())
+                Graph.Destroy();
         }
+        /// <summary>
+        /// Check if <see cref="LeafAnimatorPlayable"/> use this <see cref="RuntimeAnimatorController"/> 
+        /// </summary>
+        /// <param name="runtimeAnimatorController"></param>
+        /// <returns></returns>
         public bool IsCurrent(RuntimeAnimatorController runtimeAnimatorController)
         {
-            return currentController == runtimeAnimatorController;
+            return CurrentAnimatorController == runtimeAnimatorController;
         }
-        #region Wrap
-        public float GetFloat(string name)
-        {
-            return playablePointer.GetFloat(name);
-        }
-
-        public float GetFloat(int id)
-        {
-            return playablePointer.GetFloat(id);
-        }
-        public void SetFloat(string name, float value)
-        {
-            playablePointer.SetFloat(name, value);
-        }
-        public void SetFloat(int id, float value)
-        {
-            playablePointer.SetFloat(id, value);
-        }
-        public bool GetBool(string name)
-        {
-            return playablePointer.GetBool(name);
-        }
-        public bool GetBool(int id)
-        {
-            return playablePointer.GetBool(id);
-        }
-        public void SetBool(string name, bool value)
-        {
-            playablePointer.SetBool(name, value);
-        }
-
-        public void SetBool(int id, bool value)
-        {
-            playablePointer.SetBool(id, value);
-        }
-
-        public int GetInteger(string name)
-        {
-            return playablePointer.GetInteger(name);
-        }
-        public int GetInteger(int id)
-        {
-            return playablePointer.GetInteger(id);
-        }
-        public void SetInteger(string name, int value)
-        {
-            playablePointer.SetInteger(name, value);
-        }
-
-        public void SetInteger(int id, int value)
-        {
-            playablePointer.SetInteger(id, value);
-        }
-        public void SetTrigger(string name)
-        {
-            playablePointer.SetTrigger(name);
-        }
-
-        public void SetTrigger(int id)
-        {
-            playablePointer.SetTrigger(id);
-        }
-
-        public void ResetTrigger(string name)
-        {
-            playablePointer.ResetTrigger(name);
-        }
-        public void ResetTrigger(int id)
-        {
-            playablePointer.ResetTrigger(id);
-        }
-        public bool IsParameterControlledByCurve(string name)
-        {
-            return playablePointer.IsParameterControlledByCurve(name);
-        }
-        public bool IsParameterControlledByCurve(int id)
-        {
-            return playablePointer.IsParameterControlledByCurve(id);
-        }
-
-        public int GetLayerCount()
-        {
-            return playablePointer.GetLayerCount();
-        }
-
-        public string GetLayerName(int layerIndex)
-        {
-            return playablePointer.GetLayerName(layerIndex);
-        }
-
-        public int GetLayerIndex(string layerName)
-        {
-            return playablePointer.GetLayerIndex(layerName);
-        }
-        public float GetLayerWeight(int layerIndex)
-        {
-            return playablePointer.GetLayerWeight(layerIndex);
-        }
-        public void SetLayerWeight(int layerIndex, float weight)
-        {
-            playablePointer.SetLayerWeight(layerIndex, weight);
-        }
-
-        public AnimatorStateInfo GetCurrentAnimatorStateInfo(int layerIndex)
-        {
-            return playablePointer.GetCurrentAnimatorStateInfo(layerIndex);
-        }
-
-        public AnimatorStateInfo GetNextAnimatorStateInfo(int layerIndex)
-        {
-            return playablePointer.GetNextAnimatorStateInfo(layerIndex);
-        }
-
-        public AnimatorTransitionInfo GetAnimatorTransitionInfo(int layerIndex)
-        {
-            return playablePointer.GetAnimatorTransitionInfo(layerIndex);
-        }
-
-        public AnimatorClipInfo[] GetCurrentAnimatorClipInfo(int layerIndex)
-        {
-            return playablePointer.GetCurrentAnimatorClipInfo(layerIndex);
-        }
-
-        public void GetCurrentAnimatorClipInfo(int layerIndex, List<AnimatorClipInfo> clips)
-        {
-            playablePointer.GetCurrentAnimatorClipInfo(layerIndex, clips);
-        }
-
-        public void GetNextAnimatorClipInfo(int layerIndex, List<AnimatorClipInfo> clips)
-        {
-            playablePointer.GetNextAnimatorClipInfo(layerIndex, clips);
-        }
-        public int GetCurrentAnimatorClipInfoCount(int layerIndex)
-        {
-            return playablePointer.GetCurrentAnimatorClipInfoCount(layerIndex);
-        }
-        public int GetNextAnimatorClipInfoCount(int layerIndex)
-        {
-            return playablePointer.GetNextAnimatorClipInfoCount(layerIndex);
-        }
-
-        public AnimatorClipInfo[] GetNextAnimatorClipInfo(int layerIndex)
-        {
-            return playablePointer.GetNextAnimatorClipInfo(layerIndex);
-        }
-        public bool IsInTransition(int layerIndex)
-        {
-            return playablePointer.IsInTransition(layerIndex);
-        }
-
-        public int GetParameterCount()
-        {
-            return playablePointer.GetParameterCount();
-        }
-
-        public AnimatorControllerParameter GetParameter(int index)
-        {
-            return playablePointer.GetParameter(index);
-        }
-
-        public void CrossFadeInFixedTime(string stateName, float transitionDuration, int layer = -1, float fixedTime = 0f)
-        {
-            playablePointer.CrossFadeInFixedTime(stateName, transitionDuration, layer, fixedTime);
-        }
-        public void CrossFadeInFixedTime(int stateNameHash, float transitionDuration, int layer = -1, float fixedTime = 0.0f)
-        {
-            playablePointer.CrossFadeInFixedTime(stateNameHash, transitionDuration, layer, fixedTime);
-        }
-        public void CrossFade(string stateName, float transitionDuration, int layer = -1, float normalizedTime = float.NegativeInfinity)
-        {
-            playablePointer.CrossFade(stateName, transitionDuration, layer, normalizedTime);
-        }
-
-        public void CrossFade(int stateNameHash, float transitionDuration, int layer = -1, float normalizedTime = float.NegativeInfinity)
-        {
-            playablePointer.CrossFade(stateNameHash, transitionDuration, layer, normalizedTime);
-        }
-        public void PlayInFixedTime(string stateName, int layer = -1, float fixedTime = float.NegativeInfinity)
-        {
-            playablePointer.PlayInFixedTime(stateName, layer, fixedTime);
-        }
-
-        public void PlayInFixedTime(int stateNameHash, int layer = -1, float fixedTime = float.NegativeInfinity)
-        {
-            playablePointer.PlayInFixedTime(stateNameHash, layer, fixedTime);
-        }
-
-        public void Play(string stateName, int layer = -1, float normalizedTime = float.NegativeInfinity)
-        {
-            playablePointer.Play(stateName, layer, normalizedTime);
-        }
-
-
-        public void Play(int stateNameHash, int layer = -1, float normalizedTime = float.NegativeInfinity)
-        {
-            playablePointer.Play(stateNameHash, layer, normalizedTime);
-        }
-
-        public bool HasState(int layerIndex, int stateID)
-        {
-            return playablePointer.HasState(layerIndex, stateID);
-        }
-        #endregion
+        #endregion Public API
     }
 }
