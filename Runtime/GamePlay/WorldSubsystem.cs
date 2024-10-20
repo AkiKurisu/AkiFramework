@@ -9,7 +9,7 @@ namespace Kurisu.Framework
     {
         private readonly Dictionary<Type, SubsystemBase> systems = new();
         private SubsystemBase[] subsystems;
-        private IDisposable actorsUpdateSubscription;
+        private readonly IDisposable actorsUpdateSubscription;
         public WorldSubsystemCollection(GameWorld world)
         {
             var types = AppDomain.CurrentDomain
@@ -209,6 +209,15 @@ namespace Kurisu.Framework
                 world.RegisterSubsystem(system);
             }
             return system;
+        }
+        /// <summary>
+        /// Dynamically create system if not registered.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public static T Get<T>() where T : DynamicSubsystem, new()
+        {
+            return Get<T>(GameWorld.Get());
         }
     }
 }
