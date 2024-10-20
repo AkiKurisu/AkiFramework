@@ -77,6 +77,28 @@ namespace Kurisu.Framework.Resource
         {
             return new SoftAssetReference<T>() { Address = address };
         }
+        public static implicit operator SoftAssetReference<T>(SoftAssetReference assetReference)
+        {
+            return new SoftAssetReference<T>()
+            {
+                Address = assetReference.Address,
+#if UNITY_EDITOR
+                Guid = assetReference.Guid,
+                Locked = assetReference.Locked
+#endif
+            };
+        }
+        public static implicit operator SoftAssetReference(SoftAssetReference<T> assetReference)
+        {
+            return new SoftAssetReference()
+            {
+                Address = assetReference.Address,
+#if UNITY_EDITOR
+                Guid = assetReference.Guid,
+                Locked = assetReference.Locked
+#endif
+            };
+        }
         public override readonly string ToString()
         {
             return Address;
