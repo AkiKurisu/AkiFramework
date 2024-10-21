@@ -158,7 +158,7 @@ namespace Kurisu.Framework.Animations
                 taskBuffer = null;
             }
         }
-        private class LoadAnimationClipTask : PooledTaskBase<LoadAnimationClipTask>
+        private sealed class LoadAnimationClipTask : PooledTaskBase<LoadAnimationClipTask>
         {
             private AnimationProxy proxy;
             private AnimationClip animationClip;
@@ -188,7 +188,7 @@ namespace Kurisu.Framework.Animations
                 proxy.LoadAnimationClip(animationClip, blendInTime);
             }
         }
-        private class LoadAnimatorTask : PooledTaskBase<LoadAnimatorTask>
+        private sealed class LoadAnimatorTask : PooledTaskBase<LoadAnimatorTask>
         {
             private AnimationProxy proxy;
             private RuntimeAnimatorController animatorController;
@@ -224,7 +224,7 @@ namespace Kurisu.Framework.Animations
                 animatorController = null;
             }
         }
-        private class AnimationProxyCallBackTask : PooledTaskBase<AnimationProxyCallBackTask>
+        private sealed class AnimationProxyCallBackTask : PooledTaskBase<AnimationProxyCallBackTask>
         {
             private AnimationProxy proxy;
             private AnimationProxyDelegate callBack;
@@ -247,6 +247,7 @@ namespace Kurisu.Framework.Animations
                 callBack = null;
             }
         }
+        #region Public API
         /// <summary>
         /// Create an <see cref="AnimationSequenceBuilder"/> from this proxy
         /// </summary>
@@ -255,5 +256,6 @@ namespace Kurisu.Framework.Animations
         {
             return new AnimationSequenceBuilder(this);
         }
+        #endregion Public API
     }
 }

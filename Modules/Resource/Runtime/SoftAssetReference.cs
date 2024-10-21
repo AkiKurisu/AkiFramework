@@ -59,24 +59,33 @@ namespace Kurisu.Framework.Resource
             Locked = false;
 #endif
         }
+
         public readonly T Load<FUnregister>(ref FUnregister unregister) where FUnregister : struct, IUnRegister
         {
             return ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(ref unregister).WaitForCompletion();
 
         }
+
         public readonly T Load<FUnregister>(IUnRegister unregister)
         {
             return ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(unregister).WaitForCompletion();
         }
+
         public readonly async UniTask<T> LoadAsync<TUnregister>(IUnRegister unregister)
         {
             return await ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(unregister);
+        }
+
+        public readonly ResourceHandle<T> LoadAsync()
+        {
+            return ResourceSystem.AsyncLoadAsset<T>(Address);
         }
 
         public static implicit operator SoftAssetReference<T>(string address)
         {
             return new SoftAssetReference<T>() { Address = address };
         }
+
         public static implicit operator SoftAssetReference<T>(SoftAssetReference assetReference)
         {
             return new SoftAssetReference<T>()
@@ -88,6 +97,7 @@ namespace Kurisu.Framework.Resource
 #endif
             };
         }
+
         public static implicit operator SoftAssetReference(SoftAssetReference<T> assetReference)
         {
             return new SoftAssetReference()
@@ -142,19 +152,27 @@ namespace Kurisu.Framework.Resource
         {
             return ResourceSystem.AsyncLoadAsset<Object>(Address).AddTo(unregister).WaitForCompletion();
         }
+
         public readonly async UniTask<Object> LoadAsync<TUnregister>(IUnRegister unregister)
         {
             return await ResourceSystem.AsyncLoadAsset<Object>(Address).AddTo(unregister);
-
         }
+
+        public readonly ResourceHandle LoadAsync()
+        {
+            return ResourceSystem.AsyncLoadAsset<Object>(Address);
+        }
+
         public static implicit operator SoftAssetReference(string address)
         {
             return new SoftAssetReference() { Address = address };
         }
+
         public override readonly string ToString()
         {
             return Address;
         }
+
         public readonly bool IsValid()
         {
             return !string.IsNullOrEmpty(Address);

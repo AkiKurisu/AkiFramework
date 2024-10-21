@@ -41,7 +41,7 @@ namespace Kurisu.Framework.Serialization
                 var type = SerializedType.FromString(serializedTypeString);
                 if (type == null)
                 {
-                    Debug.LogWarning($"Missing type {type} when deserialize {nameof(T)}");
+                    Debug.LogWarning($"Missing type {serializedTypeString} when deserialize {nameof(T)}");
                     return default;
                 }
                 value = (T)JsonUtility.FromJson(jsonData, type);
@@ -57,7 +57,7 @@ namespace Kurisu.Framework.Serialization
             var type = SerializedType.FromString(serializedTypeString);
             if (type == null)
             {
-                Debug.LogWarning($"Missing type {type} when deserialize {nameof(T)}");
+                Debug.LogWarning($"Missing type {serializedTypeString} when deserialize {nameof(T)}");
                 return default;
             }
             return (T)JsonUtility.FromJson(jsonData, type);

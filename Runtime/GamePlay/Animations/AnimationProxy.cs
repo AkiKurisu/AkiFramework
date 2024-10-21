@@ -21,17 +21,17 @@ namespace Kurisu.Framework.Animations
         /// Cached <see cref="RuntimeAnimatorController"/> of <see cref="Animator"/>
         /// </summary>
         /// <value></value>
-        protected RuntimeAnimatorController SourceController { get; private set; }
+        public RuntimeAnimatorController SourceController { get; private set; }
         /// <summary>
         /// Cached input <see cref="RuntimeAnimatorController"/> of <see cref="LeafAnimatorPlayable"/>
         /// </summary>
         /// <value></value>
-        protected RuntimeAnimatorController CurrentAnimatorController { get; private set; }
+        public RuntimeAnimatorController CurrentAnimatorController { get; private set; }
         /// <summary>
         /// Cached input <see cref="AnimationClip"/> of <see cref="LeafAnimationClipPlayable"/>
         /// </summary>
         /// <value></value>
-        protected AnimationClip CurrentAnimationClip { get; private set; }
+        public AnimationClip CurrentAnimationClip { get; private set; }
         /// <summary>
         /// Get playing <see cref="PlayableGraph"/>
         /// </summary>
@@ -103,6 +103,18 @@ namespace Kurisu.Framework.Animations
                 return Graph.IsValid() && Graph.IsPlaying();
             }
         }
+        /// <summary>
+        /// Should proxy clear <see cref="RuntimeAnimatorController"/> of <see cref="Animator"/> when completely blend in 
+        /// which can prevent animation artifacts. Set <see cref="RestoreAnimatorControllerOnStop"/> to true to automatically 
+        /// restore it after stopping
+        /// </summary>
+        /// <value></value>
+        public bool ClearAnimatorControllerOnStart { get; set; } = true;
+        /// <summary>
+        /// Should proxy restore <see cref="RuntimeAnimatorController"/> after stopping
+        /// </summary>
+        /// <value></value>
+        public bool RestoreAnimatorControllerOnStop { get; set; } = true;
         public AnimationProxy(Animator animator)
         {
             Animator = animator;
@@ -231,7 +243,10 @@ namespace Kurisu.Framework.Animations
             }
             if (!IsPlaying) Graph.Play();
         }
-        private void Shrink(AnimationMontageNode node)
+        /// <summary>
+        /// Call this function to release not used playables after montage completely blend in
+        /// </summary>
+        protected virtual void Shrink(AnimationMontageNode node)
         {
             if (LeafMontage != node) return; /* Has new montage in blend */
             if (node.BlendWeight != 1)
@@ -247,7 +262,10 @@ namespace Kurisu.Framework.Animations
         protected virtual void SetInGraph()
         {
             IsBlendIn = false;
-            Animator.runtimeAnimatorController = null;
+            if (ClearAnimatorControllerOnStart)
+            {
+                Animator.runtimeAnimatorController = null;
+            }
         }
         /// <summary>
         /// Call this function after animation proxy completly blend out
@@ -300,7 +318,10 @@ namespace Kurisu.Framework.Animations
         {
             if (!IsPlaying) return;
             RootMontage.Dispose();
-            Animator.runtimeAnimatorController = SourceController;
+            if (RestoreAnimatorControllerOnStop)
+            {
+                Animator.runtimeAnimatorController = SourceController;
+            }
             IsBlendOut = true;
             if (blendOutDuration <= 0)
             {
