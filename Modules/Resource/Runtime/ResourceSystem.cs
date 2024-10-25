@@ -141,7 +141,7 @@ namespace Kurisu.Framework.Resource
         /// <param name="unRegisterHandle"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static ResourceHandle<T> AsyncLoadAsset<T>(string address, Action<T> callBack = null)
+        public static ResourceHandle<T> LoadAssetAsync<T>(string address, Action<T> callBack = null)
         {
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
             if (callBack != null)
@@ -158,7 +158,7 @@ namespace Kurisu.Framework.Resource
         /// <param name="action"></param>
         /// <param name="bindObject"></param>
         /// <returns></returns>
-        public static ResourceHandle<GameObject> AsyncInstantiate(string address, Transform parent, Action<GameObject> callBack = null)
+        public static ResourceHandle<GameObject> InstantiateAsync(string address, Transform parent, Action<GameObject> callBack = null)
         {
             AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
             var resourceHandle = CreateHandle(handle, InstantiateOperation);
@@ -193,7 +193,7 @@ namespace Kurisu.Framework.Resource
                 ReleaseAsset(handle);
         }
         /// <summary>
-        /// Release Asset, should align with <see cref="AsyncLoadAsset"/>
+        /// Release Asset, should align with <see cref="LoadAssetAsync"/>
         /// </summary>
         /// <param name="handle"></param>
         public static void ReleaseAsset(ResourceHandle handle)
@@ -203,7 +203,7 @@ namespace Kurisu.Framework.Resource
             ReleaseHandleInternal(handle);
         }
         /// <summary>
-        /// Release GameObject Instance, should align with <see cref="AsyncInstantiate"/>
+        /// Release GameObject Instance, should align with <see cref="InstantiateAsync"/>
         /// </summary>
         /// <param name="obj"></param>
         public static void ReleaseInstance(GameObject obj)
@@ -225,14 +225,14 @@ namespace Kurisu.Framework.Resource
         }
         #endregion
         #region  Multi Assets Load
-        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(object key, Action<IList<T>> callBack = null)
+        public static ResourceHandle<IList<T>> LoadAssetsAsync<T>(object key, Action<IList<T>> callBack = null)
         {
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null);
             if (callBack != null)
                 handle.Completed += (h) => callBack.Invoke(h.Result);
             return CreateHandle(handle, AssetLoadOperation);
         }
-        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(IEnumerable key, MergeMode mode, Action<IList<T>> callBack = null)
+        public static ResourceHandle<IList<T>> LoadAssetsAsync<T>(IEnumerable key, MergeMode mode, Action<IList<T>> callBack = null)
         {
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null, (Addressables.MergeMode)mode);
             if (callBack != null)

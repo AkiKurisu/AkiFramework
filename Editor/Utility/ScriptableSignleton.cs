@@ -74,7 +74,7 @@ namespace Kurisu.Framework.Editor
             }
             if (path[0] == '/')
             {
-                path = path.Substring(1);
+                path = path[1..];
             }
             filepath = path;
         }

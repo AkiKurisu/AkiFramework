@@ -90,7 +90,7 @@ namespace Kurisu.Framework.Resource
                 return internalHandle;
             }
             //Create a new resource load call, also track it's handle
-            internalHandle = ResourceSystem.AsyncLoadAsset<TAsset>(address, (asset) =>
+            internalHandle = ResourceSystem.LoadAssetAsync<TAsset>(address, (asset) =>
             {
                 cacheMap.Add(address, asset);
                 callBack?.Invoke(asset);

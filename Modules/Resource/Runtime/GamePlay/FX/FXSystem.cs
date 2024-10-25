@@ -1,11 +1,12 @@
 using Cysharp.Threading.Tasks;
 using Kurisu.Framework.Pool;
 using Kurisu.Framework.React;
+using Kurisu.Framework.Resource;
 using R3;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Object = UnityEngine.Object;
-namespace Kurisu.Framework.Resource
+namespace Kurisu.Framework.FX
 {
     // TODO: Add fx preloading
     public static class FXSystem
@@ -145,7 +146,7 @@ namespace Kurisu.Framework.Resource
                 var fxObject = GameObjectPoolManager.Get(key, out var metaData, parent, createEmptyIfNotExist: false);
                 if (!fxObject)
                 {
-                    var handle = ResourceSystem.AsyncInstantiate(address, parent);
+                    var handle = ResourceSystem.InstantiateAsync(address, parent);
                     fxObject = await handle;
                     // decrease ref count when pool manager release root
                     _ = handle.AddTo(fxObject);

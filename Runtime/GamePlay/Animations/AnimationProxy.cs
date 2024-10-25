@@ -119,6 +119,10 @@ namespace Kurisu.Framework.Animations
         {
             Animator = animator;
         }
+        private static string GetPlayableName(Animator animator)
+        {
+            return $"{animator.name}_AnimationProxyPlayable";
+        }
         /// <summary>
         /// Load animator to the graph
         /// </summary>
@@ -144,8 +148,8 @@ namespace Kurisu.Framework.Animations
         {
             // Create new graph
             SourceController = Animator.runtimeAnimatorController;
-            Graph = PlayableGraph.Create($"{Animator.gameObject.name}_Playable");
-            var playableOutput = AnimationPlayableOutput.Create(Graph, "Animation", Animator);
+            Graph = PlayableGraph.Create(GetPlayableName(Animator));
+            var playableOutput = AnimationPlayableOutput.Create(Graph, nameof(RuntimeAnimatorController), Animator);
             LeafPlayable = AnimatorControllerPlayable.Create(Graph, CurrentAnimatorController = animatorController);
             LeafMontage = RootMontage = AnimationMontageNode.CreateRootMontage(LeafPlayable);
             playableOutput.SetSourcePlayable(RootMontage.Montage);
@@ -197,8 +201,8 @@ namespace Kurisu.Framework.Animations
         {
             // Create new graph
             SourceController = Animator.runtimeAnimatorController;
-            Graph = PlayableGraph.Create($"{Animator.gameObject.name}_Playable");
-            var playableOutput = AnimationPlayableOutput.Create(Graph, "Animation", Animator);
+            Graph = PlayableGraph.Create(GetPlayableName(Animator));
+            var playableOutput = AnimationPlayableOutput.Create(Graph, nameof(AnimationClip), Animator);
             LeafPlayable = AnimationClipPlayable.Create(Graph, CurrentAnimationClip = animationClip);
             LeafMontage = RootMontage = AnimationMontageNode.CreateRootMontage(LeafPlayable);
             playableOutput.SetSourcePlayable(RootMontage.Montage);

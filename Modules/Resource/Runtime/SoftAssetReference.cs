@@ -60,25 +60,25 @@ namespace Kurisu.Framework.Resource
 #endif
         }
 
-        public readonly T Load<FUnregister>(ref FUnregister unregister) where FUnregister : struct, IUnRegister
+        public readonly T Load<FUnregister>(ref FUnregister unregister) where FUnregister : struct, IDisposableUnregister
         {
-            return ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(ref unregister).WaitForCompletion();
+            return ResourceSystem.LoadAssetAsync<T>(Address).AddTo(ref unregister).WaitForCompletion();
 
         }
 
-        public readonly T Load<FUnregister>(IUnRegister unregister)
+        public readonly T Load<FUnregister>(IDisposableUnregister unregister)
         {
-            return ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(unregister).WaitForCompletion();
+            return ResourceSystem.LoadAssetAsync<T>(Address).AddTo(unregister).WaitForCompletion();
         }
 
-        public readonly async UniTask<T> LoadAsync<TUnregister>(IUnRegister unregister)
+        public readonly async UniTask<T> LoadAsync<TUnregister>(IDisposableUnregister unregister)
         {
-            return await ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(unregister);
+            return await ResourceSystem.LoadAssetAsync<T>(Address).AddTo(unregister);
         }
 
         public readonly ResourceHandle<T> LoadAsync()
         {
-            return ResourceSystem.AsyncLoadAsset<T>(Address);
+            return ResourceSystem.LoadAssetAsync<T>(Address);
         }
 
         public static implicit operator SoftAssetReference<T>(string address)
@@ -143,24 +143,24 @@ namespace Kurisu.Framework.Resource
             Locked = false;
 #endif
         }
-        public readonly Object Load<FUnregister>(ref FUnregister unregister) where FUnregister : struct, IUnRegister
+        public readonly Object Load<FUnregister>(ref FUnregister unregister) where FUnregister : struct, IDisposableUnregister
         {
-            return ResourceSystem.AsyncLoadAsset<Object>(Address).AddTo(ref unregister).WaitForCompletion();
+            return ResourceSystem.LoadAssetAsync<Object>(Address).AddTo(ref unregister).WaitForCompletion();
         }
 
-        public readonly Object Load<FUnregister>(IUnRegister unregister)
+        public readonly Object Load<FUnregister>(IDisposableUnregister unregister)
         {
-            return ResourceSystem.AsyncLoadAsset<Object>(Address).AddTo(unregister).WaitForCompletion();
+            return ResourceSystem.LoadAssetAsync<Object>(Address).AddTo(unregister).WaitForCompletion();
         }
 
-        public readonly async UniTask<Object> LoadAsync<TUnregister>(IUnRegister unregister)
+        public readonly async UniTask<Object> LoadAsync<TUnregister>(IDisposableUnregister unregister)
         {
-            return await ResourceSystem.AsyncLoadAsset<Object>(Address).AddTo(unregister);
+            return await ResourceSystem.LoadAssetAsync<Object>(Address).AddTo(unregister);
         }
 
         public readonly ResourceHandle LoadAsync()
         {
-            return ResourceSystem.AsyncLoadAsset<Object>(Address);
+            return ResourceSystem.LoadAssetAsync<Object>(Address);
         }
 
         public static implicit operator SoftAssetReference(string address)

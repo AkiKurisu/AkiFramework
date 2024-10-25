@@ -7,7 +7,8 @@ using R3;
 using System;
 using UnityEngine.Assertions;
 using System.Collections.Generic;
-namespace Kurisu.Framework.Resource
+using Kurisu.Framework.Resource;
+namespace Kurisu.Framework.Audios
 {
     public static class AudioSystem
     {
@@ -77,7 +78,7 @@ namespace Kurisu.Framework.Resource
         private static async UniTask PlayClipAtPointAsync(string audioClipAddress, Vector3 position, float volume, float spatialBlend, float minDistance)
         {
             var audioObject = PooledAudioSource.Get(GetRoot(), volume, spatialBlend, minDistance);
-            var handle = ResourceSystem.AsyncLoadAsset<AudioClip>(audioClipAddress).AddTo(audioObject);
+            var handle = ResourceSystem.LoadAssetAsync<AudioClip>(audioClipAddress).AddTo(audioObject);
             var audioClip = await handle;
             // This will forget audio object
             PlayClipAtPoint(audioClip, audioObject, position);
@@ -113,7 +114,7 @@ namespace Kurisu.Framework.Resource
         private static async UniTask ScheduleClipAtPointAsync(string audioClipAddress, Vector3 position, float scheduleTime, float volume, float spatialBlend = 1f, float minDistance = 10f, bool appendClipDuration = false)
         {
             var audioObject = PooledAudioSource.Get(GetRoot(), volume, spatialBlend, minDistance);
-            var handle = ResourceSystem.AsyncLoadAsset<AudioClip>(audioClipAddress).AddTo(audioObject);
+            var handle = ResourceSystem.LoadAssetAsync<AudioClip>(audioClipAddress).AddTo(audioObject);
             var audioClip = await handle;
             ScheduleClipAtPoint(audioClip, audioObject, position, scheduleTime, appendClipDuration);
             // Register loop audio object

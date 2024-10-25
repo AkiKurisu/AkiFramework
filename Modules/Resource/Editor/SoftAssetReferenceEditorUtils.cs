@@ -57,7 +57,7 @@ namespace Kurisu.Framework.Resource.Editor
             var asset = GetAssetFromGUID(softAssetReference.Guid);
             if (!asset)
             {
-                asset = ResourceSystem.AsyncLoadAsset<UObject>(softAssetReference.Address).WaitForCompletion();
+                asset = ResourceSystem.LoadAssetAsync<UObject>(softAssetReference.Address).WaitForCompletion();
             }
             return asset;
         }

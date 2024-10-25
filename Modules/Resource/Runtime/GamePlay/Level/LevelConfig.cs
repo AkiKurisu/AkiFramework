@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kurisu.Framework.Resource;
 using UnityEngine;
-namespace Kurisu.Framework.Resource
+namespace Kurisu.Framework.Level
 {
     public enum LoadLevelMode
     {

@@ -23,24 +23,6 @@ namespace Kurisu.Framework.Resource
             return handle.InternalHandle.WithCancellation(cancellationToken, cancelImmediately, autoReleaseWhenCanceled);
         }
         /// <summary>
-        /// Whether resource handle is empty
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        public static bool IsNull(this ResourceHandle handle)
-        {
-            return handle.index <= 0;
-        }
-        /// <summary>
-        /// Whether resource handle is empty
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        public static bool IsNull<T>(this ResourceHandle<T> handle)
-        {
-            return handle.index <= 0;
-        }
-        /// <summary>
         /// Whether internal operation is valid
         /// </summary>
         /// <param name="handle"></param>
@@ -77,12 +59,12 @@ namespace Kurisu.Framework.Resource
             return ResourceSystem.IsValid(handle.version, handle.index) && handle.InternalHandle.IsDone;
         }
         /// <summary>
-        /// Async load asset by <see cref="AssetReferenceT{T}"/> and convert operation to <see cref="ResourceHandle{T}"/>
+        /// Load asset async by <see cref="AssetReferenceT{T}"/> and convert to <see cref="ResourceHandle{T}"/>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="assetReferenceT"></param>
         /// <returns></returns>
-        public static ResourceHandle<T> AsyncLoadAsset<T>(this AssetReferenceT<T> assetReferenceT) where T : Object
+        public static ResourceHandle<T> ToResourceHandle<T>(this AssetReferenceT<T> assetReferenceT) where T : Object
         {
             return ResourceSystem.CreateHandle(assetReferenceT.LoadAssetAsync(), ResourceSystem.AssetLoadOperation);
         }
