@@ -246,10 +246,10 @@ namespace Kurisu.Framework.UI
             using var evt = ChangeEvent<TValue>.GetPooled(default, _value.Value);
             SendEvent(evt);
         }
-        public BaseField<TValue> BindProperty<T>(ReactiveProperty<TValue> property, ref T unRegister) where T : struct, IDisposableUnregister
+        public BaseField<TValue> BindProperty<T>(ReactiveProperty<TValue> property, T unRegister) where T : IDisposableUnregister
         {
-            this.AsObservable<ChangeEvent<TValue>>().SubscribeSafe(e => property.Value = e.NewValue).AddTo(ref unRegister);
-            property.Subscribe(e => _value.OnNext(e)).AddTo(ref unRegister);
+            this.AsObservable<ChangeEvent<TValue>>().SubscribeSafe(e => property.Value = e.NewValue).AddTo(unRegister);
+            property.Subscribe(e => _value.OnNext(e)).AddTo(unRegister);
             _value.OnNext(property.Value);
             return this;
         }

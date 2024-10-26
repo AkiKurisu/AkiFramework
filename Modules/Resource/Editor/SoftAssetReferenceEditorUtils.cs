@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using UObject = UnityEngine.Object;
 using Kurisu.Framework.Serialization;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
+using UnityEngine.Assertions;
 namespace Kurisu.Framework.Resource.Editor
 {
     public static class SoftAssetReferenceEditorUtils
@@ -128,9 +129,10 @@ namespace Kurisu.Framework.Resource.Editor
         }
         public static AddressableAssetEntry AddAsset(this AddressableAssetGroup group, UObject asset, params string[] labels)
         {
+            Assert.IsNotNull(group);
             if (asset == null) return null;
             var guid = asset.GetAssetGUID();
-            if (guid == null)
+            if (string.IsNullOrEmpty(guid))
             {
                 Debug.LogError($"[Resource Editor] Can't find {asset} !");
                 return null;

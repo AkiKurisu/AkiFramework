@@ -61,10 +61,10 @@ namespace Kurisu.Framework.React
         /// <param name="slider"></param>
         /// <param name="property"></param>
         /// <param name="unRegister"></param>
-        public static void BindProperty<T>(this Slider slider, ReactiveProperty<float> property, ref T unRegister) where T : struct, IDisposableUnregister
+        public static void BindProperty<T>(this Slider slider, ReactiveProperty<float> property, T unRegister) where T : IDisposableUnregister
         {
-            slider.onValueChanged.AsObservable().Subscribe(e => property.Value = e).AddTo(ref unRegister);
-            property.Subscribe(e => slider.SetValueWithoutNotify(e)).AddTo(ref unRegister);
+            slider.onValueChanged.AsObservable().Subscribe(e => property.Value = e).AddTo(unRegister);
+            property.Subscribe(e => slider.SetValueWithoutNotify(e)).AddTo(unRegister);
             slider.SetValueWithoutNotify(property.Value);
         }
         /// <summary>
@@ -74,10 +74,10 @@ namespace Kurisu.Framework.React
         /// <param name="slider"></param>
         /// <param name="property"></param>
         /// <param name="unRegister"></param>
-        public static void BindProperty<T>(this Slider slider, ReactiveProperty<int> property, ref T unRegister) where T : struct, IDisposableUnregister
+        public static void BindProperty<T>(this Slider slider, ReactiveProperty<int> property, T unRegister) where T : IDisposableUnregister
         {
-            slider.onValueChanged.AsObservable().Subscribe(e => property.Value = (int)e).AddTo(ref unRegister);
-            property.Subscribe(e => slider.SetValueWithoutNotify(e)).AddTo(ref unRegister);
+            slider.onValueChanged.AsObservable().Subscribe(e => property.Value = (int)e).AddTo(unRegister);
+            property.Subscribe(e => slider.SetValueWithoutNotify(e)).AddTo(unRegister);
             slider.SetValueWithoutNotify(property.Value);
         }
         /// <summary>
@@ -87,10 +87,10 @@ namespace Kurisu.Framework.React
         /// <param name="toggle"></param>
         /// <param name="property"></param>
         /// <param name="unRegister"></param>
-        public static void BindProperty<T>(this Toggle toggle, ReactiveProperty<bool> property, ref T unRegister) where T : struct, IDisposableUnregister
+        public static void BindProperty<T>(this Toggle toggle, ReactiveProperty<bool> property, T unRegister) where T : IDisposableUnregister
         {
-            toggle.onValueChanged.AsObservable().Subscribe(e => property.Value = e).AddTo(ref unRegister);
-            property.Subscribe(e => toggle.SetIsOnWithoutNotify(e)).AddTo(ref unRegister);
+            toggle.onValueChanged.AsObservable().Subscribe(e => property.Value = e).AddTo(unRegister);
+            property.Subscribe(e => toggle.SetIsOnWithoutNotify(e)).AddTo(unRegister);
             toggle.SetIsOnWithoutNotify(property.Value);
         }
     }

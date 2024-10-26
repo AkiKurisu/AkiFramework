@@ -1,6 +1,4 @@
 using System;
-using Cysharp.Threading.Tasks;
-using Kurisu.Framework.React;
 using UnityEngine;
 using Object = UnityEngine.Object;
 namespace Kurisu.Framework.Resource
@@ -58,22 +56,6 @@ namespace Kurisu.Framework.Resource
             Guid = string.Empty;
             Locked = false;
 #endif
-        }
-
-        public readonly T Load<FUnregister>(ref FUnregister unregister) where FUnregister : struct, IDisposableUnregister
-        {
-            return ResourceSystem.LoadAssetAsync<T>(Address).AddTo(ref unregister).WaitForCompletion();
-
-        }
-
-        public readonly T Load<FUnregister>(IDisposableUnregister unregister)
-        {
-            return ResourceSystem.LoadAssetAsync<T>(Address).AddTo(unregister).WaitForCompletion();
-        }
-
-        public readonly async UniTask<T> LoadAsync<TUnregister>(IDisposableUnregister unregister)
-        {
-            return await ResourceSystem.LoadAssetAsync<T>(Address).AddTo(unregister);
         }
 
         public readonly ResourceHandle<T> LoadAsync()
@@ -142,20 +124,6 @@ namespace Kurisu.Framework.Resource
             Guid = string.Empty;
             Locked = false;
 #endif
-        }
-        public readonly Object Load<FUnregister>(ref FUnregister unregister) where FUnregister : struct, IDisposableUnregister
-        {
-            return ResourceSystem.LoadAssetAsync<Object>(Address).AddTo(ref unregister).WaitForCompletion();
-        }
-
-        public readonly Object Load<FUnregister>(IDisposableUnregister unregister)
-        {
-            return ResourceSystem.LoadAssetAsync<Object>(Address).AddTo(unregister).WaitForCompletion();
-        }
-
-        public readonly async UniTask<Object> LoadAsync<TUnregister>(IDisposableUnregister unregister)
-        {
-            return await ResourceSystem.LoadAssetAsync<Object>(Address).AddTo(unregister);
         }
 
         public readonly ResourceHandle LoadAsync()

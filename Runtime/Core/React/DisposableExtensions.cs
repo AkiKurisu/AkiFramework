@@ -60,12 +60,7 @@ namespace Kurisu.Framework.React
         {
             return new CancellationTokenUnregister(monoBehaviour.destroyCancellationToken);
         }
-        public static T AddTo<T, K>(this T disposable, ref K unRegister) where T : IDisposable where K : struct, IDisposableUnregister
-        {
-            unRegister.Register(disposable);
-            return disposable;
-        }
-        public static T AddTo<T>(this T disposable, IDisposableUnregister unRegister) where T : IDisposable
+        public static T AddTo<T, K>(this T disposable, K unRegister) where T : IDisposable where K : IDisposableUnregister
         {
             unRegister.Register(disposable);
             return disposable;
