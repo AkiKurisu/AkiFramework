@@ -129,12 +129,12 @@ namespace Kurisu.Framework.Serialization
 
         public static Type FromString(string serializedTypeString)
         {
+            if (string.IsNullOrEmpty(serializedTypeString) || IsGeneric(serializedTypeString))
+                return null;
             if (SerializedTypeRedirector.TryRedirect(serializedTypeString, out var type))
             {
                 return type;
             }
-            if (string.IsNullOrEmpty(serializedTypeString) || IsGeneric(serializedTypeString))
-                return null;
             var data = SplitTypeString(serializedTypeString);
             return Type.GetType(data.typeName);
         }

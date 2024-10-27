@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEditorInternal;
 using Kurisu.Framework.Serialization;
 using Kurisu.Framework.Serialization.Editor;
+using System.Collections.ObjectModel;
 namespace Kurisu.Framework.DataDriven.Editor
 {
     /// <summary>
@@ -18,6 +19,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         private ReorderableList reorderableList;
         public DataTable Table { get; }
         private SerializedObject serializedObject;
+        private int selectIndex;
         public DataTableRowView(DataTable dataTable)
         {
             Table = dataTable;
@@ -41,6 +43,11 @@ namespace Kurisu.Framework.DataDriven.Editor
                 header.Insert(0, "Row Id");
                 var rows = Table.GetAllRows();
                 reorderableList ??= new ReorderableList(rows, rowStructType, true, true, true, true);
+                if (selectIndex >= 0)
+                {
+                    SelectRow(selectIndex);
+                    selectIndex = -1;
+                }
                 reorderableList.multiSelect = true;
                 reorderableList.elementHeightCallback = (int index) =>
                 {
@@ -106,11 +113,53 @@ namespace Kurisu.Framework.DataDriven.Editor
                 RequestDataTableUpdate();
             }
         }
+        /// <summary>
+        /// Get row view selected indices
+        /// </summary>
+        /// <returns></returns>
+        public ReadOnlyCollection<int> GetSelectedIndices()
+        {
+            return reorderableList.selectedIndices;
+        }
+        /// <summary>
+        /// Get row view selected rows
+        /// </summary>
+        /// <returns></returns>
+        public IDataTableRow[] GetSelectedRows()
+        {
+            var rows = Table.GetAllRows();
+            return reorderableList.selectedIndices.Select(x => rows[x]).ToArray();
+        }
+        /// <summary>
+        /// Get row view selected rows in serialized property format
+        /// </summary>
+        /// <returns></returns>
+        public SerializedProperty[] GetSelectedRowProperties(SerializedObject serializedObject)
+        {
+            var rows = Table.GetAllRows();
+            var rowsProp = serializedObject.FindProperty("m_rows");
+            return reorderableList.selectedIndices.Select(x => rowsProp.GetArrayElementAtIndex(x)).ToArray();
+        }
         protected void RequestDataTableUpdate()
         {
             DataTableEditorUtils.OnDataTablePreUpdate?.Invoke(Table);
             Rebuild();
             DataTableEditorUtils.OnDataTablePostUpdate?.Invoke(Table);
+        }
+        /// <summary>
+        /// Select target row in view
+        /// </summary>
+        /// <param name="index"></param>
+        public void SelectRow(int index)
+        {
+            if (reorderableList == null)
+            {
+                // Cache pre-select index when list view is not prepared
+                selectIndex = index;
+                return;
+            }
+            if (selectIndex < reorderableList.count)
+                reorderableList.Select(index);
         }
         /// <summary>
         /// Rebuild rows view
