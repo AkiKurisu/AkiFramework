@@ -1,8 +1,10 @@
 using UnityEngine;
 using UnityEditor;
+using Kurisu.Framework.Editor;
+using Newtonsoft.Json;
 namespace Kurisu.Framework.Serialization.Editor
 {
-    // Modified from https://gist.github.com/tomkail/ba4136e6aa990f4dc94e0d39ec6a058c
+    // Thanks to https://gist.github.com/tomkail/ba4136e6aa990f4dc94e0d39ec6a058c
     public class SerializedObjectWrapperDrawer
     {
         public static float CalculatePropertyHeight(ScriptableObject data)
@@ -61,6 +63,12 @@ namespace Kurisu.Framework.Serialization.Editor
                 serializedObject.Dispose();
             }
         }
+        /// <summary>
+        /// Draw wrapper in horizontal layout
+        /// </summary>
+        /// <param name="startRect"></param>
+        /// <param name="space"></param>
+        /// <param name="data"></param>
         public static void DrawGUIHorizontal(Rect startRect, int space, ScriptableObject data)
         {
             var serializedObject = new SerializedObject(data);
@@ -77,6 +85,40 @@ namespace Kurisu.Framework.Serialization.Editor
             serializedObject.ApplyModifiedProperties();
             serializedObject.Dispose();
         }
+        /// <summary>
+        /// Draw read-only wrapper in horizontal layout
+        /// </summary>
+        /// <param name="startRect"></param>
+        /// <param name="space"></param>
+        /// <param name="data"></param>
+        public static void DrawReadOnlyGUIHorizontal(Rect startRect, int space, ScriptableObject data)
+        {
+            var serializedObject = new SerializedObject(data);
+            SerializedProperty property = serializedObject.FindProperty("m_Value");
+            if (property != null && property.NextVisible(true))
+            {
+                do
+                {
+                    var propertyObject = ReflectionUtility.GetTargetObjectWithProperty(property);
+                    if (property.propertyType == SerializedPropertyType.Generic)
+                    {
+                        EditorGUI.LabelField(startRect, JsonConvert.SerializeObject(propertyObject));
+                    }
+                    else
+                    {
+                        EditorGUI.LabelField(startRect, propertyObject.ToString());
+                    }
+                    startRect.x += startRect.width + space;
+                }
+                while (property.NextVisible(false));
+            }
+            serializedObject.Dispose();
+        }
+        /// <summary>
+        ///  Draw wrapper in input rect
+        /// </summary>
+        /// <param name="position"></param>
+        /// <param name="data"></param>
         public static void DrawGUI(Rect position, ScriptableObject data)
         {
             var serializedObject = new SerializedObject(data);
@@ -89,6 +131,25 @@ namespace Kurisu.Framework.Serialization.Editor
                     position.height = height;
                     EditorGUI.PropertyField(position, prop, true);
                     position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
+                }
+                while (prop.NextVisible(false));
+            }
+            serializedObject.ApplyModifiedProperties();
+            serializedObject.Dispose();
+        }
+        /// <summary>
+        /// Draw wrapper in a GUILayout scope
+        /// </summary>
+        /// <param name="data"></param>
+        public static void DrawGUILayout(ScriptableObject data)
+        {
+            var serializedObject = new SerializedObject(data);
+            SerializedProperty prop = serializedObject.FindProperty("m_Value");
+            if (prop != null && prop.NextVisible(true))
+            {
+                do
+                {
+                    EditorGUILayout.PropertyField(prop, true);
                 }
                 while (prop.NextVisible(false));
             }

@@ -10,7 +10,7 @@ namespace Kurisu.Framework.Pool
     /// <summary>
     /// Wrapper for pooling gameObject
     /// </summary>
-    public class PooledGameObject : IDisposable, IUnRegister
+    public class PooledGameObject : IDisposable, IDisposableUnregister
     {
         public PooledGameObject() { }
         private readonly static _ObjectPool<PooledGameObject> pool = new(() => new());
@@ -52,9 +52,9 @@ namespace Kurisu.Framework.Pool
         /// </summary>
         /// <param name="disposable"></param>
         /// <remarks>
-        /// Implement of <see cref="IUnRegister"/> to manage <see cref="IDisposable"/> in pooling scope.
+        /// Implement of <see cref="IDisposableUnregister"/> to manage <see cref="IDisposable"/> in pooling scope.
         /// </remarks>
-        void IUnRegister.Add(IDisposable disposable)
+        void IDisposableUnregister.Register(IDisposable disposable)
         {
             disposables.Add(disposable);
         }

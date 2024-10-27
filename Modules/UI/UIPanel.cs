@@ -39,7 +39,11 @@ namespace Kurisu.Framework.UI
         [SerializeField]
         private SerializedType<IPanelItem>[] initialItems;
         /// <summary>
-        /// Space between each panel item, not include custom fields
+        /// Add space between each <see cref="initialItems"/> 
+        /// </summary>
+        public bool AddSpaceForInitialItems = true;
+        /// <summary>
+        /// Space amount between each <see cref="initialItems"/> 
         /// </summary>
         public int ItemSpace = SpaceField.DefaultSpace;
         [SerializeField, Tooltip("Set to override content container, default use self transform")]
@@ -95,7 +99,7 @@ namespace Kurisu.Framework.UI
             bool isFirst = true;
             foreach (var item in items)
             {
-                if (!isFirst)
+                if (!isFirst && AddSpaceForInitialItems)
                 {
                     panelField.Add(new SpaceField(ItemSpace));
                 }

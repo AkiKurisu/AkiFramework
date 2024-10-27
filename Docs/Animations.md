@@ -18,11 +18,11 @@ public class MontageExample : MonoBehaviour
     private IEnumerator Start()
     {
         animationProxy = new AnimationProxy(animator);
-        animationProxy.LoadAnimator(controllerA, 0.5f); /* Crossfade  animator to controllerA in 0.5s */
+        animationProxy.LoadAnimator(controllerA, 0.5f); /* Crossfade animator to controllerA in 0.5s */
         yield return new WaitForSeconds(1f);
-        animationProxy.LoadAnimator(controllerB, 0.5f); /* Crossfade  controllerA to controllerB in 0.5s */
+        animationProxy.LoadAnimator(controllerB, 0.5f); /* Crossfade controllerA to controllerB in 0.5s */
         yield return new WaitForSeconds(1f);
-        chaAnimationProxy.Stop(0.5f); /* Crossfade  controllerB to animator in 0.5s */
+        chaAnimationProxy.Stop(0.5f); /* Crossfade controllerB to animator in 0.5s */
     }
 }
 ```
@@ -38,7 +38,7 @@ public class SequenceExample : MonoBehaviour
     private void Start()
     {
         animationProxy = new AnimationProxy(animator);
-        using var builder = chaAnimationProxy.CreateSequenceBuilder();
+        using var builder = animationProxy.CreateSequenceBuilder();
         foreach (var clip in clips)
         {
             builder.Append(clip, clip.length * 3 /* Play 3 loop */, 0.25f /* BlendIn duration */);

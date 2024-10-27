@@ -9,7 +9,7 @@ namespace Kurisu.Framework.Editor
     internal class AkiFrameworkSettings : ScriptableSingleton<AkiFrameworkSettings>
     {
         public bool SchdulerStackTrace = true;
-        public SerializedType<IDataTableJsonSerializer> JsonSerializer = SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
+        public SerializedType<IDataTableJsonSerializer> DataTableJsonSerializer = SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
     }
 
     internal class AkiFrameworkSettingsProvider : SettingsProvider
@@ -36,7 +36,7 @@ namespace Kurisu.Framework.Editor
         {
             GUILayout.BeginVertical("Scheduler Settings", GUI.skin.box);
             GUILayout.Space(EditorGUIUtility.singleLineHeight);
-            EditorGUILayout.PropertyField(settingsObject.FindProperty("SchdulerStackTrace"), Styles.s_StackTraceScheduler);
+            EditorGUILayout.PropertyField(settingsObject.FindProperty(nameof(AkiFrameworkSettings.SchdulerStackTrace)), Styles.s_StackTraceScheduler);
             if (settingsObject.ApplyModifiedPropertiesWithoutUndo())
             {
                 if (settings.SchdulerStackTrace)
@@ -51,12 +51,12 @@ namespace Kurisu.Framework.Editor
         {
             GUILayout.BeginVertical("DataTable Settings", GUI.skin.box);
             GUILayout.Space(EditorGUIUtility.singleLineHeight);
-            EditorGUILayout.PropertyField(settingsObject.FindProperty("JsonSerializer"), Styles.s_DataTableJsonSerializer);
+            EditorGUILayout.PropertyField(settingsObject.FindProperty(nameof(AkiFrameworkSettings.DataTableJsonSerializer)), Styles.s_DataTableJsonSerializer);
             if (settingsObject.ApplyModifiedPropertiesWithoutUndo())
             {
-                if (AkiFrameworkSettings.Instance.JsonSerializer.GetType() == null)
+                if (AkiFrameworkSettings.Instance.DataTableJsonSerializer.GetType() == null)
                 {
-                    AkiFrameworkSettings.Instance.JsonSerializer = SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
+                    AkiFrameworkSettings.Instance.DataTableJsonSerializer = SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
                 }
                 AkiFrameworkSettings.Save();
             }

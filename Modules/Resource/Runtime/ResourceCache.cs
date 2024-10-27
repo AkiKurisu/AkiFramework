@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Collections;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 namespace Kurisu.Framework.Resource
 {
     /// <summary>
@@ -34,7 +35,11 @@ namespace Kurisu.Framework.Resource
         public int Count => cacheMap.Count;
 
         public TAsset this[string key] => cacheMap[key];
-
+        private int loadinRef = 0;
+        /// <summary>
+        /// Flags when any asset is in loading
+        /// </summary>
+        public bool IsLoading => loadinRef > 0;
         /// <summary>
         /// Load and cache asset async
         /// </summary>
@@ -45,9 +50,11 @@ namespace Kurisu.Framework.Resource
             versionMap[address] = Version;
             if (!cacheMap.TryGetValue(address, out TAsset asset))
             {
+                loadinRef++;
                 if (AddressSafeCheck)
                     await ResourceSystem.SafeCheckAsync<TAsset>(address);
                 asset = await LoadNewAssetAsync(address);
+                loadinRef--;
             }
             return asset;
         }
@@ -83,7 +90,7 @@ namespace Kurisu.Framework.Resource
                 return internalHandle;
             }
             //Create a new resource load call, also track it's handle
-            internalHandle = ResourceSystem.AsyncLoadAsset<TAsset>(address, (asset) =>
+            internalHandle = ResourceSystem.LoadAssetAsync<TAsset>(address, (asset) =>
             {
                 cacheMap.Add(address, asset);
                 callBack?.Invoke(asset);
@@ -152,5 +159,12 @@ namespace Kurisu.Framework.Resource
         {
             return cacheMap.GetEnumerator();
         }
+    }
+    /// <summary>
+    /// Resource cache for audioClip
+    /// </summary>
+    public class AudioClipCache : ResourceCache<AudioClip>
+    {
+
     }
 }

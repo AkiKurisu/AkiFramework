@@ -2,6 +2,7 @@ using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using R3;
+using UnityEngine;
 namespace Kurisu.Framework.React
 {
     /// <summary>
@@ -16,9 +17,17 @@ namespace Kurisu.Framework.React
         }
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            var token = JToken.Load(reader);
-            var value = token.ToObject<T>();
-            return new ReactiveProperty<T>(value);
+            try
+            {
+                var token = JToken.Load(reader);
+                var value = token.ToObject<T>();
+                return new ReactiveProperty<T>(value);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+                return new ReactiveProperty<T>();
+            }
         }
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {

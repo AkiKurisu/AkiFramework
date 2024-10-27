@@ -11,6 +11,8 @@ SerializedType<ICustomInterface> myType;
 ICustomInterface customInterface = myType.GetObject();
 ```
 
+![SerializedType](./Images/serializedtype.png)
+
 ## SerializedObject{T}
 
 More managable than Unity's `SerializeReference` attribute.

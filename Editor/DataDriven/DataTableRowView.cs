@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEditorInternal;
 using Kurisu.Framework.Serialization;
 using Kurisu.Framework.Serialization.Editor;
+using System.Collections.ObjectModel;
 namespace Kurisu.Framework.DataDriven.Editor
 {
     /// <summary>
@@ -18,6 +19,8 @@ namespace Kurisu.Framework.DataDriven.Editor
         private ReorderableList reorderableList;
         public DataTable Table { get; }
         private SerializedObject serializedObject;
+        private int selectIndex;
+        public bool ReadOnly { get; set; } = false;
         public DataTableRowView(DataTable dataTable)
         {
             Table = dataTable;
@@ -41,10 +44,19 @@ namespace Kurisu.Framework.DataDriven.Editor
                 header.Insert(0, "Row Id");
                 var rows = Table.GetAllRows();
                 reorderableList ??= new ReorderableList(rows, rowStructType, true, true, true, true);
+                if (selectIndex >= 0)
+                {
+                    SelectRow(selectIndex);
+                    selectIndex = -1;
+                }
                 reorderableList.multiSelect = true;
                 reorderableList.elementHeightCallback = (int index) =>
                 {
                     var prop = rowsProp.GetArrayElementAtIndex(index);
+                    if (ReadOnly)
+                    {
+                        return EditorGUIUtility.singleLineHeight;
+                    }
                     return GetDataTableRowHeight(rowStructType, prop);
                 };
                 reorderableList.drawHeaderCallback = (Rect rect) =>
@@ -54,7 +66,14 @@ namespace Kurisu.Framework.DataDriven.Editor
                 reorderableList.drawElementCallback = (Rect rect, int index, bool selected, bool focused) =>
                 {
                     var prop = rowsProp.GetArrayElementAtIndex(index);
-                    DrawDataTableRows(rect, header.Count, rowStructType, prop);
+                    if (ReadOnly)
+                    {
+                        DrawReadOnlyDataTableRow(rect, header.Count, rowStructType, prop);
+                    }
+                    else
+                    {
+                        DrawDataTableRow(rect, header.Count, rowStructType, prop);
+                    }
                 };
                 reorderableList.onAddCallback = list =>
                 {
@@ -106,11 +125,56 @@ namespace Kurisu.Framework.DataDriven.Editor
                 RequestDataTableUpdate();
             }
         }
+        private static readonly int[] defaultIndices = new int[0];
+        /// <summary>
+        /// Get row view selected indices
+        /// </summary>
+        /// <returns></returns>
+        public ReadOnlyCollection<int> GetSelectedIndices()
+        {
+            if (reorderableList == null) return new ReadOnlyCollection<int>(defaultIndices);
+            return reorderableList.selectedIndices;
+        }
+        /// <summary>
+        /// Get row view selected rows
+        /// </summary>
+        /// <returns></returns>
+        public IDataTableRow[] GetSelectedRows()
+        {
+            if (reorderableList == null) return new IDataTableRow[0];
+            var rows = Table.GetAllRows();
+            return reorderableList.selectedIndices.Select(x => rows[x]).ToArray();
+        }
+        /// <summary>
+        /// Get row view selected rows in serialized property format
+        /// </summary>
+        /// <returns></returns>
+        public SerializedProperty[] GetSelectedRowProperties(SerializedObject serializedObject)
+        {
+            var rows = Table.GetAllRows();
+            var rowsProp = serializedObject.FindProperty("m_rows");
+            return reorderableList.selectedIndices.Select(x => rowsProp.GetArrayElementAtIndex(x)).ToArray();
+        }
         protected void RequestDataTableUpdate()
         {
             DataTableEditorUtils.OnDataTablePreUpdate?.Invoke(Table);
             Rebuild();
             DataTableEditorUtils.OnDataTablePostUpdate?.Invoke(Table);
+        }
+        /// <summary>
+        /// Select target row in view
+        /// </summary>
+        /// <param name="index"></param>
+        public void SelectRow(int index)
+        {
+            if (reorderableList == null)
+            {
+                // Cache pre-select index when list view is not prepared
+                selectIndex = index;
+                return;
+            }
+            if (selectIndex < reorderableList.count)
+                reorderableList.Select(index);
         }
         /// <summary>
         /// Rebuild rows view
@@ -162,7 +226,7 @@ namespace Kurisu.Framework.DataDriven.Editor
             }
         }
 
-        private void DrawDataTableRows(Rect rect, int columNum, Type elementType, SerializedProperty property)
+        private void DrawDataTableRow(Rect rect, int columNum, Type elementType, SerializedProperty property)
         {
             rect.width /= columNum;
             rect.width -= ColumSpace;
@@ -201,6 +265,41 @@ namespace Kurisu.Framework.DataDriven.Editor
             {
                 jsonProp.stringValue = JsonUtility.ToJson(wrapper.Value);
             }
+        }
+        private void DrawReadOnlyDataTableRow(Rect rect, int columNum, Type elementType, SerializedProperty property)
+        {
+            rect.width /= columNum;
+            rect.width -= ColumSpace;
+            var height = rect.height;
+            rect.height = EditorGUIUtility.singleLineHeight;
+            var rowIdProp = property.FindPropertyRelative("RowId");
+            string rowId = rowIdProp.stringValue;
+            EditorGUI.PropertyField(rect, rowIdProp, GUIContent.none);
+            if (rowId != rowIdProp.stringValue)
+            {
+                DataTableEditorUtils.ValidateNewRowId(Table, rowId, rowIdProp.stringValue, out string validId);
+                rowIdProp.stringValue = validId;
+            }
+            rect.x += rect.width + ColumSpace;
+            rect.height = height;
+
+            property = property.FindPropertyRelative("RowData");
+            var jsonProp = property.FindPropertyRelative("jsonData");
+            var objectHandleProp = property.FindPropertyRelative("objectHandle");
+            var handle = new SoftObjectHandle(objectHandleProp.ulongValue);
+            SerializedObjectWrapper wrapper = SerializedObjectWrapperManager.CreateWrapper(elementType, ref handle);
+            if (objectHandleProp.ulongValue != handle.Handle)
+            {
+                objectHandleProp.ulongValue = handle.Handle;
+                property.serializedObject.ApplyModifiedProperties();
+            }
+            if (!wrapper) return;
+
+            if (!string.IsNullOrEmpty(jsonProp.stringValue))
+            {
+                JsonUtility.FromJsonOverwrite(jsonProp.stringValue, wrapper.Value);
+            }
+            SerializedObjectWrapperDrawer.DrawReadOnlyGUIHorizontal(rect, ColumSpace, wrapper);
         }
         private void DrawDataTableHeader(Rect rect, List<string> header)
         {

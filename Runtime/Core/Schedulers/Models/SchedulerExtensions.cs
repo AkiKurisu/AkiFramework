@@ -15,7 +15,7 @@ namespace Kurisu.Framework.Schedulers
         {
             if (disposeSchedulerWhenCancelled)
                 handle.AddTo(cancellationToken);
-            return UniTask.WaitUntil(() => handle.IsDone, cancellationToken: cancellationToken);
+            return UniTask.WaitUntil(() => handle.IsDone(), cancellationToken: cancellationToken);
         }
         internal static void Assign(this IScheduled scheduled, ref SchedulerHandle handle)
         {

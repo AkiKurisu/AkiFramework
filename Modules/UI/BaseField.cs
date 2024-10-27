@@ -7,6 +7,7 @@ using Kurisu.Framework.React;
 using Kurisu.Framework.Resource;
 using R3;
 using UnityEngine.UI;
+using UnityEngine.Pool;
 namespace Kurisu.Framework.UI
 {
     public static class UIEntry
@@ -82,7 +83,7 @@ namespace Kurisu.Framework.UI
         }
         private static void LoadPrefab()
         {
-            resourceHandle = ResourceSystem.AsyncInstantiate(address, UIEntry.VisualRoot);
+            resourceHandle = ResourceSystem.InstantiateAsync(address, UIEntry.VisualRoot);
             prefab = resourceHandle.WaitForCompletion();
             Disposable.Create(ReleasePrefab).AddTo(prefab);
         }
@@ -100,7 +101,7 @@ namespace Kurisu.Framework.UI
     /// <summary>
     /// UI base element
     /// </summary>
-    public abstract class BaseField : CallbackEventHandler, IDisposable
+    public abstract class BaseField : CallbackEventHandler, IDisposable, IDisposableUnregister
     {
         public abstract class UIFactory<T> : UI.UIFactory<T> where T : BaseField
         {
@@ -127,6 +128,7 @@ namespace Kurisu.Framework.UI
         public readonly List<GameObject> ViewItems = new(1);
         public ReactiveProperty<bool> Visible { get; } = new(true);
         private readonly IUIFactory _factory;
+        private List<IDisposable> disposables;
         internal virtual void CreateView(Transform parent, BaseField parentField)
         {
             GameObject view = OnCreateView(parent);
@@ -141,6 +143,15 @@ namespace Kurisu.Framework.UI
         public virtual void Dispose()
         {
             Visible.Dispose();
+            if (disposables != null)
+            {
+                foreach (var disposable in disposables)
+                {
+                    disposable.Dispose();
+                }
+                ListPool<IDisposable>.Release(disposables);
+                disposables = null;
+            }
         }
         public TField Cast<TField>() where TField : BaseField
         {
@@ -160,6 +171,13 @@ namespace Kurisu.Framework.UI
             e.Target = this;
             EventSystem.Instance.Dispatch(e, dispatchMode, MonoDispatchType.Update);
         }
+
+        void IDisposableUnregister.Register(IDisposable disposable)
+        {
+            disposables ??= ListPool<IDisposable>.Get();
+            disposables.Add(disposable);
+        }
+
         public override IEventCoordinator Root => EventSystem.Instance;
         #endregion
     }
@@ -228,10 +246,10 @@ namespace Kurisu.Framework.UI
             using var evt = ChangeEvent<TValue>.GetPooled(default, _value.Value);
             SendEvent(evt);
         }
-        public BaseField<TValue> BindProperty<T>(ReactiveProperty<TValue> property, ref T unRegister) where T : struct, IUnRegister
+        public BaseField<TValue> BindProperty<T>(ReactiveProperty<TValue> property, T unRegister) where T : IDisposableUnregister
         {
-            this.AsObservable<ChangeEvent<TValue>>().SubscribeSafe(e => property.Value = e.NewValue).AddTo(ref unRegister);
-            property.Subscribe(e => _value.OnNext(e)).AddTo(ref unRegister);
+            this.AsObservable<ChangeEvent<TValue>>().SubscribeSafe(e => property.Value = e.NewValue).AddTo(unRegister);
+            property.Subscribe(e => _value.OnNext(e)).AddTo(unRegister);
             _value.OnNext(property.Value);
             return this;
         }
@@ -241,7 +259,7 @@ namespace Kurisu.Framework.UI
             base.Dispose();
         }
 
-        private readonly ReactiveProperty<TValue> _value;
+        protected readonly ReactiveProperty<TValue> _value;
         private bool _canFireEvents;
     }
     #region UI Elements
@@ -363,21 +381,16 @@ namespace Kurisu.Framework.UI
         {
             GameObject tr = Instantiate(parent);
             toggle = tr.GetComponentInChildren<Toggle>();
-            toggle.onValueChanged.AddListener(SetValue);
+            toggle.onValueChanged.AsObservable().Subscribe(SetValue).AddTo(this);
             OnNotifyViewChanged.Subscribe(b =>
             {
-                toggle.isOn = b;
+                toggle.SetIsOnWithoutNotify(b);
             });
             Text text = tr.GetComponentInChildren<Text>();
             text.text = DisplayName;
             text.color = GetUIStyle().TextColor;
             text.SetAutosize();
             return tr;
-        }
-        public override void Dispose()
-        {
-            if (toggle) toggle.onValueChanged.RemoveListener(SetValue);
-            base.Dispose();
         }
     }
     /// <summary>
@@ -411,21 +424,16 @@ namespace Kurisu.Framework.UI
         {
             GameObject tr = Instantiate(parent);
             button = tr.GetComponentInChildren<Button>();
-            button.onClick.AddListener(OnButtonClicked);
+            button.OnClickAsObservable().Subscribe(OnButtonClicked).AddTo(this);
             Text text = tr.GetComponentInChildren<Text>();
             text.text = DisplayName;
             text.color = GetUIStyle().TextColor;
             text.SetAutosize();
             return tr;
         }
-        private void OnButtonClicked()
+        private void OnButtonClicked(Unit _)
         {
             OnClicked?.Invoke();
-        }
-        public override void Dispose()
-        {
-            if (button) button.onClick.RemoveListener(OnButtonClicked);
-            base.Dispose();
         }
     }
     /// <summary>

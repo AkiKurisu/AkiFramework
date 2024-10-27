@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Kurisu.Framework.Collections;
+using Kurisu.Framework.Resource;
 using UnityEngine;
 using UnityEngine.Pool;
-namespace Kurisu.Framework.Resource
+namespace Kurisu.Framework.Audios
 {
     /// <summary>
     /// Command structure of character voice
@@ -78,7 +79,7 @@ namespace Kurisu.Framework.Resource
     /// <summary>
     /// Class for managing character voice playing order
     /// </summary>
-    public class VoiceCommandBuffer : IDisposable
+    public class VoiceProxy : IDisposable
     {
         public enum VoiceStatus
         {
@@ -98,7 +99,7 @@ namespace Kurisu.Framework.Resource
         private readonly HashSet<string> _voiceStates = new();
         private readonly AudioSource _audioSource;
         private readonly int _maxCommandNum;
-        public VoiceCommandBuffer(AudioSource audioSource, int maxCommandNum = -1)
+        public VoiceProxy(AudioSource audioSource, int maxCommandNum = -1)
         {
             _audioSource = audioSource;
             _maxCommandNum = maxCommandNum;

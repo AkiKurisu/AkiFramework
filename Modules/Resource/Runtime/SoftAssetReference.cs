@@ -1,6 +1,4 @@
 using System;
-using Cysharp.Threading.Tasks;
-using Kurisu.Framework.React;
 using UnityEngine;
 using Object = UnityEngine.Object;
 namespace Kurisu.Framework.Resource
@@ -59,23 +57,39 @@ namespace Kurisu.Framework.Resource
             Locked = false;
 #endif
         }
-        public readonly T Load<FUnregister>(ref FUnregister unregister) where FUnregister : struct, IUnRegister
-        {
-            return ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(ref unregister).WaitForCompletion();
 
-        }
-        public readonly T Load<FUnregister>(IUnRegister unregister)
+        public readonly ResourceHandle<T> LoadAsync()
         {
-            return ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(unregister).WaitForCompletion();
-        }
-        public readonly async UniTask<T> LoadAsync<TUnregister>(IUnRegister unregister)
-        {
-            return await ResourceSystem.AsyncLoadAsset<T>(Address).AddTo(unregister);
+            return ResourceSystem.LoadAssetAsync<T>(Address);
         }
 
         public static implicit operator SoftAssetReference<T>(string address)
         {
             return new SoftAssetReference<T>() { Address = address };
+        }
+
+        public static implicit operator SoftAssetReference<T>(SoftAssetReference assetReference)
+        {
+            return new SoftAssetReference<T>()
+            {
+                Address = assetReference.Address,
+#if UNITY_EDITOR
+                Guid = assetReference.Guid,
+                Locked = assetReference.Locked
+#endif
+            };
+        }
+
+        public static implicit operator SoftAssetReference(SoftAssetReference<T> assetReference)
+        {
+            return new SoftAssetReference()
+            {
+                Address = assetReference.Address,
+#if UNITY_EDITOR
+                Guid = assetReference.Guid,
+                Locked = assetReference.Locked
+#endif
+            };
         }
         public override readonly string ToString()
         {
@@ -111,28 +125,22 @@ namespace Kurisu.Framework.Resource
             Locked = false;
 #endif
         }
-        public readonly Object Load<FUnregister>(ref FUnregister unregister) where FUnregister : struct, IUnRegister
+
+        public readonly ResourceHandle LoadAsync()
         {
-            return ResourceSystem.AsyncLoadAsset<Object>(Address).AddTo(ref unregister).WaitForCompletion();
+            return ResourceSystem.LoadAssetAsync<Object>(Address);
         }
 
-        public readonly Object Load<FUnregister>(IUnRegister unregister)
-        {
-            return ResourceSystem.AsyncLoadAsset<Object>(Address).AddTo(unregister).WaitForCompletion();
-        }
-        public readonly async UniTask<Object> LoadAsync<TUnregister>(IUnRegister unregister)
-        {
-            return await ResourceSystem.AsyncLoadAsset<Object>(Address).AddTo(unregister);
-
-        }
         public static implicit operator SoftAssetReference(string address)
         {
             return new SoftAssetReference() { Address = address };
         }
+
         public override readonly string ToString()
         {
             return Address;
         }
+
         public readonly bool IsValid()
         {
             return !string.IsNullOrEmpty(Address);

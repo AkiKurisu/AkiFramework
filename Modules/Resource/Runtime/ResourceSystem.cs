@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Cysharp.Threading.Tasks;
+using Kurisu.Framework.Collections;
 namespace Kurisu.Framework.Resource
 {
     /// <summary>
@@ -140,7 +141,7 @@ namespace Kurisu.Framework.Resource
         /// <param name="unRegisterHandle"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static ResourceHandle<T> AsyncLoadAsset<T>(string address, Action<T> callBack = null)
+        public static ResourceHandle<T> LoadAssetAsync<T>(string address, Action<T> callBack = null)
         {
             AsyncOperationHandle<T> handle = Addressables.LoadAssetAsync<T>(address);
             if (callBack != null)
@@ -157,11 +158,11 @@ namespace Kurisu.Framework.Resource
         /// <param name="action"></param>
         /// <param name="bindObject"></param>
         /// <returns></returns>
-        public static ResourceHandle<GameObject> AsyncInstantiate(string address, Transform parent, Action<GameObject> callBack = null)
+        public static ResourceHandle<GameObject> InstantiateAsync(string address, Transform parent, Action<GameObject> callBack = null)
         {
             AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
             var resourceHandle = CreateHandle(handle, InstantiateOperation);
-            handle.Completed += (h) => instanceIDMap.Add(h.Result.GetInstanceID(), resourceHandle.handleID);
+            handle.Completed += (h) => instanceIDMap.Add(h.Result.GetInstanceID(), resourceHandle);
             if (callBack != null)
                 handle.Completed += (h) => callBack.Invoke(h.Result);
             return resourceHandle;
@@ -192,38 +193,46 @@ namespace Kurisu.Framework.Resource
                 ReleaseAsset(handle);
         }
         /// <summary>
-        /// Release Asset, should align with <see cref="AsyncLoadAsset"/>
+        /// Release Asset, should align with <see cref="LoadAssetAsync"/>
         /// </summary>
         /// <param name="handle"></param>
         public static void ReleaseAsset(ResourceHandle handle)
         {
             if (handle.InternalHandle.IsValid())
                 Addressables.Release(handle.InternalHandle);
-            internalHandleMap.Remove(handle.handleID);
+            ReleaseHandleInternal(handle);
         }
         /// <summary>
-        /// Release GameObject Instance, should align with <see cref="AsyncInstantiate"/>
+        /// Release GameObject Instance, should align with <see cref="InstantiateAsync"/>
         /// </summary>
         /// <param name="obj"></param>
         public static void ReleaseInstance(GameObject obj)
         {
-            if (instanceIDMap.TryGetValue(obj.GetInstanceID(), out uint handleID))
+            if (instanceIDMap.TryGetValue(obj.GetInstanceID(), out var handle))
             {
-                internalHandleMap.Remove(handleID);
+                ReleaseHandleInternal(handle);
             }
             if (obj != null)
                 Addressables.ReleaseInstance(obj);
         }
+        private static void ReleaseHandleInternal(ResourceHandle handle)
+        {
+            if (IsValid(handle.version, handle.index))
+            {
+                internalList.RemoveAt(handle.index);
+                version++;
+            }
+        }
         #endregion
         #region  Multi Assets Load
-        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(object key, Action<IList<T>> callBack = null)
+        public static ResourceHandle<IList<T>> LoadAssetsAsync<T>(object key, Action<IList<T>> callBack = null)
         {
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null);
             if (callBack != null)
                 handle.Completed += (h) => callBack.Invoke(h.Result);
             return CreateHandle(handle, AssetLoadOperation);
         }
-        public static ResourceHandle<IList<T>> AsyncLoadAssets<T>(IEnumerable key, MergeMode mode, Action<IList<T>> callBack = null)
+        public static ResourceHandle<IList<T>> LoadAssetsAsync<T>(IEnumerable key, MergeMode mode, Action<IList<T>> callBack = null)
         {
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null, (Addressables.MergeMode)mode);
             if (callBack != null)
@@ -234,40 +243,45 @@ namespace Kurisu.Framework.Resource
         /// <summary>
         /// Start from 1 since 0 is always invalid handle
         /// </summary>
-        private static uint handleIndex = 1;
-        private static readonly Dictionary<int, uint> instanceIDMap = new();
-        // TODO: Use sparse list
-        private static readonly Dictionary<uint, AsyncOperationHandle> internalHandleMap = new();
+        private static uint version = 1;
+        private static readonly Dictionary<int, ResourceHandle> instanceIDMap = new();
+        private static readonly SparseList<AsyncOperationStructure> internalList = new(10, int.MaxValue);
         internal static ResourceHandle<T> CreateHandle<T>(AsyncOperationHandle<T> asyncOperationHandle, byte operation)
         {
-            internalHandleMap.Add(++handleIndex, asyncOperationHandle);
-            return new ResourceHandle<T>(handleIndex, operation);
-        }
-        internal static AsyncOperationHandle<T> CastOperationHandle<T>(uint handleID)
-        {
-            if (internalHandleMap.TryGetValue(handleID, out var handle))
+            var index = internalList.AddUninitialized();
+            var handle = new ResourceHandle<T>(version, index, operation);
+            internalList[index] = new AsyncOperationStructure()
             {
-                return handle.Convert<T>();
+                asyncOperationHandle = asyncOperationHandle,
+                resourceHandle = handle
+            };
+            return handle;
+        }
+        internal static AsyncOperationHandle<T> CastOperationHandle<T>(uint version, int index)
+        {
+            return CastOperationHandle(version, index).Convert<T>();
+        }
+        internal static AsyncOperationHandle CastOperationHandle(uint version, int index)
+        {
+            if (internalList.IsAllocated(index))
+            {
+                if (internalList[index].resourceHandle.version == version)
+                    return internalList[index].asyncOperationHandle;
+                return default;
             }
             else
             {
                 return default;
             }
         }
-        internal static AsyncOperationHandle CastOperationHandle(uint handleID)
+        public static bool IsValid(uint version, int index)
         {
-            if (internalHandleMap.TryGetValue(handleID, out var handle))
-            {
-                return handle;
-            }
-            else
-            {
-                return default;
-            }
+            return internalList.IsAllocated(index) && internalList[index].resourceHandle.version == version;
         }
-        public static bool IsValid(uint handleID)
+        private struct AsyncOperationStructure
         {
-            return internalHandleMap.TryGetValue(handleID, out _);
+            public AsyncOperationHandle asyncOperationHandle;
+            public ResourceHandle resourceHandle;
         }
     }
 }

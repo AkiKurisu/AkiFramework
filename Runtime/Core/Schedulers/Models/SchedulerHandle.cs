@@ -22,25 +22,20 @@ namespace Kurisu.Framework.Schedulers
         /// Get scheduled task whether is valid
         /// </summary>
         /// <value></value>
-        public readonly bool IsValid
+        public readonly bool IsValid()
         {
-            get
-            {
-                if (!SchedulerRunner.IsInitialized) return default;
-                return Handle != 0;
-            }
+
+            if (!SchedulerRunner.IsInitialized) return default;
+            return Handle != 0;
         }
         /// <summary>
         /// Get scheduled task whether is done
         /// </summary>
         /// <value></value>
-        public readonly bool IsDone
+        public readonly bool IsDone()
         {
-            get
-            {
-                if (!SchedulerRunner.IsInitialized) return default;
-                return SchedulerRunner.Instance.IsDone(this);
-            }
+            if (!SchedulerRunner.IsInitialized) return default;
+            return SchedulerRunner.Instance.IsDone(this);
         }
         public SchedulerHandle(ulong serialNum, int index)
         {
@@ -57,7 +52,7 @@ namespace Kurisu.Framework.Schedulers
         public void Cancel()
         {
             if (!SchedulerRunner.IsInitialized) return;
-            if (!IsValid) return;
+            if (!IsValid()) return;
             SchedulerRunner.Instance.Cancel(this);
         }
         /// <summary>
@@ -67,7 +62,7 @@ namespace Kurisu.Framework.Schedulers
         public void Pause()
         {
             if (!SchedulerRunner.IsInitialized) return;
-            if (!IsValid) return;
+            if (!IsValid()) return;
             SchedulerRunner.Instance.Pause(this);
         }
         /// <summary>
@@ -77,7 +72,7 @@ namespace Kurisu.Framework.Schedulers
         public void Resume()
         {
             if (!SchedulerRunner.IsInitialized) return;
-            if (!IsValid) return;
+            if (!IsValid()) return;
             SchedulerRunner.Instance.Resume(this);
         }
 

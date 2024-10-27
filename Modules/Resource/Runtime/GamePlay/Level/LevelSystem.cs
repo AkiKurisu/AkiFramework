@@ -3,7 +3,7 @@ using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.ResourceProviders;
-namespace Kurisu.Framework.Resource
+namespace Kurisu.Framework.Level
 {
     public class LevelReference
     {

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using UObject = UnityEngine.Object;
 using Kurisu.Framework.Serialization;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
+using UnityEngine.Assertions;
 namespace Kurisu.Framework.Resource.Editor
 {
     public static class SoftAssetReferenceEditorUtils
@@ -57,7 +58,7 @@ namespace Kurisu.Framework.Resource.Editor
             var asset = GetAssetFromGUID(softAssetReference.Guid);
             if (!asset)
             {
-                asset = ResourceSystem.AsyncLoadAsset<UObject>(softAssetReference.Address).WaitForCompletion();
+                asset = ResourceSystem.LoadAssetAsync<UObject>(softAssetReference.Address).WaitForCompletion();
             }
             return asset;
         }
@@ -65,8 +66,9 @@ namespace Kurisu.Framework.Resource.Editor
         /// Create a soft asset reference from object
         /// </summary>
         /// <param name="asset"></param>
+        /// <param name="groupName"></param>
         /// <returns></returns>
-        public static SoftAssetReference FromObject(UObject asset)
+        public static SoftAssetReference FromObject(UObject asset, string groupName = null)
         {
             if (!asset)
             {
@@ -80,7 +82,11 @@ namespace Kurisu.Framework.Resource.Editor
             }
             else
             {
-                AddressableAssetGroup assetGroup = AddressableAssetSettingsDefaultObject.Settings.DefaultGroup;
+                AddressableAssetGroup assetGroup;
+                if (string.IsNullOrEmpty(groupName))
+                    assetGroup = AddressableAssetSettingsDefaultObject.Settings.DefaultGroup;
+                else
+                    assetGroup = ResourceEditorUtils.GetOrCreateAssetGroup(groupName);
                 var entry = assetGroup.AddAsset(asset);
                 assetGroup.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, false, true);
                 reference.Address = entry.address;
@@ -91,27 +97,11 @@ namespace Kurisu.Framework.Resource.Editor
         /// Create a generic soft asset reference from object
         /// </summary>
         /// <param name="asset"></param>
+        /// <param name="groupName"></param>
         /// <returns></returns>
-        public static SoftAssetReference<T> FromTObject<T>(T asset) where T : UObject
+        public static SoftAssetReference<T> FromTObject<T>(T asset, string groupName = null) where T : UObject
         {
-            if (!asset)
-            {
-                return new SoftAssetReference<T>();
-            }
-            var reference = new SoftAssetReference<T>() { Guid = asset.GetAssetGUID(), Locked = true };
-            var existingEntry = asset.ToAddressableAssetEntry();
-            if (existingEntry != null)
-            {
-                reference.Address = existingEntry.address;
-            }
-            else
-            {
-                AddressableAssetGroup assetGroup = AddressableAssetSettingsDefaultObject.Settings.DefaultGroup;
-                var entry = assetGroup.AddAsset(asset);
-                assetGroup.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, false, true);
-                reference.Address = entry.address;
-            }
-            return reference;
+            return (SoftAssetReference<T>)FromObject(asset, groupName);
         }
         /// <summary>
         /// Move reference object safe in editor
@@ -139,9 +129,10 @@ namespace Kurisu.Framework.Resource.Editor
         }
         public static AddressableAssetEntry AddAsset(this AddressableAssetGroup group, UObject asset, params string[] labels)
         {
+            Assert.IsNotNull(group);
             if (asset == null) return null;
             var guid = asset.GetAssetGUID();
-            if (guid == null)
+            if (string.IsNullOrEmpty(guid))
             {
                 Debug.LogError($"[Resource Editor] Can't find {asset} !");
                 return null;

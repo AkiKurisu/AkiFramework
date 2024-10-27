@@ -28,7 +28,7 @@ namespace Kurisu.Framework.Schedulers
 #endif
             public IScheduled Value { get; private set; }
             private bool delay;
-            private TickFrame tickFrame;
+            public TickFrame TickFrame { get; private set; }
             private static readonly ProfilerMarker profilerMarker = new("SchedulerRunner.UpdateAll.UpdateStep.UpdateItem");
             public static ScheduledItem GetPooled(IScheduled scheduled, TickFrame tickFrame, bool delay)
             {
@@ -38,7 +38,7 @@ namespace Kurisu.Framework.Schedulers
                 item.Timestamp = Time.timeSinceLevelLoadAsDouble;
 #endif
                 item.delay = delay;
-                item.tickFrame = tickFrame;
+                item.TickFrame = tickFrame;
                 return item;
             }
             /// <summary>
@@ -51,7 +51,7 @@ namespace Kurisu.Framework.Schedulers
                 using (profilerMarker.Auto())
                 {
                     if (Value.IsDone) return;
-                    if (this.tickFrame != tickFrame) return;
+                    if (TickFrame != tickFrame) return;
                     if (delay)
                     {
                         delay = false;
@@ -172,7 +172,7 @@ namespace Kurisu.Framework.Schedulers
             // Assign item
             scheduledItems[index] = item;
             pendingHandles.Add(scheduled.Handle);
-#if UNITY_EDITOR&&!AF_SCHEDULER_STACK_TRACE_DISABLE
+#if UNITY_EDITOR && !AF_SCHEDULER_STACK_TRACE_DISABLE
             SchedulerRegistry.RegisterListener(scheduled, @delegate);
 #endif
         }
@@ -188,7 +188,7 @@ namespace Kurisu.Framework.Schedulers
         public void Unregister(IScheduled scheduled, Delegate @delegate)
         {
             scheduledItems.RemoveAt(scheduled.Handle.GetIndex());
-#if UNITY_EDITOR&&!AF_SCHEDULER_STACK_TRACE_DISABLE
+#if UNITY_EDITOR && !AF_SCHEDULER_STACK_TRACE_DISABLE
             SchedulerRegistry.UnregisterListener(scheduled, @delegate);
 #endif
         }

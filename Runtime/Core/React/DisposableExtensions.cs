@@ -5,30 +5,37 @@ using R3.Triggers;
 using UnityEngine;
 namespace Kurisu.Framework.React
 {
-    public interface IUnRegister
+    /// <summary>
+    /// Unregister scope interface for managing <see cref="IDisposable"/> 
+    /// </summary>
+    public interface IDisposableUnregister
     {
-        void Add(IDisposable disposable);
+        /// <summary>
+        /// Register new disposable to this unregister scope
+        /// </summary>
+        /// <param name="disposable"></param>
+        void Register(IDisposable disposable);
     }
-    public readonly struct ObservableDestroyTriggerUnRegister : IUnRegister
+    public readonly struct ObservableDestroyTriggerUnregister : IDisposableUnregister
     {
         private readonly ObservableDestroyTrigger trigger;
-        public ObservableDestroyTriggerUnRegister(ObservableDestroyTrigger trigger)
+        public ObservableDestroyTriggerUnregister(ObservableDestroyTrigger trigger)
         {
             this.trigger = trigger;
         }
-        public readonly void Add(IDisposable disposable)
+        public readonly void Register(IDisposable disposable)
         {
             trigger.AddDisposableOnDestroy(disposable);
         }
     }
-    public readonly struct CancellationTokenUnRegister : IUnRegister
+    public readonly struct CancellationTokenUnregister : IDisposableUnregister
     {
         private readonly CancellationToken cancellationToken;
-        public CancellationTokenUnRegister(CancellationToken cancellationToken)
+        public CancellationTokenUnregister(CancellationToken cancellationToken)
         {
             this.cancellationToken = cancellationToken;
         }
-        public readonly void Add(IDisposable disposable)
+        public readonly void Register(IDisposable disposable)
         {
             disposable.RegisterTo(cancellationToken);
         }
@@ -40,27 +47,22 @@ namespace Kurisu.Framework.React
         /// </summary>
         /// <param name="gameObject"></param>
         /// <returns></returns>
-        public static ObservableDestroyTriggerUnRegister GetUnRegister(this GameObject gameObject)
+        public static ObservableDestroyTriggerUnregister GetUnregister(this GameObject gameObject)
         {
-            return new ObservableDestroyTriggerUnRegister(gameObject.GetOrAddComponent<ObservableDestroyTrigger>());
+            return new ObservableDestroyTriggerUnregister(gameObject.GetOrAddComponent<ObservableDestroyTrigger>());
         }
         /// <summary>
         ///  Get or create an UnRegister from <see cref="MonoBehaviour"/>, listening OnDestroy event
         /// </summary>
         /// <param name="monoBehaviour"></param>
         /// <returns></returns>
-        public static CancellationTokenUnRegister GetUnRegister(this MonoBehaviour monoBehaviour)
+        public static CancellationTokenUnregister GetUnregister(this MonoBehaviour monoBehaviour)
         {
-            return new CancellationTokenUnRegister(monoBehaviour.destroyCancellationToken);
+            return new CancellationTokenUnregister(monoBehaviour.destroyCancellationToken);
         }
-        public static T AddTo<T, K>(this T disposable, ref K unRegister) where T : IDisposable where K : struct, IUnRegister
+        public static T AddTo<T, K>(this T disposable, K unRegister) where T : IDisposable where K : IDisposableUnregister
         {
-            unRegister.Add(disposable);
-            return disposable;
-        }
-        public static T AddTo<T>(this T disposable, IUnRegister unRegister) where T : IDisposable
-        {
-            unRegister.Add(disposable);
+            unRegister.Register(disposable);
             return disposable;
         }
     }

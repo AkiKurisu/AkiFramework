@@ -28,7 +28,7 @@ namespace Kurisu.Framework.Serialization
         /// <summary>
         /// Container for UObject
         /// </summary>
-        internal class ObjectStructure
+        internal struct ObjectStructure
         {
             public UObject Object;
             public SoftObjectHandle Handle;
@@ -89,9 +89,10 @@ namespace Kurisu.Framework.Serialization
                 return;
             }
             var structure = new ObjectStructure() { Object = uObject };
-            int index = GlobalObjects.Add(structure);
+            int index = GlobalObjects.AddUninitialized();
             handle = new SoftObjectHandle(serialNum, index);
             structure.Handle = handle;
+            GlobalObjects[index] = structure;
             isDirty = true;
         }
         /// <summary>

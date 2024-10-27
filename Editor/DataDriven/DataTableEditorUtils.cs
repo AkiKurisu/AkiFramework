@@ -48,7 +48,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         /// <returns></returns>
         public static string ExportJson(DataTable dataTable)
         {
-            return AkiFrameworkSettings.Instance.JsonSerializer.GetObject().Serialize(dataTable);
+            return AkiFrameworkSettings.Instance.DataTableJsonSerializer.GetObject().Serialize(dataTable);
         }
         /// <summary>
         /// Import json and overwrite dataTable
@@ -58,7 +58,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         public static void ImportJson(DataTable dataTable, string jsonData)
         {
             Undo.RecordObject(dataTable, "Overwrite DataTable from Json");
-            AkiFrameworkSettings.Instance.JsonSerializer.GetObject().Deserialize(dataTable, jsonData);
+            AkiFrameworkSettings.Instance.DataTableJsonSerializer.GetObject().Deserialize(dataTable, jsonData);
         }
         /// <summary>
         /// Validate input row id and out right one

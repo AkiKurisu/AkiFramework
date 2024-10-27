@@ -50,6 +50,8 @@ namespace Kurisu.Framework.Schedulers
         }
         public static bool TryGetListener(IScheduled scheduled, out ListenerRecord record)
         {
+            record = default;
+            if (scheduled == null) return false;
             return s_Listeners.TryGetValue(scheduled, out record);
         }
         public static void UnregisterListener(IScheduled scheduled, Delegate callback)
