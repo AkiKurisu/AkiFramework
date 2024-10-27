@@ -38,7 +38,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         private void OnEnable()
         {
             window = this;
-            splitterState = SplitterGUILayout.CreateSplitterState(new float[] { 75f, 25f }, new int[] { 32, 32 }, null);
+            splitterState = SplitterGUILayout.CreateSplitterState(new float[] { 50f, 50f }, new int[] { 32, 32 }, null);
         }
         private void OnDisable()
         {
@@ -65,6 +65,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         private static readonly string PathCacheKey = "DataTableEditorWindow_LastPath";
         private DataTable currentTarget;
         private InlineDataTableEditor currentEditor;
+        private string currentPath;
         private void RenderHeadPanel()
         {
             EditorGUILayout.BeginVertical(EmptyLayoutOption);
@@ -83,6 +84,7 @@ namespace Kurisu.Framework.DataDriven.Editor
                 }
                 GUIUtility.ExitGUI();
             }
+            GUILayout.Label(currentPath);
             GUILayout.FlexibleSpace();
 
             EditorGUILayout.EndHorizontal();
@@ -91,19 +93,33 @@ namespace Kurisu.Framework.DataDriven.Editor
         private void OpenDataTable(DataTable dataTable)
         {
             currentTarget = dataTable;
+            currentPath = AssetDatabase.GetAssetPath(dataTable);
             if (currentEditor)
             {
                 DestroyImmediate(currentEditor);
             }
             currentEditor = (InlineDataTableEditor)UEditor.CreateEditor(currentTarget, typeof(InlineDataTableEditor));
         }
+
+        private Vector2 tableScroll;
         private void RenderTable()
         {
             EditorGUILayout.BeginVertical(EmptyLayoutOption);
             if (currentEditor)
             {
+                currentEditor.DrawToolBarInternal();
+                GUILayout.Space(10);
+            }
+            tableScroll = EditorGUILayout.BeginScrollView(tableScroll, new GUILayoutOption[]
+            {
+                GUILayout.ExpandWidth(true),
+                GUILayout.MaxWidth(2000f)
+            });
+            if (currentEditor)
+            {
                 currentEditor.OnInspectorGUI();
             }
+            EditorGUILayout.EndScrollView();
             EditorGUILayout.EndVertical();
         }
         private static GUIStyle detailsStyle;
@@ -134,11 +150,19 @@ namespace Kurisu.Framework.DataDriven.Editor
 #pragma warning restore IDE0051
         private class InlineDataTableEditor : DataTableEditor
         {
-            public override void OnInspectorGUI()
+            public void DrawToolBarInternal()
             {
                 DrawToolBar();
-                GUILayout.Space(10);
+            }
+            public override void OnInspectorGUI()
+            {
                 DrawRowView();
+            }
+            protected override DataTableRowView CreateDataTableRowView(DataTable table)
+            {
+                var rowView = base.CreateDataTableRowView(table);
+                rowView.ReadOnly = true;
+                return rowView;
             }
             public void DrawSelectedRowDetail()
             {

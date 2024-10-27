@@ -17,8 +17,17 @@ namespace Kurisu.Framework.DataDriven.Editor
         public event DrawToolBarDelegate OnDrawRightTooBar;
         public DataTableRowView GetDataTableRowView()
         {
-            dataTableRowView ??= new DataTableRowView(Table);
+            dataTableRowView ??= CreateDataTableRowView(Table);
             return dataTableRowView;
+        }
+        /// <summary>
+        /// Implement to use customized <see cref="DataTableRowView"/>  
+        /// </summary>
+        /// <param name="table"></param>
+        /// <returns></returns>
+        protected virtual DataTableRowView CreateDataTableRowView(DataTable table)
+        {
+            return new DataTableRowView(table);
         }
         public override void OnInspectorGUI()
         {
