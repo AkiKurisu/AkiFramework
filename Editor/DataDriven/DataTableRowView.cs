@@ -196,8 +196,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         {
             List<FieldInfo> fieldInfos = new();
             GetAllSerializableFields(type, fieldInfos);
-            return fieldInfos.Where(field => field.IsInitOnly == false)
-                            .Select(x => x.Name)
+            return fieldInfos.Select(x => x.Name)
                             .ToList();
         }
         private static void GetAllSerializableFields(Type type, List<FieldInfo> fieldInfos)
@@ -207,23 +206,54 @@ namespace Kurisu.Framework.DataDriven.Editor
                 GetAllSerializableFields(type.BaseType, fieldInfos);
             }
 
-
             FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-
             foreach (FieldInfo field in fields)
             {
-                if (field.IsStatic) continue;
-
-                if (!field.FieldType.IsSerializable && !typeof(UnityEngine.Object).IsAssignableFrom(field.FieldType) && !field.FieldType.IsPrimitive && !field.FieldType.IsEnum
-                    && !typeof(List<>).IsAssignableFrom(field.FieldType) && !field.FieldType.IsArray
-                    && !field.FieldType.IsGenericType
-                    && !Attribute.IsDefined(field, typeof(SerializableAttribute), false))
+                if (!ValidateSerializedField(field))
+                {
                     continue;
-
-                if (!field.IsPublic && !Attribute.IsDefined(field, typeof(SerializeField), false)) continue;
+                }
 
                 fieldInfos.Add(field);
             }
+        }
+
+        private static bool ValidateSerializedField(FieldInfo field)
+        {
+            if (field.IsStatic) return false;
+
+            if (field.IsInitOnly) return false;
+
+            if (!field.IsPublic && !Attribute.IsDefined(field, typeof(SerializeField), false)) return false;
+
+            if (!field.FieldType.IsSerializable && !typeof(UnityEngine.Object).IsAssignableFrom(field.FieldType)
+                && !field.FieldType.IsPrimitive && !field.FieldType.IsEnum
+                && !typeof(List<>).IsAssignableFrom(field.FieldType) && !field.FieldType.IsArray
+                && !field.FieldType.IsGenericType
+                && !Attribute.IsDefined(field.FieldType, typeof(SerializableAttribute), false)
+                && !IsUnityBuiltInTypes(field.FieldType))
+                return false;
+
+            return true;
+        }
+
+        private static bool IsUnityBuiltInTypes(Type type)
+        {
+            if (type.Equals(typeof(AnimationCurve))) return true;
+            else if (type.Equals(typeof(Bounds))) return true;
+            else if (type.Equals(typeof(BoundsInt))) return true;
+            else if (type.Equals(typeof(Color))) return true;
+            else if (type.Equals(typeof(Enum))) return true;
+            else if (type.Equals(typeof(UnityEngine.Object))) return true;
+            else if (type.Equals(typeof(Quaternion))) return true;
+            else if (type.Equals(typeof(Rect))) return true;
+            else if (type.Equals(typeof(RectInt))) return true;
+            else if (type.Equals(typeof(Vector2))) return true;
+            else if (type.Equals(typeof(Vector2Int))) return true;
+            else if (type.Equals(typeof(Vector3))) return true;
+            else if (type.Equals(typeof(Vector3Int))) return true;
+            else if (type.Equals(typeof(Vector4))) return true;
+            return false;
         }
 
         private void DrawDataTableRow(Rect rect, int columNum, Type elementType, SerializedProperty property)

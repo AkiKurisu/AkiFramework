@@ -176,6 +176,7 @@ namespace Kurisu.Framework.Resource
         /// <typeparam name="T"></typeparam>
         public static void Release<T>(ResourceHandle<T> handle)
         {
+            if (!handle.IsValid()) return;
             if (handle.operationType == InstantiateOperation)
                 ReleaseInstance(handle.Result as GameObject);
             else
@@ -187,6 +188,7 @@ namespace Kurisu.Framework.Resource
         /// <param name="handle"></param>
         public static void Release(ResourceHandle handle)
         {
+            if (!handle.IsValid()) return;
             if (handle.operationType == InstantiateOperation)
                 ReleaseInstance(handle.Result as GameObject);
             else
@@ -198,8 +200,11 @@ namespace Kurisu.Framework.Resource
         /// <param name="handle"></param>
         public static void ReleaseAsset(ResourceHandle handle)
         {
+            if (!handle.IsValid()) return;
             if (handle.InternalHandle.IsValid())
+            {
                 Addressables.Release(handle.InternalHandle);
+            }
             ReleaseHandleInternal(handle);
         }
         /// <summary>
@@ -210,6 +215,7 @@ namespace Kurisu.Framework.Resource
         {
             if (instanceIDMap.TryGetValue(obj.GetInstanceID(), out var handle))
             {
+                if (!handle.IsValid()) return;
                 ReleaseHandleInternal(handle);
             }
             if (obj != null)
@@ -217,11 +223,8 @@ namespace Kurisu.Framework.Resource
         }
         private static void ReleaseHandleInternal(ResourceHandle handle)
         {
-            if (IsValid(handle.version, handle.index))
-            {
-                internalList.RemoveAt(handle.index);
-                version++;
-            }
+            internalList.RemoveAt(handle.index);
+            version++;
         }
         #endregion
         #region  Multi Assets Load
