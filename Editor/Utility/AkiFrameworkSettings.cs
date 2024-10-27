@@ -10,6 +10,7 @@ namespace Kurisu.Framework.Editor
     {
         public bool SchdulerStackTrace = true;
         public SerializedType<IDataTableJsonSerializer> DataTableJsonSerializer = SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
+        public bool InitializeDataTableManagerOnLoad = false;
     }
 
     internal class AkiFrameworkSettingsProvider : SettingsProvider
@@ -19,9 +20,11 @@ namespace Kurisu.Framework.Editor
         {
             public static GUIContent s_StackTraceScheduler = new("Stack Trace", "Allow trace scheduled task in editor");
             public static GUIContent s_DataTableJsonSerializer = new("Json Serializer", "Set DataTable json serializer type");
+            public static GUIContent s_InitializeDataTableManagerOnLoad = new("Initialize Managers", "Initialize all DataManager instances before scene loaded");
         }
         public AkiFrameworkSettingsProvider(string path, SettingsScope scope = SettingsScope.User) : base(path, scope) { }
         private const string StackTraceSchedulerDisableSymbol = "AF_SCHEDULER_STACK_TRACE_DISABLE";
+        private const string InitializeDataTableManagerOnLoadSymbol = "AF_INITIALIZE_DATATABLE_MANAGER_ON_LOAD";
         private AkiFrameworkSettings settings;
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
@@ -52,12 +55,17 @@ namespace Kurisu.Framework.Editor
             GUILayout.BeginVertical("DataTable Settings", GUI.skin.box);
             GUILayout.Space(EditorGUIUtility.singleLineHeight);
             EditorGUILayout.PropertyField(settingsObject.FindProperty(nameof(AkiFrameworkSettings.DataTableJsonSerializer)), Styles.s_DataTableJsonSerializer);
+            EditorGUILayout.PropertyField(settingsObject.FindProperty(nameof(AkiFrameworkSettings.InitializeDataTableManagerOnLoad)), Styles.s_InitializeDataTableManagerOnLoad);
             if (settingsObject.ApplyModifiedPropertiesWithoutUndo())
             {
                 if (AkiFrameworkSettings.Instance.DataTableJsonSerializer.GetType() == null)
                 {
                     AkiFrameworkSettings.Instance.DataTableJsonSerializer = SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
                 }
+                if (settings.InitializeDataTableManagerOnLoad)
+                    ScriptingSymbol.AddScriptingSymbol(InitializeDataTableManagerOnLoadSymbol);
+                else
+                    ScriptingSymbol.RemoveScriptingSymbol(InitializeDataTableManagerOnLoadSymbol);
                 AkiFrameworkSettings.Save();
             }
             GUILayout.EndVertical();
