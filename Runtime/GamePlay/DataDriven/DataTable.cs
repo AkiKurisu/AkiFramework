@@ -201,14 +201,15 @@ namespace Kurisu.Framework.DataDriven
         /// <summary>
         /// Clear editor object cache.
         /// </summary>
-        [Conditional("UNITY_EDITOR")]
         internal void Cleanup()
         {
+#if UNITY_EDITOR
             if (m_rows == null) return;
             for (int i = 0; i < m_rows.Length; ++i)
             {
                 m_rows[i].RowData.objectHandle = 0;
             }
+#endif
         }
         /// <summary>
         /// Get data rows from table without modify default object
