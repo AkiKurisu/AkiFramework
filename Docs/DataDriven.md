@@ -11,6 +11,7 @@ using Kurisu.Framework.Resource;
 using Kurisu.Framework.Serialization;
 using UnityEngine;
 
+// Must add this attribute
 [Serializable]
 public class MyDataRow : IDataTableRow
 {
@@ -20,6 +21,17 @@ public class MyDataRow : IDataTableRow
 }
 ```
 
-![DataTable](./Images/datatable.png)
+
+## Editor
+
+Support two kinds of editing mode.
+
+Edit DataTable in Inspector.
+
+![DataTable Inspector](./Images/datatable.png)
+
+Edit DataTable in an EditorWindow (opened by double-left clicked).
+
+![DataTable EditorWindow](./Images/datatable_editor_window.png)
 
 
