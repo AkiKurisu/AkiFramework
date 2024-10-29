@@ -56,7 +56,7 @@ namespace Kurisu.Framework.AI.EQS
         public static void OverlapFieldView(List<Actor> actors, Vector3 position, Vector3 forward, float radius, float angle, LayerMask targetMask, Actor ignoredActor = null)
         {
             var resultActors = new NativeList<ActorHandle>(Allocator.TempJob);
-            var actorData = GameWorld.Get().GetSubsystem<ActorQuerySystem>().GetAllActors(Allocator.TempJob);
+            var actorData = WorldSubsystem.Get<ActorQuerySystem>().GetAllActors(Allocator.TempJob);
             var job = new OverlapFieldViewJob()
             {
                 center = position,

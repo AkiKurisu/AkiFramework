@@ -54,7 +54,7 @@ namespace Kurisu.Framework.AI.EQS
         public Vector3 Offset;
         private void Start()
         {
-            system = DynamicSubsystem.Get<FieldViewQuerySystem>(GameWorld.Get());
+            system = WorldSubsystem.Get<FieldViewQuerySystem>();
             if (system == null)
             {
                 Debug.LogError($"[FieldViewQueryComponent] Can not get FieldViewQuerySystem dynamically.");

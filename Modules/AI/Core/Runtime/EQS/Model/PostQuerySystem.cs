@@ -21,7 +21,7 @@ namespace Kurisu.Framework.AI.EQS
         public int layerMask;
         public PostQueryParameters parameters;
     }
-    public class PostQuerySystem : DynamicSubsystem
+    public class PostQuerySystem : WorldSubsystem
     {
         [BurstCompile]
         public struct PrepareCommandJob : IJobParallelFor
@@ -165,7 +165,7 @@ namespace Kurisu.Framework.AI.EQS
             using (ConsumeCommandsPM.Auto())
             {
                 batchLength = 0;
-                var actorDatas = GetWorld().GetSubsystem<ActorQuerySystem>().GetAllActors(Allocator.Temp);
+                var actorDatas = Get<ActorQuerySystem>().GetAllActors(Allocator.Temp);
                 while (batchLength < MaxWorkerCount)
                 {
                     if (!commandBuffer.TryDequeue(out var command))

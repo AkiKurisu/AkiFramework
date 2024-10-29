@@ -22,7 +22,7 @@ namespace Kurisu.Framework.AI.EQS
         public Vector3 Offset;
         private void Start()
         {
-            system = DynamicSubsystem.Get<FieldViewPrimeQuerySystem>(GameWorld.Get());
+            system = WorldSubsystem.Get<FieldViewPrimeQuerySystem>();
             if (system == null)
             {
                 Debug.LogError($"[FieldViewPrimeQueryComponent] Can not get FieldViewPrimeQuerySystem dynamically.");

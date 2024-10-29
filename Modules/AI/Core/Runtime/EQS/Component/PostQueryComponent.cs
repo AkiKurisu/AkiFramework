@@ -21,7 +21,7 @@ namespace Kurisu.Framework.AI.EQS
         private PostQuerySystem system;
         private void Start()
         {
-            system = DynamicSubsystem.Get<PostQuerySystem>(GameWorld.Get());
+            system = WorldSubsystem.Get<PostQuerySystem>();
             if (system == null)
             {
                 Debug.LogError($"[PostQueryComponent] Can not get PostQuerySystem dynamically.");
