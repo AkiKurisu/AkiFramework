@@ -8,10 +8,21 @@ namespace Kurisu.Framework.Schedulers.Editor
 {
     public class SchedulerDebuggerTreeView : TreeView
     {
+        private SchedulerRunner Manager
+        {
+            get
+            {
+                if (Application.isPlaying)
+                    return SchedulerRunner.Instance;
+                else
+                    return null;
+            }
+        }
         internal class ViewItem : TreeViewItem
         {
             public ulong Handle { get; set; }
             public string Name { get; set; }
+            public string Type { get; set; }
             public TickFrame TickFrame { get; set; }
             public bool Running { get; set; }
             public double ElapsedTime { get; set; }
@@ -30,6 +41,7 @@ namespace Kurisu.Framework.Schedulers.Editor
             {
                 new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Handle"), width = 10},
                 new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Name")},
+                new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Type"), width = 10},
                 new MultiColumnHeaderState.Column() { headerContent = new GUIContent("TickFrame"), width = 10},
                 new MultiColumnHeaderState.Column() { headerContent = new GUIContent("Running"), width = 5},
                 new MultiColumnHeaderState.Column() { headerContent = new GUIContent("ElapsedTime"), width = 10}
@@ -70,9 +82,10 @@ namespace Kurisu.Framework.Schedulers.Editor
             {
                 0 => ascending ? items.OrderBy(item => item.Handle) : items.OrderByDescending(item => item.Handle),
                 1 => ascending ? items.OrderBy(item => item.Name) : items.OrderByDescending(item => item.Name),
-                2 => ascending ? items.OrderBy(item => item.TickFrame) : items.OrderByDescending(item => item.TickFrame),
-                3 => ascending ? items.OrderBy(item => item.Running) : items.OrderByDescending(item => item.Running),
-                4 => ascending ? items.OrderBy(item => item.ElapsedTime) : items.OrderByDescending(item => item.ElapsedTime),
+                2 => ascending ? items.OrderBy(item => item.Type) : items.OrderByDescending(item => item.Type),
+                3 => ascending ? items.OrderBy(item => item.TickFrame) : items.OrderByDescending(item => item.TickFrame),
+                4 => ascending ? items.OrderBy(item => item.Running) : items.OrderByDescending(item => item.Running),
+                5 => ascending ? items.OrderBy(item => item.ElapsedTime) : items.OrderByDescending(item => item.ElapsedTime),
                 _ => throw new ArgumentOutOfRangeException(nameof(index), index, null),
             };
             CurrentBindingItems = rootItem.children = orderedEnumerable.Cast<TreeViewItem>().ToList();
@@ -96,6 +109,7 @@ namespace Kurisu.Framework.Schedulers.Editor
                     {
                         Handle = scheduled.Value.Handle.Handle,
                         Name = taskName,
+                        Type = scheduled.Value is Timer ? nameof(Timer) : nameof(FrameCounter),
                         TickFrame = scheduled.TickFrame,
                         Running = !scheduled.Value.IsPaused,
                         ElapsedTime = Time.timeSinceLevelLoadAsDouble - scheduled.Timestamp,
@@ -134,13 +148,23 @@ namespace Kurisu.Framework.Schedulers.Editor
                         EditorGUI.LabelField(rect, item.Name.ToString(), labelStyle);
                         break;
                     case 2:
-                        EditorGUI.LabelField(rect, item.TickFrame.ToString(), labelStyle);
+                        EditorGUI.LabelField(rect, item.Type, labelStyle);
                         break;
                     case 3:
-                        EditorGUI.Toggle(rect, item.Running);
+                        EditorGUI.LabelField(rect, item.TickFrame.ToString(), labelStyle);
                         break;
                     case 4:
-                        EditorGUI.LabelField(rect, item.ElapsedTime.ToString(), labelStyle);
+                        var value = EditorGUI.Toggle(rect, item.Running, EditorStyles.toggle);
+                        if (value != item.Running)
+                        {
+                            if (value)
+                                Manager.Resume(item.ScheduledItem.Value.Handle);
+                            else
+                                Manager.Pause(item.ScheduledItem.Value.Handle);
+                        }
+                        break;
+                    case 5:
+                        EditorGUI.LabelField(rect, item.ElapsedTime.ToString("0.0000"), labelStyle);
                         break;
                     default:
                         throw new ArgumentOutOfRangeException(nameof(columnIndex), columnIndex, null);
