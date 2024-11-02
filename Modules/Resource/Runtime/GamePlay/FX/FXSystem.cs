@@ -24,7 +24,7 @@ namespace Kurisu.Framework.FX
         public static void PlayFX(string address, Transform parent)
         {
             if (AddressSafeCheck)
-                ResourceSystem.SafeCheck<GameObject>(address);
+                ResourceSystem.CheckAsset<GameObject>(address);
             PlayFXAsync(address, Vector3.zero, Quaternion.identity, parent, true).Forget();
         }
         /// <summary>
@@ -38,7 +38,7 @@ namespace Kurisu.Framework.FX
         public static void PlayFX(string address, Vector3 position, Quaternion rotation, Transform parent = null, bool useLocalPosition = false)
         {
             if (AddressSafeCheck)
-                ResourceSystem.SafeCheck<GameObject>(address);
+                ResourceSystem.CheckAsset<GameObject>(address);
             PlayFXAsync(address, position, rotation, parent, useLocalPosition).Forget();
         }
         /// <summary>
@@ -79,7 +79,7 @@ namespace Kurisu.Framework.FX
         public static async UniTask<PooledParticleSystem> InstantiateAsync(string address, Transform parent)
         {
             if (AddressSafeCheck)
-                await ResourceSystem.SafeCheckAsync<GameObject>(address);
+                await ResourceSystem.CheckAssetAsync<GameObject>(address);
             return await PooledParticleSystem.InstantiateAsync(address, parent);
         }
         /// <summary>

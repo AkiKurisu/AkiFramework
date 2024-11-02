@@ -66,7 +66,7 @@ namespace Kurisu.Framework.Resource
         /// </summary>
         /// <param name="key"></param>
         /// <typeparam name="TAsset"></typeparam>
-        public static void SafeCheck<TAsset>(object key)
+        public static void CheckAsset<TAsset>(object key)
         {
             var location = Addressables.LoadResourceLocationsAsync(key, typeof(TAsset));
             location.WaitForCompletion();
@@ -84,7 +84,7 @@ namespace Kurisu.Framework.Resource
         /// <param name="key"></param>
         /// <param name="mergeMode"></param>
         /// <typeparam name="TAsset"></typeparam>
-        public static void SafeCheck<TAsset>(IEnumerable key, MergeMode mergeMode)
+        public static void CheckAsset<TAsset>(IEnumerable key, MergeMode mergeMode)
         {
             var location = Addressables.LoadResourceLocationsAsync(key, (Addressables.MergeMode)mergeMode, typeof(TAsset));
             location.WaitForCompletion();
@@ -102,7 +102,7 @@ namespace Kurisu.Framework.Resource
         /// <param name="key"></param>
         /// <typeparam name="TAsset"></typeparam>
         /// <returns></returns>
-        public static async UniTask SafeCheckAsync<TAsset>(object key)
+        public static async UniTask CheckAssetAsync<TAsset>(object key)
         {
             var location = Addressables.LoadResourceLocationsAsync(key, typeof(TAsset));
             await location.ToUniTask();
@@ -121,7 +121,7 @@ namespace Kurisu.Framework.Resource
         /// <param name="mergeMode"></param>
         /// <typeparam name="TAsset"></typeparam>
         /// <returns></returns>
-        public static async UniTask SafeCheckAsync<TAsset>(IEnumerable key, MergeMode mergeMode)
+        public static async UniTask CheckAssetAsync<TAsset>(IEnumerable key, MergeMode mergeMode)
         {
             var location = Addressables.LoadResourceLocationsAsync(key, (Addressables.MergeMode)mergeMode, typeof(TAsset));
             await location.ToUniTask();

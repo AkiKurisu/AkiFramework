@@ -52,7 +52,7 @@ namespace Kurisu.Framework.Resource
             {
                 loadinRef++;
                 if (AddressSafeCheck)
-                    await ResourceSystem.SafeCheckAsync<TAsset>(address);
+                    await ResourceSystem.CheckAssetAsync<TAsset>(address);
                 asset = await LoadNewAssetAsync(address);
                 loadinRef--;
             }
@@ -69,7 +69,7 @@ namespace Kurisu.Framework.Resource
             if (!cacheMap.TryGetValue(address, out TAsset asset))
             {
                 if (AddressSafeCheck)
-                    ResourceSystem.SafeCheck<TAsset>(address);
+                    ResourceSystem.CheckAsset<TAsset>(address);
                 asset = LoadNewAssetAsync(address).WaitForCompletion();
             }
             return asset;
