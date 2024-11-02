@@ -23,16 +23,6 @@ namespace Kurisu.Framework.Animations
         /// <value></value>
         public RuntimeAnimatorController SourceController { get; private set; }
         /// <summary>
-        /// Cached input <see cref="RuntimeAnimatorController"/> of <see cref="LeafAnimatorPlayable"/>
-        /// </summary>
-        /// <value></value>
-        public RuntimeAnimatorController CurrentAnimatorController { get; private set; }
-        /// <summary>
-        /// Cached input <see cref="AnimationClip"/> of <see cref="LeafAnimationClipPlayable"/>
-        /// </summary>
-        /// <value></value>
-        public AnimationClip CurrentAnimationClip { get; private set; }
-        /// <summary>
         /// Get playing <see cref="PlayableGraph"/>
         /// </summary>
         /// <value></value>
@@ -43,45 +33,9 @@ namespace Kurisu.Framework.Animations
         /// <value></value>
         protected AnimationMontageNode RootMontage { get; private set; }
         /// <summary>
-        /// Get leaf montage node
+        /// Proxy default animation layer index
         /// </summary>
-        /// <value></value>
-        protected AnimationMontageNode LeafMontage { get; private set; }
-        /// <summary>
-        /// Get leaf <see cref="Playable"/>
-        /// </summary>
-        /// <value></value>
-        protected Playable LeafPlayable { get; private set; }
-        /// <summary>
-        /// Get leaf <see cref="AnimatorControllerPlayable"/> if type matched
-        /// </summary>
-        /// <value></value>
-        protected AnimatorControllerPlayable LeafAnimatorPlayable
-        {
-            get
-            {
-                if (LeafPlayable.IsPlayableOfType<AnimatorControllerPlayable>())
-                {
-                    return (AnimatorControllerPlayable)LeafPlayable;
-                }
-                return AnimatorControllerPlayable.Null;
-            }
-        }
-        /// <summary>
-        /// Get leaf <see cref="AnimationClipPlayable"/> if type matched
-        /// </summary>
-        /// <value></value>
-        protected AnimationClipPlayable LeafAnimationClipPlayable
-        {
-            get
-            {
-                if (LeafPlayable.IsPlayableOfType<AnimationClipPlayable>())
-                {
-                    return (AnimationClipPlayable)LeafPlayable;
-                }
-                return default;
-            }
-        }
+        public const int DefaultLayerIndex = 0;
         /// <summary>
         /// Is proxy blendout
         /// </summary>
@@ -115,6 +69,8 @@ namespace Kurisu.Framework.Animations
         /// </summary>
         /// <value></value>
         public bool RestoreAnimatorControllerOnStop { get; set; } = true;
+        private AnimationMontageNode[] _leafMontages;
+        private Playable[] _leafPlayables;
         public AnimationProxy(Animator animator)
         {
             Animator = animator;
@@ -124,17 +80,61 @@ namespace Kurisu.Framework.Animations
             return $"{animator.name}_AnimationProxyPlayable";
         }
         /// <summary>
+        /// Get ref leaf montage node
+        /// </summary>
+        /// <param name="layerHandle"></param> 
+        /// <value></value>
+        protected ref AnimationMontageNode GetLeafMontageRef(LayerHandle layerHandle = default)
+        {
+            return ref _leafMontages[GetLayerIndex(layerHandle)];
+        }
+        /// <summary>
+        /// Get ref leaf <see cref="Playable"/>
+        /// </summary>
+        /// <param name="layerHandle"></param> 
+        /// <value></value>
+        protected ref Playable GetLeafPlayableRef(LayerHandle layerHandle = default)
+        {
+            return ref _leafPlayables[GetLayerIndex(layerHandle)];
+        }
+        /// <summary>
+        /// Create proxy root montage
+        /// </summary>
+        /// <param name="sourcePlayableNode"></param>
+        /// <param name="context"></param>
+        /// <param name="contexts"></param>
+        private void CreateRootMontage(AnimationPlayableNode sourcePlayableNode, LayerContext context, LayerContext[] contexts)
+        {
+            int leafCount = Math.Max(1, contexts.Length);
+            _leafMontages = new AnimationMontageNode[leafCount];
+            _leafPlayables = new Playable[leafCount];
+            RootMontage = AnimationMontageNode.CreateChildOnlyMontage(sourcePlayableNode);
+            if (context.Handle.IsValid() && contexts.Length > 0)
+            {
+                var index = context.Descriptor.Index;
+                var layerMontage = AnimationMontageNode.CreateLayerMontage(RootMontage, context, contexts);
+                GetLeafPlayableRef(context.Handle) = sourcePlayableNode.Playable;
+                GetLeafMontageRef(context.Handle) = layerMontage.Children[index];
+                RootMontage = layerMontage;
+            }
+            else
+            {
+                GetLeafPlayableRef(default) = sourcePlayableNode.Playable;
+                GetLeafMontageRef(default) = RootMontage;
+            }
+        }
+        /// <summary>
         /// Load animator to the graph
         /// </summary>
         /// <param name="animatorController"></param>
         /// <param name="blendInDuration"></param>
-        protected virtual void LoadAnimator_Implementation(RuntimeAnimatorController animatorController, float blendInDuration = 0.25f)
+        /// <param name="layerHandle"></param> 
+        protected virtual void LoadAnimator_Implementation(RuntimeAnimatorController animatorController, float blendInDuration = 0.25f, LayerHandle layerHandle = default)
         {
-            if (IsPlaying && CurrentAnimatorController == animatorController) return;
             // If Graph is not created or already destroyed, create a new one and use play api
             if (!Graph.IsValid())
             {
-                PlayAnimatorInternal(animatorController, blendInDuration);
+                PlayAnimatorInternal(animatorController, blendInDuration, layerHandle);
                 return;
             }
             BlendAnimatorInternal(animatorController, blendInDuration);
@@ -144,15 +144,16 @@ namespace Kurisu.Framework.Animations
         /// </summary>
         /// <param name="animatorController"></param>
         /// <param name="blendInDuration"></param>
-        protected void PlayAnimatorInternal(RuntimeAnimatorController animatorController, float blendInDuration = 0.25f)
+        /// <param name="layerHandle"></param> 
+        protected void PlayAnimatorInternal(RuntimeAnimatorController animatorController, float blendInDuration = 0.25f, LayerHandle layerHandle = default)
         {
             // Create new graph
             SourceController = Animator.runtimeAnimatorController;
             Graph = PlayableGraph.Create(GetPlayableName(Animator));
             var playableOutput = AnimationPlayableOutput.Create(Graph, nameof(RuntimeAnimatorController), Animator);
-            LeafPlayable = AnimatorControllerPlayable.Create(Graph, CurrentAnimatorController = animatorController);
-            LeafMontage = RootMontage = AnimationMontageNode.CreateRootMontage(LeafPlayable);
-            playableOutput.SetSourcePlayable(RootMontage.Montage);
+            var node = new AnimationPlayableNode(AnimatorControllerPlayable.Create(Graph, animatorController), animatorController);
+            CreateRootMontage(node, GetLayerContext(layerHandle), GetAllLayerContexts());
+            playableOutput.SetSourcePlayable(RootMontage.Playable);
 
             // Start play graph
             PlayInternal(blendInDuration);
@@ -162,18 +163,21 @@ namespace Kurisu.Framework.Animations
         /// </summary>
         /// <param name="animatorController"></param>
         /// <param name="blendInDuration"></param>
-        protected void BlendAnimatorInternal(RuntimeAnimatorController animatorController, float blendInDuration = 0.25f)
+        /// <param name="layerHandle"></param> 
+        protected void BlendAnimatorInternal(RuntimeAnimatorController animatorController, float blendInDuration = 0.25f, LayerHandle layerHandle = default)
         {
-            LeafPlayable = AnimatorControllerPlayable.Create(Graph, CurrentAnimatorController = animatorController);
-            LeafMontage |= new AnimationPlayableNode(LeafPlayable);
+            GetLeafPlayableRef(layerHandle) = AnimatorControllerPlayable.Create(Graph, animatorController);
+            var node = new AnimationPlayableNode(GetLeafPlayableRef(layerHandle), animatorController);
+            GetLeafMontageRef(layerHandle) |= node;
+            var leafMontage = GetLeafMontage(layerHandle);
             if (blendInDuration > 0)
             {
-                LeafMontage.ScheduleBlendIn(blendInDuration, () => Shrink(LeafMontage));
+                leafMontage.ScheduleBlendIn(blendInDuration, () => Shrink(leafMontage, layerHandle));
             }
             else
             {
-                LeafMontage.Blend(1);
-                Shrink(LeafMontage);
+                leafMontage.Blend(1);
+                Shrink(leafMontage, layerHandle);
             }
         }
         /// <summary>
@@ -181,13 +185,13 @@ namespace Kurisu.Framework.Animations
         /// </summary>
         /// <param name="animationClip"></param>
         /// <param name="blendInDuration"></param>
-        protected virtual void LoadAnimationClip_Implementation(AnimationClip animationClip, float blendInDuration = 0.25f)
+        /// <param name="layerHandle"></param> 
+        protected virtual void LoadAnimationClip_Implementation(AnimationClip animationClip, float blendInDuration = 0.25f, LayerHandle layerHandle = default)
         {
-            if (IsPlaying && CurrentAnimationClip == animationClip) return;
             // If Graph is not created or already destroyed, create a new one and use play api
             if (!Graph.IsValid())
             {
-                PlayAnimationClipInternal(animationClip, blendInDuration);
+                PlayAnimationClipInternal(animationClip, blendInDuration, layerHandle);
                 return;
             }
             BlendAnimationClipInternal(animationClip, blendInDuration);
@@ -197,15 +201,16 @@ namespace Kurisu.Framework.Animations
         /// </summary>
         /// <param name="animationClip"></param>
         /// <param name="blendInDuration"></param>
-        protected void PlayAnimationClipInternal(AnimationClip animationClip, float blendInDuration = 0.25f)
+        /// <param name="layerHandle"></param> 
+        protected void PlayAnimationClipInternal(AnimationClip animationClip, float blendInDuration = 0.25f, LayerHandle layerHandle = default)
         {
             // Create new graph
             SourceController = Animator.runtimeAnimatorController;
             Graph = PlayableGraph.Create(GetPlayableName(Animator));
             var playableOutput = AnimationPlayableOutput.Create(Graph, nameof(AnimationClip), Animator);
-            LeafPlayable = AnimationClipPlayable.Create(Graph, CurrentAnimationClip = animationClip);
-            LeafMontage = RootMontage = AnimationMontageNode.CreateRootMontage(LeafPlayable);
-            playableOutput.SetSourcePlayable(RootMontage.Montage);
+            var node = new AnimationPlayableNode(AnimationClipPlayable.Create(Graph, animationClip));
+            CreateRootMontage(node, GetLayerContext(layerHandle), GetAllLayerContexts());
+            playableOutput.SetSourcePlayable(RootMontage.Playable);
 
             // Start play graph
             PlayInternal(blendInDuration);
@@ -215,18 +220,20 @@ namespace Kurisu.Framework.Animations
         /// </summary>
         /// <param name="animationClip"></param>
         /// <param name="blendInDuration"></param>
-        protected void BlendAnimationClipInternal(AnimationClip animationClip, float blendInDuration = 0.25f)
+        /// <param name="layerHandle"></param> 
+        protected void BlendAnimationClipInternal(AnimationClip animationClip, float blendInDuration = 0.25f, LayerHandle layerHandle = default)
         {
-            LeafPlayable = AnimationClipPlayable.Create(Graph, CurrentAnimationClip = animationClip);
-            LeafMontage |= new AnimationPlayableNode(LeafPlayable);
+            GetLeafPlayableRef(layerHandle) = AnimationClipPlayable.Create(Graph, animationClip);
+            GetLeafMontageRef(layerHandle) |= new AnimationPlayableNode(GetLeafPlayableRef(layerHandle));
+            var leafMontage = GetLeafMontage(layerHandle);
             if (blendInDuration > 0)
             {
-                LeafMontage.ScheduleBlendIn(blendInDuration, () => Shrink(LeafMontage));
+                leafMontage.ScheduleBlendIn(blendInDuration, () => Shrink(leafMontage, layerHandle));
             }
             else
             {
-                LeafMontage.Blend(1);
-                Shrink(LeafMontage);
+                leafMontage.Blend(1);
+                Shrink(leafMontage, layerHandle);
             }
         }
         /// <summary>
@@ -250,15 +257,15 @@ namespace Kurisu.Framework.Animations
         /// <summary>
         /// Call this function to release not used playables after montage completely blend in
         /// </summary>
-        protected virtual void Shrink(AnimationMontageNode node)
+        protected virtual void Shrink(AnimationMontageNode node, LayerHandle layerHandle)
         {
-            if (LeafMontage != node) return; /* Has new montage in blend */
-            if (node.BlendWeight != 1)
+            if (GetLeafMontageRef(layerHandle) != node) return; /* Has new montage in blend */
+            if (!node.CanShrink())
             {
                 Debug.LogWarning("[AnimationProxy] Montage is in use but try to release it.");
                 return;
             }
-            LeafMontage = node.Shrink();
+            GetLeafMontageRef(layerHandle) = node.Shrink();
         }
         /// <summary>
         /// Call this function after animation proxy completly blend in
@@ -266,7 +273,8 @@ namespace Kurisu.Framework.Animations
         protected virtual void SetInGraph()
         {
             IsBlendIn = false;
-            if (ClearAnimatorControllerOnStart)
+            // Can not clear source animator controller when layer montage use it
+            if (ClearAnimatorControllerOnStart && RootMontage is not AnimationLayerMontageNode)
             {
                 Animator.runtimeAnimatorController = null;
             }
@@ -279,16 +287,34 @@ namespace Kurisu.Framework.Animations
             IsBlendOut = false;
             Graph.Stop();
             Graph.Destroy();
-            CurrentAnimatorController = null;
         }
         #region Public API
+        /// <summary>
+        /// Get leaf montage node
+        /// </summary>
+        /// <param name="layerHandle"></param> 
+        /// <value></value>
+        public AnimationMontageNode GetLeafMontage(LayerHandle layerHandle = default)
+        {
+            return _leafMontages[GetLayerIndex(layerHandle)];
+        }
+        /// <summary>
+        /// Get leaf <see cref="Playable"/>
+        /// </summary>
+        /// <param name="layerHandle"></param> 
+        /// <value></value>
+        public Playable GetLeafPlayable(LayerHandle layerHandle = default)
+        {
+            return _leafPlayables[GetLayerIndex(layerHandle)];
+        }
         /// <summary>
         /// Start playing animation from new <see cref="RuntimeAnimatorController"/> 
         /// and blend in if <see cref="blendInDuration"/> greater than 0
         /// </summary>
         /// <param name="animatorController"></param>
         /// <param name="blendInDuration"></param>
-        public void LoadAnimator(RuntimeAnimatorController animatorController, float blendInDuration = 0.25f)
+        /// <param name="layerHandle"></param>
+        public void LoadAnimator(RuntimeAnimatorController animatorController, float blendInDuration = 0.25f, LayerHandle layerHandle = default)
         {
             // Ensure old graph is destroyed
             if (IsBlendOut)
@@ -296,7 +322,7 @@ namespace Kurisu.Framework.Animations
                 RootMontage.BlendHandle.Cancel();
                 SetOutGraph();
             }
-            LoadAnimator_Implementation(animatorController, blendInDuration);
+            LoadAnimator_Implementation(animatorController, blendInDuration, layerHandle);
         }
         /// <summary>
         /// Start playing animation from new <see cref="AnimationClip"/> 
@@ -304,7 +330,8 @@ namespace Kurisu.Framework.Animations
         /// </summary>
         /// <param name="animationClip"></param>
         /// <param name="blendInDuration"></param>
-        public void LoadAnimationClip(AnimationClip animationClip, float blendInDuration = 0.25f)
+        /// <param name="layerHandle"></param>
+        public void LoadAnimationClip(AnimationClip animationClip, float blendInDuration = 0.25f, LayerHandle layerHandle = default)
         {
             // Ensure old graph is destroyed
             if (IsBlendOut)
@@ -312,7 +339,7 @@ namespace Kurisu.Framework.Animations
                 RootMontage.BlendHandle.Cancel();
                 SetOutGraph();
             }
-            LoadAnimationClip_Implementation(animationClip, blendInDuration);
+            LoadAnimationClip_Implementation(animationClip, blendInDuration, layerHandle);
         }
         /// <summary>
         /// Stop animation proxy montage and blend out if <see cref="blendOutDuration"/> greater than 0
@@ -340,19 +367,39 @@ namespace Kurisu.Framework.Animations
         /// </summary>
         public virtual void Dispose()
         {
-            CurrentAnimatorController = null;
             SourceController = null;
             if (Graph.IsValid())
                 Graph.Destroy();
         }
         /// <summary>
-        /// Check if <see cref="LeafAnimatorPlayable"/> use this <see cref="RuntimeAnimatorController"/> 
+        /// Get animator controller instance proxy if leaf montage use <see cref="RuntimeAnimatorController"/> 
         /// </summary>
-        /// <param name="runtimeAnimatorController"></param>
+        /// <param name="layerHandle"></param>
         /// <returns></returns>
-        public bool IsCurrent(RuntimeAnimatorController runtimeAnimatorController)
+        public AnimatorControllerInstanceProxy GetAnimatorControllerInstanceProxy(LayerHandle layerHandle = default)
         {
-            return CurrentAnimatorController == runtimeAnimatorController;
+            AnimatorControllerPlayable playable = AnimatorControllerPlayable.Null;
+            RuntimeAnimatorController runtimeAnimatorController = null;
+            if (GetLeafPlayable(layerHandle).IsPlayableOfType<AnimatorControllerPlayable>())
+            {
+                playable = (AnimatorControllerPlayable)GetLeafPlayable(layerHandle);
+                runtimeAnimatorController = GetLeafMontage(layerHandle).AnimatorController;
+            }
+            return new AnimatorControllerInstanceProxy(playable, runtimeAnimatorController);
+        }
+        /// <summary>
+        /// Get animation clip instance proxy if leaf montage use <see cref="AnimationClip"/> 
+        /// </summary>
+        /// <param name="layerHandle"></param>
+        /// <returns></returns>
+        public AnimationClipInstanceProxy GetAnimationClipInstanceProxy(LayerHandle layerHandle = default)
+        {
+            AnimationClipPlayable playable = default;
+            if (GetLeafPlayable(layerHandle).IsPlayableOfType<AnimationClipPlayable>())
+            {
+                playable = (AnimationClipPlayable)GetLeafPlayable(layerHandle);
+            }
+            return new AnimationClipInstanceProxy(playable);
         }
         #endregion Public API
     }
