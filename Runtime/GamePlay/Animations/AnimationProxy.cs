@@ -285,6 +285,7 @@ namespace Kurisu.Framework.Animations
         protected virtual void SetOutGraph()
         {
             IsBlendOut = false;
+            eventTrackerTickHandle.Cancel();
             Graph.Stop();
             Graph.Destroy();
         }
@@ -367,6 +368,8 @@ namespace Kurisu.Framework.Animations
         /// </summary>
         public virtual void Dispose()
         {
+            notifierContexts.Clear();
+            eventTrackerTickHandle.Dispose();
             SourceController = null;
             if (Graph.IsValid())
                 Graph.Destroy();

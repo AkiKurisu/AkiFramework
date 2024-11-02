@@ -199,10 +199,10 @@ namespace Kurisu.Framework.Animations
         {
             private readonly AnimatorControllerPlayable animatorPlayable;
             private readonly RuntimeAnimatorController animatorController;
-            internal AnimatorControllerInstanceProxy(AnimatorControllerPlayable playable, RuntimeAnimatorController animatorController)
+            internal AnimatorControllerInstanceProxy(AnimatorControllerPlayable playable, RuntimeAnimatorController sourceController)
             {
                 animatorPlayable = playable;
-                this.animatorController = animatorController;
+                animatorController = sourceController;
             }
             public RuntimeAnimatorController GetAnimatorController()
             {
