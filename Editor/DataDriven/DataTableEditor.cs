@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using Kurisu.Framework.Serialization;
 using UEditor = UnityEditor.Editor;
+using Kurisu.Framework.Editor;
 namespace Kurisu.Framework.DataDriven.Editor
 {
     public delegate void DrawToolBarDelegate(DataTableEditor tableEditor);
@@ -18,6 +19,10 @@ namespace Kurisu.Framework.DataDriven.Editor
         public DataTableRowView GetDataTableRowView()
         {
             dataTableRowView ??= CreateDataTableRowView(Table);
+            if (AkiFrameworkSettings.Instance.InlineRowReadOnly)
+            {
+                dataTableRowView.ReadOnly = true;
+            }
             return dataTableRowView;
         }
         /// <summary>
