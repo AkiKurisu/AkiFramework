@@ -14,15 +14,9 @@ namespace Kurisu.Framework.DataDriven.Editor
     {
         public DataTable Table => target as DataTable;
         private DataTableRowView dataTableRowView;
-        public event DrawToolBarDelegate OnDrawLeftTooBar;
-        public event DrawToolBarDelegate OnDrawRightTooBar;
         public DataTableRowView GetDataTableRowView()
         {
             dataTableRowView ??= CreateDataTableRowView(Table);
-            if (AkiFrameworkSettings.Instance.InlineRowReadOnly)
-            {
-                dataTableRowView.ReadOnly = true;
-            }
             return dataTableRowView;
         }
         /// <summary>
@@ -32,7 +26,12 @@ namespace Kurisu.Framework.DataDriven.Editor
         /// <returns></returns>
         protected virtual DataTableRowView CreateDataTableRowView(DataTable table)
         {
-            return new DataTableRowView(table);
+            var rowView = new DataTableRowView(table);
+            if (AkiFrameworkSettings.Instance.InlineRowReadOnly)
+            {
+                rowView.ReadOnly = true;
+            }
+            return rowView;
         }
         public override void OnInspectorGUI()
         {
@@ -102,7 +101,7 @@ namespace Kurisu.Framework.DataDriven.Editor
                     AssetDatabase.Refresh();
                 }
             }
-            OnDrawLeftTooBar?.Invoke(this);
+            DataTableEditorUtils.OnDrawLeftTooBar?.Invoke(this);
             GUILayout.FlexibleSpace();
 
             if (GUILayout.Button("Import from Json", DataTableEditorUtils.ToolBarButtonStyle))
@@ -118,7 +117,7 @@ namespace Kurisu.Framework.DataDriven.Editor
                     GUIUtility.ExitGUI();
                 }
             }
-            OnDrawRightTooBar?.Invoke(this);
+            DataTableEditorUtils.OnDrawRightTooBar?.Invoke(this);
             GUILayout.EndHorizontal();
         }
         /// <summary>
