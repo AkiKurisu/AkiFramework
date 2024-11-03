@@ -273,8 +273,8 @@ namespace Kurisu.Framework.Animations
         protected virtual void SetInGraph()
         {
             IsBlendIn = false;
-            // Can not clear source animator controller when layer montage use it
-            if (ClearAnimatorControllerOnStart && RootMontage is not AnimationLayerMontageNode)
+            // Can not clear source animator controller when any layer montage use it
+            if (ClearAnimatorControllerOnStart && IsFullBodyOverride())
             {
                 Animator.runtimeAnimatorController = null;
             }
@@ -290,6 +290,15 @@ namespace Kurisu.Framework.Animations
             Graph.Destroy();
         }
         #region Public API
+        /// <summary>
+        /// Whether proxy override full body animation
+        /// </summary>
+        /// <returns></returns>
+        public bool IsFullBodyOverride()
+        {
+            /* Currently only root can be layer montage */
+            return RootMontage is not AnimationLayerMontageNode;
+        }
         /// <summary>
         /// Get leaf montage node
         /// </summary>
@@ -373,6 +382,26 @@ namespace Kurisu.Framework.Animations
             SourceController = null;
             if (Graph.IsValid())
                 Graph.Destroy();
+        }
+        /// <summary>
+        /// Get proxy leaf animator controller name of animation clip name
+        /// </summary>
+        /// <param name="layerHandle"></param>
+        /// <returns></returns>
+        public string GetLeafAnimationName(LayerHandle layerHandle = default)
+        {
+            var playable = GetLeafPlayable(layerHandle);
+            if (!playable.IsValid()) return string.Empty;
+
+            if (playable.IsPlayableOfType<AnimatorControllerPlayable>())
+            {
+                return GetAnimatorControllerInstanceProxy(layerHandle).GetAnimatorController().name;
+            }
+            else
+            {
+                var proxy = GetAnimationClipInstanceProxy(layerHandle);
+                return proxy.GetAnimationClip().name;
+            }
         }
         /// <summary>
         /// Get animator controller instance proxy if leaf montage use <see cref="RuntimeAnimatorController"/> 

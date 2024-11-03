@@ -81,10 +81,10 @@ namespace Kurisu.Framework.Animations
                 var context = notifierContexts[i];
                 var playable = GetLeafPlayable(notifierContexts[i].LayerHandle);
 
-                /* Get normalized time by playable type */
                 float normalizedTime;
                 if (playable.IsPlayableOfType<AnimatorControllerPlayable>())
                 {
+                    /* AnimatorControllerPlayable can get normalized time directly */
                     var proxy = GetAnimatorControllerInstanceProxy(context.LayerHandle);
                     normalizedTime = proxy.GetCurrentAnimatorStateInfo(0).normalizedTime;
                 }
