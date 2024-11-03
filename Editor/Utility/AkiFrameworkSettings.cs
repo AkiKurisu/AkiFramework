@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 namespace Kurisu.Framework.Editor
 {
     [FilePath("ProjectSettings/AkiFrameworkSettings.asset")]
-    internal class AkiFrameworkSettings : ScriptableSingleton<AkiFrameworkSettings>
+    public class AkiFrameworkSettings : ScriptableSingleton<AkiFrameworkSettings>
     {
         public bool SchdulerStackTrace = true;
         public SerializedType<IDataTableJsonSerializer> DataTableJsonSerializer = SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
