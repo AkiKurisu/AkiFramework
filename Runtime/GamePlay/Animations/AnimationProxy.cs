@@ -5,11 +5,9 @@ using UnityEngine.Playables;
 namespace Kurisu.Framework.Animations
 {
     /// <summary>
-    /// Animation proxy that can cross fade multi <see cref="RuntimeAnimatorController"/>
+    /// Animation proxy that can cross fade multi <see cref="RuntimeAnimatorController"/> 
+    /// and <see cref="AnimationClip"/> in multi layer. 
     /// </summary>
-    /// <remarks>
-    /// Useful to override default animation in cutscene and dialogue.
-    /// </remarks>
     public partial class AnimationProxy : IDisposable
     {
         /// <summary>
@@ -359,7 +357,7 @@ namespace Kurisu.Framework.Animations
         {
             if (!IsPlaying) return;
             RootMontage.Dispose();
-            if (RestoreAnimatorControllerOnStop)
+            if (RestoreAnimatorControllerOnStop && Animator.runtimeAnimatorController != SourceController)
             {
                 Animator.runtimeAnimatorController = SourceController;
             }
@@ -384,7 +382,7 @@ namespace Kurisu.Framework.Animations
                 Graph.Destroy();
         }
         /// <summary>
-        /// Get proxy leaf animator controller name of animation clip name
+        /// Get proxy leaf animator controller name or animation clip name
         /// </summary>
         /// <param name="layerHandle"></param>
         /// <returns></returns>
@@ -402,6 +400,55 @@ namespace Kurisu.Framework.Animations
                 var proxy = GetAnimationClipInstanceProxy(layerHandle);
                 return proxy.GetAnimationClip().name;
             }
+        }
+        /// <summary>
+        /// Get proxy leaf animator controller current state or animation clip normalized time
+        /// </summary>
+        /// <param name="layerHandle">Proxy layer</param>
+        /// <param name="innerLayerIndex">Animator layer if leaf montage use animator controller</param>
+        /// <returns></returns>
+        public float GetLeafAnimationNormalizedTime(LayerHandle layerHandle = default, int innerLayerIndex = DefaultLayerIndex)
+        {
+            var playable = GetLeafPlayable(layerHandle);
+            if (innerLayerIndex < DefaultLayerIndex) innerLayerIndex = DefaultLayerIndex;
+            float normalizedTime;
+            if (playable.IsPlayableOfType<AnimatorControllerPlayable>())
+            {
+                /* AnimatorControllerPlayable can get normalized time directly */
+                var proxy = GetAnimatorControllerInstanceProxy(layerHandle);
+                normalizedTime = proxy.GetCurrentAnimatorStateInfo(innerLayerIndex).normalizedTime;
+            }
+            else
+            {
+                var proxy = GetAnimationClipInstanceProxy(layerHandle);
+                var length = proxy.GetAnimationClip().length;
+                normalizedTime = (float)(playable.GetTime() % length);
+            }
+            return normalizedTime;
+        }
+        /// <summary>
+        /// Get proxy leaf animator controller current state or animation clip duration
+        /// </summary>
+        /// <param name="layerHandle">Proxy layer</param>
+        /// <param name="innerLayerIndex">Animator layer if leaf montage use animator controller</param>
+        /// <returns></returns>
+        public float GetLeafAnimationDuration(LayerHandle layerHandle = default, int innerLayerIndex = DefaultLayerIndex)
+        {
+            var playable = GetLeafPlayable(layerHandle);
+            if (innerLayerIndex < DefaultLayerIndex) innerLayerIndex = DefaultLayerIndex;
+            float duration;
+            if (playable.IsPlayableOfType<AnimatorControllerPlayable>())
+            {
+                /* AnimatorControllerPlayable can get normalized time directly */
+                var proxy = GetAnimatorControllerInstanceProxy(layerHandle);
+                duration = proxy.GetCurrentAnimatorStateInfo(innerLayerIndex).length;
+            }
+            else
+            {
+                var proxy = GetAnimationClipInstanceProxy(layerHandle);
+                duration = proxy.GetAnimationClip().length;
+            }
+            return duration;
         }
         /// <summary>
         /// Get animator controller instance proxy if leaf montage use <see cref="RuntimeAnimatorController"/> 

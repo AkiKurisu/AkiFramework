@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using Kurisu.Framework.Events;
 using Kurisu.Framework.Schedulers;
+using UnityEngine;
 using UnityEngine.Animations;
-using UnityEngine.Playables;
 namespace Kurisu.Framework.Animations
 {
     public class AnimationNotifyEvent : EventBase<AnimationNotifyEvent>
@@ -15,10 +15,85 @@ namespace Kurisu.Framework.Animations
             return evt;
         }
     }
-    public struct AnimationNotifier
+    /// <summary>
+    /// Class for define an notifier for animation proxy montage
+    /// </summary>
+    public class AnimationNotifier
     {
+        /// <summary>
+        /// Notify name
+        /// </summary>
         public string Name;
-        public float NormalizedTime;
+        /// <summary>
+        /// Animator layer to observe if montage use animator controller
+        /// </summary>
+        public int Layer = 0;
+        /// <summary>
+        /// Normalized time to observe, do not observe time if less than zero
+        /// </summary>
+        public float NormalizedTime = -1;
+        public AnimationNotifier()
+        {
+
+        }
+        public AnimationNotifier(string name, int layer = 0, float normalizedTime = -1)
+        {
+            Name = name;
+            Layer = layer;
+            NormalizedTime = normalizedTime;
+        }
+        public virtual bool CanNotify(AnimationProxy animationProxy, LayerHandle layerHandle, float lastTime)
+        {
+            if (NormalizedTime < 0) return true;
+            float currentTime = animationProxy.GetLeafAnimationNormalizedTime(layerHandle, Layer);
+            float duration = animationProxy.GetLeafAnimationDuration(layerHandle, Layer);
+            if (currentTime >= NormalizedTime)
+            {
+                if (lastTime < NormalizedTime) return true;
+                /* Case when last tick time is in last loop */
+                if (lastTime > currentTime)
+                {
+                    /* Validate if interval is less than 2 frames */
+                    if ((1 - lastTime + currentTime) * duration < Time.deltaTime * 2)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+    }
+    /// <summary>
+    /// Notifier with specific animation state hash
+    /// </summary>
+    public class AnimationNotifier_AnimationState : AnimationNotifier
+    {
+        public int StateHash;
+        public AnimationNotifier_AnimationState()
+        {
+
+        }
+        public AnimationNotifier_AnimationState(string name, string stateName, int layer = 0, float normalizedTime = -1)
+        : base(name, layer, normalizedTime)
+        {
+            StateHash = Animator.StringToHash(stateName);
+        }
+        public AnimationNotifier_AnimationState(string name, int stateHash, int layer = 0, float normalizedTime = -1)
+        : base(name, layer, normalizedTime)
+        {
+            StateHash = stateHash;
+        }
+        public override bool CanNotify(AnimationProxy animationProxy, LayerHandle layerHandle, float lastTime)
+        {
+            var playable = animationProxy.GetLeafPlayable(layerHandle);
+            // Must use animator controller
+            if (!playable.IsPlayableOfType<AnimatorControllerPlayable>()) return false;
+            // Check time reach
+            if (!base.CanNotify(animationProxy, layerHandle, lastTime)) return false;
+            // Check state match
+            return animationProxy.GetAnimatorControllerInstanceProxy(layerHandle)
+                                 .GetCurrentAnimatorStateInfo(Layer).shortNameHash == StateHash;
+        }
     }
     public partial class AnimationProxy
     {
@@ -77,26 +152,12 @@ namespace Kurisu.Framework.Animations
         {
             for (int i = 0; i < notifierContexts.Count; ++i)
             {
-                var notifier = notifierContexts[i].Notifier;
                 var context = notifierContexts[i];
-                var playable = GetLeafPlayable(notifierContexts[i].LayerHandle);
-
-                float normalizedTime;
-                if (playable.IsPlayableOfType<AnimatorControllerPlayable>())
-                {
-                    /* AnimatorControllerPlayable can get normalized time directly */
-                    var proxy = GetAnimatorControllerInstanceProxy(context.LayerHandle);
-                    normalizedTime = proxy.GetCurrentAnimatorStateInfo(0).normalizedTime;
-                }
-                else
-                {
-                    var proxy = GetAnimationClipInstanceProxy(context.LayerHandle);
-                    var length = proxy.GetAnimationClip().length;
-                    normalizedTime = (float)(playable.GetTime() % length);
-                }
+                var notifier = context.Notifier;
+                float normalizedTime = GetLeafAnimationNormalizedTime(context.LayerHandle, notifier.Layer);
 
                 /* Whether event should be fired */
-                if (normalizedTime >= notifier.NormalizedTime && context.LastTime < notifier.NormalizedTime)
+                if (notifier.CanNotify(this, context.LayerHandle, context.LastTime))
                 {
                     using var evt = AnimationNotifyEvent.GetPooled(notifier);
                     GetEventHandler().SendEvent(evt);
@@ -108,7 +169,7 @@ namespace Kurisu.Framework.Animations
         {
             GetEventHandler().RegisterCallback(callback, default);
         }
-        public void UnregisterNotifyCallback<TEventType>(EventCallback<AnimationNotifyEvent> callback)
+        public void UnregisterNotifyCallback(EventCallback<AnimationNotifyEvent> callback)
         {
             GetEventHandler().UnregisterCallback(callback, default);
         }
