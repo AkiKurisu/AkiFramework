@@ -106,7 +106,7 @@ namespace Kurisu.Framework.Serialization.Editor
                     }
                     else
                     {
-                        EditorGUI.LabelField(startRect, propertyObject.ToString());
+                        EditorGUI.LabelField(startRect, $"{propertyObject}");
                     }
                     startRect.x += startRect.width + space;
                 }

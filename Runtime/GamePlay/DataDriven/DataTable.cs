@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Kurisu.Framework.Serialization;
 using UnityEngine;
@@ -65,13 +64,45 @@ namespace Kurisu.Framework.DataDriven
             return m_rows[index].RowData.GetObject() as T;
         }
         /// <summary>
-        /// Get data row from table
+        /// Get data row from table by index
         /// </summary>
         /// <param name="index"></param>
         /// <returns></returns>
         public IDataTableRow GetRow(int index)
         {
             return m_rows[index].RowData.GetObject();
+        }
+        /// <summary>
+        /// Get data row from table by RowId
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public T GetRow<T>(string rowId) where T : class, IDataTableRow
+        {
+            foreach (var row in m_rows)
+            {
+                if (row.RowId == rowId)
+                {
+                    return row.RowData.GetObject() as T;
+                }
+            }
+            return null;
+        }
+        /// <summary>
+        /// Get data row from table by RowId
+        /// </summary>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public IDataTableRow GetRow(string rowId)
+        {
+            foreach (var row in m_rows)
+            {
+                if (row.RowId == rowId)
+                {
+                    return row.RowData.GetObject();
+                }
+            }
+            return null;
         }
         /// <summary>
         /// Add a data row to the table

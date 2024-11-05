@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System;
-namespace Kurisu.Framework.IOC
+namespace Kurisu.Framework
 {
-    public class IOCContainer
+    internal class IOCContainer
     {
         private readonly Dictionary<Type, object> instances = new();
         /// <summary>
@@ -47,6 +47,13 @@ namespace Kurisu.Framework.IOC
                 return obj as T;
             }
             return null;
+        }
+        /// <summary>
+        /// Clear registered instances
+        /// </summary>
+        public void Clear()
+        {
+            instances.Clear();
         }
     }
 }

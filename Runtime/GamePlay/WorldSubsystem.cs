@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using R3;
 using UnityEngine;
 namespace Kurisu.Framework
@@ -17,11 +18,12 @@ namespace Kurisu.Framework
                     .Select(x => x.GetTypes())
                     .SelectMany(x => x)
                     .Where(x => x.IsSubclassOf(typeof(WorldSubsystem)) && !x.IsAbstract)
+                    .Where(x => x.GetCustomAttribute<InitializeOnWorldCreateAttribute>() != null)
                     .ToList();
             systems = types.ToDictionary(x => x, x => Activator.CreateInstance(x) as SubsystemBase);
             foreach (var type in types)
             {
-                if (!systems[type].CanCreate(world)) systems.Remove(type);
+                if (!(systems[type] as WorldSubsystem).CanCreate(world)) systems.Remove(type);
                 else systems[type].SetWorld(world);
             }
             subsystems = systems.Values.ToArray();
@@ -87,9 +89,12 @@ namespace Kurisu.Framework
             }
         }
     }
+    /// <summary>
+    /// Base class for subsystem, gameplay subsystem should not implement from this directly. 
+    /// See <see cref="WorldSubsystem"/>.
+    /// </summary>
     public abstract class SubsystemBase
     {
-
         /// <summary>
         /// Buffered dirty flag when world actors changed
         /// </summary>
@@ -104,13 +109,9 @@ namespace Kurisu.Framework
         /// </summary>
         /// <value></value>
         protected bool IsDestroyed { get; private set; }
+
         private GameWorld world;
-        /// <summary>
-        /// Whether system can create
-        /// </summary>
-        /// <param name="world"></param>
-        /// <returns></returns>
-        public virtual bool CanCreate(GameWorld world) => true;
+
         /// <summary>
         /// Subsystem initialize phase, should bind callbacks and collect references in this phase
         /// </summary>
@@ -118,20 +119,24 @@ namespace Kurisu.Framework
         {
 
         }
+
         internal virtual void InternalInit()
         {
             if (IsInitialized) return;
             IsInitialized = true;
             Initialize();
         }
+
         public virtual void Tick()
         {
 
         }
+
         public virtual void FixedTick()
         {
 
         }
+
         /// <summary>
         /// Subsystem release phase, should unbind callbacks and release references in this phase
         /// </summary>
@@ -139,6 +144,7 @@ namespace Kurisu.Framework
         {
 
         }
+
         internal virtual void InternalRelease()
         {
             if (IsDestroyed) return;
@@ -146,15 +152,18 @@ namespace Kurisu.Framework
             IsDestroyed = true;
             Release();
         }
+
         internal void SetWorld(GameWorld world)
         {
             this.world = world;
         }
+
         /// <summary>
         /// Get attached world
         /// </summary>
         /// <returns></returns>
         public GameWorld GetWorld() => world;
+
         /// <summary>
         /// Get all actors in world, readonly
         /// </summary>
@@ -171,6 +180,11 @@ namespace Kurisu.Framework
                 actors.Add(actor);
             }
         }
+
+        /// <summary>
+        /// Get actor num in world, readonly
+        /// </summary>
+        /// <returns></returns>
         protected int GetActorsNum()
         {
             if (!world)
@@ -182,23 +196,24 @@ namespace Kurisu.Framework
         }
     }
     /// <summary>
-    /// Subsystem always bound to an actor world.
+    /// Subsystem bound to an actor world.
     /// </summary>
     public abstract class WorldSubsystem : SubsystemBase
     {
-    }
-    /// <summary>
-    /// Subsystem dynamically created during game
-    /// </summary>
-    public abstract class DynamicSubsystem : SubsystemBase
-    {
         /// <summary>
-        /// Dynamically create system if not registered.
+        /// Whether <see cref="WorldSubsystem"/> can create
+        /// </summary>
+        /// <param name="world"></param>
+        /// <returns></returns>
+        public virtual bool CanCreate(GameWorld world) => true;
+
+        /// <summary>
+        /// Get or create system if not registered.
         /// </summary>
         /// <param name="world"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T Get<T>(GameWorld world) where T : DynamicSubsystem, new()
+        public static T Get<T>(GameWorld world) where T : WorldSubsystem, new()
         {
             var system = world.GetSubsystem<T>();
             if (system == null)
@@ -210,12 +225,13 @@ namespace Kurisu.Framework
             }
             return system;
         }
+
         /// <summary>
-        /// Dynamically create system if not registered.
+        /// Get or create system if not registered.
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T Get<T>() where T : DynamicSubsystem, new()
+        public static T Get<T>() where T : WorldSubsystem, new()
         {
             return Get<T>(GameWorld.Get());
         }

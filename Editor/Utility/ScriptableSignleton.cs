@@ -5,7 +5,7 @@ using UnityEditorInternal;
 using UnityEngine;
 namespace Kurisu.Framework.Editor
 {
-    internal class ScriptableSingleton<T> : ScriptableObject where T : ScriptableObject
+    public class ScriptableSingleton<T> : ScriptableObject where T : ScriptableObject
     {
         private static T s_Instance;
         public static T Instance

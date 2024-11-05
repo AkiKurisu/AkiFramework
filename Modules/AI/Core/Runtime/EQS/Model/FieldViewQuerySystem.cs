@@ -15,7 +15,7 @@ namespace Kurisu.Framework.AI.EQS
         public FieldView fieldView;
         public LayerMask layerMask;
     }
-    public class FieldViewQuerySystem : DynamicSubsystem
+    public class FieldViewQuerySystem : WorldSubsystem
     {
         /// <summary>
         /// Batch field view query, performe better than <see cref="EnvironmentQuery.OverlapFieldViewJob"/>
@@ -84,7 +84,7 @@ namespace Kurisu.Framework.AI.EQS
 
                 if (commands.Length == 0) return;
 
-                actorData = GameWorld.Get().GetSubsystem<ActorQuerySystem>().GetAllActors(Allocator.TempJob);
+                actorData = Get<ActorQuerySystem>().GetAllActors(Allocator.TempJob);
                 results = new NativeParallelMultiHashMap<int, ActorHandle>(1024, Allocator.Persistent);
                 execution = commands.ToArray(Allocator.TempJob);
                 jobHandle = new OverlapFieldViewBatchJob()

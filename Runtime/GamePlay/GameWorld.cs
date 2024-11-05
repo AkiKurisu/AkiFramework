@@ -59,7 +59,7 @@ namespace Kurisu.Framework
         /// Use <see cref="SparseList{T}"/> for fast look up
         /// </summary>
         /// <returns></returns>
-        internal SparseList<Actor> actorsInWorld = new(InitialCapacity, ActorHandle.MaxIndex + 1);
+        internal SparseList<Actor> actorsInWorld = new(InitialCapacity, ActorHandle.MaxIndex);
         internal readonly Subject<Unit> onActorsUpdate = new();
         private WorldSubsystemCollection subsystemCollection;
         private static GameWorld current;
@@ -157,15 +157,30 @@ namespace Kurisu.Framework
             }
             return null;
         }
+        /// <summary>
+        /// Get <see cref="SubsystemBase"/> from type <see cref="{T}"/>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
         public T GetSubsystem<T>() where T : SubsystemBase
         {
             return subsystemCollection.GetSubsystem<T>();
         }
+        /// <summary>
+        /// Get <see cref="SubsystemBase"/> from type
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public SubsystemBase GetSubsystem(Type type)
         {
             return subsystemCollection.GetSubsystem(type);
         }
-        internal void RegisterSubsystem<T>(T subsystem) where T : SubsystemBase
+        /// <summary>
+        /// Register a <see cref="SubsystemBase"/> with type <see cref="{T}"/>
+        /// </summary>
+        /// <param name="subsystem"></param>
+        /// <typeparam name="T"></typeparam>
+        public void RegisterSubsystem<T>(T subsystem) where T : SubsystemBase
         {
             if (isDestroyed)
             {
