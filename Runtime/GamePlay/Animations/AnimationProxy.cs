@@ -283,7 +283,7 @@ namespace Kurisu.Framework.Animations
         protected virtual void SetOutGraph()
         {
             IsBlendOut = false;
-            eventTrackerTickHandle.Cancel();
+            eventTickHandle.Cancel();
             Graph.Stop();
             Graph.Destroy();
         }
@@ -356,19 +356,20 @@ namespace Kurisu.Framework.Animations
         public void Stop(float blendOutDuration = 0.25f)
         {
             if (!IsPlaying) return;
-            RootMontage.Dispose();
-            if (RestoreAnimatorControllerOnStop && Animator.runtimeAnimatorController != SourceController)
-            {
-                Animator.runtimeAnimatorController = SourceController;
-            }
             IsBlendOut = true;
             if (blendOutDuration <= 0)
             {
+                if (RestoreAnimatorControllerOnStop && Animator.runtimeAnimatorController != SourceController)
+                {
+                    Animator.runtimeAnimatorController = SourceController;
+                }
                 RootMontage.Blend(0);
                 SetOutGraph();
                 return;
             }
-            RootMontage.ScheduleBlendOut(blendOutDuration, SetOutGraph);
+            // Set runtimeAnimatorController may cause jitter in LateUpdate(), 
+            // so we dispatch event to ensure DoStop is called in Update()
+            DispatchStopEvent(blendOutDuration);
         }
         /// <summary>
         /// Release animation proxy
@@ -376,7 +377,7 @@ namespace Kurisu.Framework.Animations
         public virtual void Dispose()
         {
             notifierContexts.Clear();
-            eventTrackerTickHandle.Dispose();
+            eventTickHandle.Dispose();
             SourceController = null;
             if (Graph.IsValid())
                 Graph.Destroy();

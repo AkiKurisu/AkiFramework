@@ -97,13 +97,23 @@ namespace Kurisu.Framework.Animations
     }
     public partial class AnimationProxy
     {
-        public class AnimationNotifierContext
+        private class AnimationNotifierContext
         {
             public AnimationNotifier Notifier;
             public LayerHandle LayerHandle;
             public float LastTime;
         }
-        private class AnimationEventHandler : CallbackEventHandler
+        private class AnimationPreStopEvent : EventBase<AnimationPreStopEvent>
+        {
+            public float BlendOutDuration { get; private set; }
+            public static AnimationPreStopEvent GetPooled(float blendOutDuration)
+            {
+                var evt = GetPooled();
+                evt.BlendOutDuration = blendOutDuration;
+                return evt;
+            }
+        }
+        public class AnimationEventHandler : CallbackEventHandler
         {
             public override IEventCoordinator Root => EventSystem.Instance;
             public override void SendEvent(EventBase e, DispatchMode dispatchMode = DispatchMode.Default)
@@ -111,13 +121,23 @@ namespace Kurisu.Framework.Animations
                 e.Target = this;
                 EventSystem.Instance.Dispatch(e, dispatchMode, MonoDispatchType.LateUpdate);
             }
+            public void SendEvent(EventBase e, DispatchMode dispatchMode = DispatchMode.Default, MonoDispatchType monoDispatchType = MonoDispatchType.LateUpdate)
+            {
+                e.Target = this;
+                EventSystem.Instance.Dispatch(e, dispatchMode, monoDispatchType);
+            }
         }
         private readonly List<AnimationNotifierContext> notifierContexts = new();
-        private SchedulerHandle eventTrackerTickHandle;
-        private AnimationEventHandler eventTracker;
-        public CallbackEventHandler GetEventHandler()
+        private SchedulerHandle eventTickHandle;
+        private AnimationEventHandler eventHandler;
+        public AnimationEventHandler GetEventHandler()
         {
-            return eventTracker ??= new AnimationEventHandler();
+            if (eventHandler == null)
+            {
+                eventHandler = new AnimationEventHandler();
+                eventHandler.RegisterCallback<AnimationPreStopEvent>(DoStop);
+            }
+            return eventHandler;
         }
         public void AddNotifier(AnimationNotifier animationNotifier, LayerHandle layerHandle = default)
         {
@@ -127,9 +147,9 @@ namespace Kurisu.Framework.Animations
                 LayerHandle = layerHandle,
                 LastTime = 1
             });
-            if (!eventTrackerTickHandle.IsValid())
+            if (!eventTickHandle.IsValid())
             {
-                Scheduler.WaitFrame(ref eventTrackerTickHandle, 1, TickEvents, TickFrame.LateUpdate, true);
+                Scheduler.WaitFrame(ref eventTickHandle, 1, TickEvents, TickFrame.LateUpdate, true);
             }
         }
         public void RemoveNotifier(string Name, LayerHandle layerHandle = default)
@@ -145,7 +165,7 @@ namespace Kurisu.Framework.Animations
             }
             if (notifierContexts.Count == 0)
             {
-                eventTrackerTickHandle.Cancel();
+                eventTickHandle.Cancel();
             }
         }
         private void TickEvents(int frame)
@@ -172,6 +192,19 @@ namespace Kurisu.Framework.Animations
         public void UnregisterNotifyCallback(EventCallback<AnimationNotifyEvent> callback)
         {
             GetEventHandler().UnregisterCallback(callback, default);
+        }
+        private void DispatchStopEvent(float blendoutDuration)
+        {
+            using var evt = AnimationPreStopEvent.GetPooled(blendoutDuration);
+            GetEventHandler().SendEvent(evt, monoDispatchType: MonoDispatchType.Update);
+        }
+        private void DoStop(AnimationPreStopEvent preStopEvent)
+        {
+            if (RestoreAnimatorControllerOnStop && Animator.runtimeAnimatorController != SourceController)
+            {
+                Animator.runtimeAnimatorController = SourceController;
+            }
+            RootMontage.ScheduleBlendOut(preStopEvent.BlendOutDuration, SetOutGraph);
         }
     }
 }
