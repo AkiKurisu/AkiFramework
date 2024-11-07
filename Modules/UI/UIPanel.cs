@@ -82,7 +82,7 @@ namespace Kurisu.Framework.UI
             panelField ??= new PanelField(this);
             return panelField;
         }
-        private void CreateFields()
+        protected void CreateFields()
         {
             // Inject virtual panel items
             var items = new PanelItem[initialItems.Length];
@@ -109,6 +109,11 @@ namespace Kurisu.Framework.UI
 
             // Create view
             panelField.CreateView(transform, null);
+        }
+        public void ClearFields()
+        {
+            if (panelField == null) return;
+            panelField.Clear();
         }
         public TPanel Cast<TPanel>() where TPanel : UIPanel
         {

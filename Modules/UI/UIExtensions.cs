@@ -28,7 +28,11 @@ namespace Kurisu.Framework.UI
             panelItem.Fields.Add(field);
             return field;
         }
-        public static void SetAutosize(this Text text)
+        /// <summary>
+        /// Resize text automatically
+        /// </summary>
+        /// <param name="text"></param>
+        public static void AutoResize(this Text text)
         {
             text.resizeTextMaxSize = text.fontSize;
             text.resizeTextForBestFit = true;

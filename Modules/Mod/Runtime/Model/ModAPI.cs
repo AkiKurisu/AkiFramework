@@ -69,6 +69,20 @@ namespace Kurisu.Framework.Mod
             OnModRefresh.OnNext(Unit.Default);
         }
         /// <summary>
+        /// Get mod state
+        /// </summary>
+        /// <param name="modInfo"></param>
+        /// <returns></returns>
+        public static ModState GetModState(ModInfo modInfo)
+        {
+            if (!IsModInit.Value)
+            {
+                Debug.LogError("[Mod API] Mod api is not initialized");
+                return ModState.Disabled;
+            }
+            return setting.GetModState(modInfo);
+        }
+        /// <summary>
         /// Get all enabled mod infos
         /// </summary>
         /// <returns></returns>

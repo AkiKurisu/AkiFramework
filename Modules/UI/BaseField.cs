@@ -8,6 +8,7 @@ using Kurisu.Framework.Resource;
 using R3;
 using UnityEngine.UI;
 using UnityEngine.Pool;
+using UObject = UnityEngine.Object;
 namespace Kurisu.Framework.UI
 {
     public static class UIEntry
@@ -95,7 +96,7 @@ namespace Kurisu.Framework.UI
         }
         public GameObject Instantiate(Transform parent)
         {
-            return UnityEngine.Object.Instantiate(Prefab, parent);
+            return UObject.Instantiate(Prefab, parent);
         }
     }
     /// <summary>
@@ -140,6 +141,16 @@ namespace Kurisu.Framework.UI
             ViewItems.Add(view);
         }
         protected abstract GameObject OnCreateView(Transform parent);
+        public virtual void DestroyView()
+        {
+            foreach (var view in ViewItems)
+            {
+                if (view)
+                {
+                    UObject.Destroy(view);
+                }
+            }
+        }
         public virtual void Dispose()
         {
             Visible.Dispose();
@@ -297,6 +308,18 @@ namespace Kurisu.Framework.UI
             return field;
         }
         /// <summary>
+        /// Clear all fields from the panel
+        /// </summary>
+        public void Clear()
+        {
+            foreach (var field in _fields)
+            {
+                field.DestroyView();
+                field.Dispose();
+            }
+            _fields.Clear();
+        }
+        /// <summary>
         /// Add fields to the panel
         /// </summary>
         /// <param name="fields"></param>
@@ -389,7 +412,7 @@ namespace Kurisu.Framework.UI
             Text text = tr.GetComponentInChildren<Text>();
             text.text = DisplayName;
             text.color = GetUIStyle().TextColor;
-            text.SetAutosize();
+            text.AutoResize();
             return tr;
         }
     }
@@ -428,7 +451,7 @@ namespace Kurisu.Framework.UI
             Text text = tr.GetComponentInChildren<Text>();
             text.text = DisplayName;
             text.color = GetUIStyle().TextColor;
-            text.SetAutosize();
+            text.AutoResize();
             return tr;
         }
         private void OnButtonClicked(Unit _)
@@ -484,7 +507,7 @@ namespace Kurisu.Framework.UI
             Text text = label.GetComponentInChildren<Text>();
             text.text = DisplayName;
             text.color = GetUIStyle().TextColor;
-            text.SetAutosize();
+            text.AutoResize();
             return label;
         }
         /// <summary>

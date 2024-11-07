@@ -1,0 +1,28 @@
+{
+    "name": "Kurisu.Framework.Mod.UI",
+    "rootNamespace": "Kurisu.Framework.Mod.UI",
+    "references": [
+        "Kurisu.Framework",
+        "Kurisu.Framework.Mod",
+        "Kurisu.Framework.UI",
+        "UniTask",
+        "R3.Unity"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "AF_ADDRESSABLES_INSATLL"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.addressables",
+            "expression": "1.21.0",
+            "define": "AF_ADDRESSABLES_INSATLL"
+        }
+    ],
+    "noEngineReferences": false
+}
