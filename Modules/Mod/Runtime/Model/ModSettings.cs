@@ -6,7 +6,7 @@ namespace Kurisu.Framework.Mod
     /// Configuration of mod importer
     /// </summary>
     [Serializable]
-    public class ModSetting
+    public class ModSettings
     {
         public string LoadingPath { get; set; } = ImportConstants.LoadingPath;
         public List<ModStateInfo> stateInfos = new();

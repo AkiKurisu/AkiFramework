@@ -108,7 +108,10 @@ namespace Kurisu.Framework.UI
             }
 
             // Create view
-            panelField.CreateView(transform, null);
+            if (!panelField.IsInitialized)
+            {
+                panelField.CreateView(transform, null);
+            }
         }
         public void ClearFields()
         {

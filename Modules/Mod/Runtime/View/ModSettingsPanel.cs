@@ -83,17 +83,20 @@ namespace Kurisu.Framework.Mod.UI
                     toggles[i].SetIsOnWithoutNotify(i == b);
                 }
             });
-            deleteButton.OnClickAsObservable().Subscribe(_ =>
+            if (deleteButton)
             {
-                SetValue(2);
-            });
+                deleteButton.OnClickAsObservable().Subscribe(_ =>
+                {
+                    SetValue(2);
+                });
+            }
             Text text = tr.transform.Find("title").GetComponent<Text>();
             text.text = DisplayName;
             return tr;
         }
         public ModConfigField Bind(ModInfo modInfo)
         {
-            this.AsObservable<ChangeEvent<int>>().SubscribeSafe(e =>
+            this.AsObservable<ChangeEvent<int>>().Skip(1).SubscribeSafe(e =>
             {
                 if (e.NewValue == 0)
                 {

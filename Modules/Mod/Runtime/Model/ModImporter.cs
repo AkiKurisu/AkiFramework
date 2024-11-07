@@ -34,9 +34,9 @@ namespace Kurisu.Framework.Mod
     }
     public class ModImporter : IModImporter
     {
-        private readonly ModSetting modSettingData;
+        private readonly ModSettings modSettingData;
         private readonly IModValidator validator;
-        public ModImporter(ModSetting modSettingData, IModValidator validator)
+        public ModImporter(ModSettings modSettingData, IModValidator validator)
         {
             this.modSettingData = modSettingData;
             this.validator = validator;
@@ -98,7 +98,7 @@ namespace Kurisu.Framework.Mod
             }
             return true;
         }
-        public async UniTask<ModInfo> LoadModAsync(ModSetting settingData, string path)
+        public async UniTask<ModInfo> LoadModAsync(ModSettings settingData, string path)
         {
             var configs = Directory.GetFiles(path, "*.cfg");
             if (configs.Length == 0) return null;

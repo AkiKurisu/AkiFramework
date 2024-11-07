@@ -291,6 +291,13 @@ namespace Kurisu.Framework.UI
             Panel = panelObject;
         }
         private bool _isInitialized;
+        public bool IsInitialized
+        {
+            get
+            {
+                return _isInitialized;
+            }
+        }
         private readonly List<BaseField> _fields = new();
         /// <summary>
         /// Add a field to the panel
@@ -318,6 +325,7 @@ namespace Kurisu.Framework.UI
                 field.Dispose();
             }
             _fields.Clear();
+            _isInitialized = false;
         }
         /// <summary>
         /// Add fields to the panel

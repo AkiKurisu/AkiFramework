@@ -14,14 +14,14 @@ namespace Kurisu.Framework.Mod
         public static ReactiveProperty<bool> IsModInit { get; } = new(false);
         public static Subject<Unit> OnModRefresh { get; } = new();
         private static readonly List<ModInfo> modInfos = new();
-        private static ModSetting setting;
+        private static ModSettings setting;
         /// <summary>
         /// Initialize api and load all mods
         /// </summary>
         /// <param name="modSetting"></param>
         /// <param name="modImporter"></param>
         /// <returns></returns>
-        public static async UniTask Initialize(ModSetting modSetting, IModImporter modImporter = default)
+        public static async UniTask Initialize(ModSettings modSetting, IModImporter modImporter = default)
         {
             if (IsModInit.Value)
             {
@@ -48,6 +48,7 @@ namespace Kurisu.Framework.Mod
                 Debug.LogError("[Mod API] Mod api is not initialized");
                 return;
             }
+            if (setting.GetModState(modInfo) == ModState.Delate) return;
             setting.DelateMod(modInfo);
             modInfos.Remove(modInfo);
             modInfo.Dispose();
@@ -65,6 +66,7 @@ namespace Kurisu.Framework.Mod
                 Debug.LogError("[Mod API] Mod api is not initialized");
                 return;
             }
+            if (setting.GetModState(modInfo) == (isEnabled ? ModState.Enabled : ModState.Disabled)) return;
             setting.SetModEnabled(modInfo, isEnabled);
             OnModRefresh.OnNext(Unit.Default);
         }
