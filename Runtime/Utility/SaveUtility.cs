@@ -7,7 +7,11 @@ namespace Kurisu.Framework
 {
     public class SaveUtility
     {
-        private static readonly string SavePath = Path.Combine(Application.persistentDataPath, "Saving");
+#if UNITY_EDITOR || UNITY_STANDALONE_WIN
+        private static readonly string SavePath = Path.Combine(Application.dataPath, "../Saved");
+#else
+        private static readonly string SavePath = Path.Combine(Application.persistentDataPath, "Saved");
+#endif
         private static readonly BinaryFormatter formatter = new();
         /// <summary>
         /// Save object data to saving
@@ -22,7 +26,7 @@ namespace Kurisu.Framework
             else
                 jsonData = JsonConvert.SerializeObject(data);
             if (!Directory.Exists(SavePath)) Directory.CreateDirectory(SavePath);
-            using FileStream file = File.Create($"{SavePath}/{key}.bin");
+            using FileStream file = File.Create($"{SavePath}/{key}.sav");
             formatter.Serialize(file, jsonData);
         }
         /// <summary>
@@ -39,7 +43,7 @@ namespace Kurisu.Framework
             else
                 jsonData = JsonConvert.SerializeObject(data);
             if (!Directory.Exists(SavePath)) Directory.CreateDirectory(SavePath);
-            using FileStream file = File.Create($"{SavePath}/{key}.bin");
+            using FileStream file = File.Create($"{SavePath}/{key}.sav");
             formatter.Serialize(file, jsonData);
         }
         /// <summary>
@@ -58,7 +62,7 @@ namespace Kurisu.Framework
         public static void Delate(string key)
         {
             if (!Directory.Exists(SavePath)) return;
-            string path = $"{SavePath}/{key}.bin";
+            string path = $"{SavePath}/{key}.sav";
             if (File.Exists(path))
             {
                 File.Delete(path);
@@ -80,12 +84,12 @@ namespace Kurisu.Framework
         public static void SaveJson(string key, string jsonData)
         {
             if (!Directory.Exists(SavePath)) Directory.CreateDirectory(SavePath);
-            using FileStream file = File.Create($"{SavePath}/{key}.bin");
+            using FileStream file = File.Create($"{SavePath}/{key}.sav");
             formatter.Serialize(file, jsonData);
         }
         public static bool SavingExists(string key)
         {
-            return File.Exists($"{SavePath}/{key}.bin");
+            return File.Exists($"{SavePath}/{key}.sav");
         }
         /// <summary>
         /// Load json from saving
@@ -93,7 +97,7 @@ namespace Kurisu.Framework
         /// <param name="key"></param>
         public static bool TryLoadJson(string key, out string jsonData)
         {
-            string path = $"{SavePath}/{key}.bin";
+            string path = $"{SavePath}/{key}.sav";
             if (File.Exists(path))
             {
                 using FileStream file = File.Open(path, FileMode.Open);
@@ -110,7 +114,7 @@ namespace Kurisu.Framework
         /// <param name="data"></param>
         public static bool Overwrite(string key, object data)
         {
-            string path = $"{SavePath}/{key}.bin";
+            string path = $"{SavePath}/{key}.sav";
             if (File.Exists(path))
             {
                 using FileStream file = File.Open(path, FileMode.Open);
@@ -131,7 +135,7 @@ namespace Kurisu.Framework
         /// <returns></returns>
         public static bool Overwrite<T>(string key, T data)
         {
-            string path = $"{SavePath}/{key}.bin";
+            string path = $"{SavePath}/{key}.sav";
             if (File.Exists(path))
             {
                 using FileStream file = File.Open(path, FileMode.Open);
@@ -162,7 +166,7 @@ namespace Kurisu.Framework
         public static T LoadOrNew<T>(string key) where T : class, new()
         {
             T data = null;
-            string path = $"{SavePath}/{key}.bin";
+            string path = $"{SavePath}/{key}.sav";
             if (File.Exists(path))
             {
                 using FileStream file = File.Open(path, FileMode.Open);
