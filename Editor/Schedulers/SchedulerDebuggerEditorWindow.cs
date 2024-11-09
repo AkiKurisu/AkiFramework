@@ -13,7 +13,7 @@ namespace Kurisu.Framework.Schedulers.Editor
             get
             {
                 if (Application.isPlaying)
-                    return SchedulerRunner.Instance;
+                    return SchedulerRunner.Get();
                 else
                     return null;
             }

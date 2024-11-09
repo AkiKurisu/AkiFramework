@@ -2,9 +2,7 @@
 
 # AkiFramework
 
-This is a code collection that i really used in my games, will be update through my development. 
-
-I supposed these code are useful but also not-must-be-included, which is my personal understanding of "Game Framework" should be, so that you can pick code you like and use in your project for free.
+A Unity game framework designed for efficient development.
 
 </div>
 
@@ -17,6 +15,8 @@ I supposed these code are useful but also not-must-be-included, which is my pers
 
 [Pool](./Docs/Pool.md) 
 > Zero allocation GameObject/Component pooling. 
+
+![Pooling Performance](./Docs/Images/pooling-performance.png)
 
 [Schedulers](./Docs/Schedulers.md) 
 > Zero allocation timer/frame counter. 
@@ -47,10 +47,14 @@ Modules are based on core features.
 ![FieldViewPrime](./Docs/Images/fov-prime.gif)
 
 [Mod](./Docs/Mod.md) 
-> Simple mod system based on Addressables. 
+> Mod workflow based on Addressables. 
+
+![Mod Exporter](./Docs/Images/mod_exporter.png)
 
 [Resource](./Docs/Resource.md) 
 > Resource loading system, effect system based on Addressables. 
+
+![SoftAssetReference](./Docs/Images/soft_asset_reference.png)
 
 [UI](./Docs/UI.md) 
 > Build UGUI in script easily, useful for creating dynamic setting UI and debug menu.

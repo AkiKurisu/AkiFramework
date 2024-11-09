@@ -34,10 +34,10 @@ namespace Kurisu.Framework.Schedulers
                 else
                 {
                     hashCode = callback.GetHashCode();
-                    itemName = Utils.GetDelegatePath(callback);
+                    itemName = FrameworkUtils.GetDelegatePath(callback);
                 }
 
-                StackFrame frame = Utils.GetCurrentStackFrame();
+                StackFrame frame = FrameworkUtils.GetCurrentStackFrame();
 
                 s_Listeners.Add(scheduled, new ListenerRecord
                 {
@@ -67,7 +67,7 @@ namespace Kurisu.Framework.Schedulers
                     return;
                 }
 
-                if (record.name == Utils.GetDelegatePath(callback))
+                if (record.name == FrameworkUtils.GetDelegatePath(callback))
                 {
                     s_Listeners.Remove(scheduled);
                 }

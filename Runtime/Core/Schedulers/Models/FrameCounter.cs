@@ -60,8 +60,8 @@ namespace Kurisu.Framework.Schedulers
          TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
             FrameCounter timer = pool.Get();
-            timer.Init(SchedulerRunner.Instance.NewHandle(), frame, ref onComplete, ref onUpdate, isLooped);
-            SchedulerRunner.Instance.Register(timer, tickFrame, onComplete.IsValid() ? onComplete.GetDelegate() : onUpdate.GetDelegate());
+            timer.Init(SchedulerRunner.Get().NewHandle(), frame, ref onComplete, ref onUpdate, isLooped);
+            SchedulerRunner.Get().Register(timer, tickFrame, onComplete.IsValid() ? onComplete.GetDelegate() : onUpdate.GetDelegate());
             return timer;
         }
         #endregion
@@ -77,7 +77,7 @@ namespace Kurisu.Framework.Schedulers
         }
         public void Dispose()
         {
-            SchedulerRunner.Instance.Unregister(this, _onComplete.IsValid() ? _onComplete.GetDelegate() : _onUpdate.GetDelegate());
+            SchedulerRunner.Get().Unregister(this, _onComplete.IsValid() ? _onComplete.GetDelegate() : _onUpdate.GetDelegate());
             _onUpdate = default;
             _onComplete = default;
             pool.Release(this);

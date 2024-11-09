@@ -4,8 +4,9 @@ using System.Reflection;
 using UnityEngine;
 namespace Kurisu.Framework
 {
-    public static class Utils
+    public static class FrameworkUtils
     {
+        #region Public API
         public static Vector3 GetScreenPosition(float width, float height, Vector3 target)
         {
             return GetScreenPosition(Camera.main, width, height, target);
@@ -45,7 +46,17 @@ namespace Kurisu.Framework
             }
             return match;
         }
-        #region Internal Utils
+        public static string GetRelativePath(string path)
+        {
+            return path.Replace("\\", "/").Replace(Application.dataPath, "Assets/");
+        }
+        public static string GetAbsolutePath(string path)
+        {
+            return Application.dataPath + path.Replace("\\", "/")[6..];
+        }
+        #endregion Public API
+
+        #region Internal API
         internal static MethodInfo GetStaticMethodWithNoParametersInBase(Type type, string methodName)
         {
             MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
@@ -94,6 +105,6 @@ namespace Kurisu.Framework
             };
             return itemName;
         }
-        #endregion
+        #endregion Internal API
     }
 }

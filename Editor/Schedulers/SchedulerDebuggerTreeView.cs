@@ -13,7 +13,7 @@ namespace Kurisu.Framework.Schedulers.Editor
             get
             {
                 if (Application.isPlaying)
-                    return SchedulerRunner.Instance;
+                    return SchedulerRunner.Get();
                 else
                     return null;
             }
@@ -100,7 +100,7 @@ namespace Kurisu.Framework.Schedulers.Editor
 
             if (Application.isPlaying)
             {
-                foreach (var scheduled in SchedulerRunner.Instance.scheduledItems)
+                foreach (var scheduled in SchedulerRunner.Get().scheduledItems)
                 {
                     string taskName = string.Empty;
                     if (SchedulerRegistry.TryGetListener(scheduled.Value, out var listener))

@@ -420,7 +420,7 @@ namespace Kurisu.Framework.Events
                 s_Listeners.Add(ceh, dict);
             }
 
-            string itemName = Utils.GetDelegatePath(callback);
+            string itemName = FrameworkUtils.GetDelegatePath(callback);
 
             if (!dict.TryGetValue(typeof(TEventType), out List<ListenerRecord> callbackRecords))
             {
@@ -428,7 +428,7 @@ namespace Kurisu.Framework.Events
                 dict.Add(typeof(TEventType), callbackRecords);
             }
 
-            StackFrame frame = Utils.GetCurrentStackFrame();
+            StackFrame frame = FrameworkUtils.GetCurrentStackFrame();
 
             callbackRecords.Add(new ListenerRecord
             {
@@ -446,7 +446,7 @@ namespace Kurisu.Framework.Events
             if (!s_Listeners.TryGetValue(ceh, out Dictionary<Type, List<ListenerRecord>> dict))
                 return;
 
-            string itemName = Utils.GetDelegatePath(callback);
+            string itemName = FrameworkUtils.GetDelegatePath(callback);
 
             if (!dict.TryGetValue(typeof(TEventType), out List<ListenerRecord> callbackRecords))
                 return;

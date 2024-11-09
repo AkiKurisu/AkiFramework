@@ -35,7 +35,7 @@ namespace Kurisu.Framework.Schedulers
         public readonly bool IsDone()
         {
             if (!SchedulerRunner.IsInitialized) return default;
-            return SchedulerRunner.Instance.IsDone(this);
+            return SchedulerRunner.Get().IsDone(this);
         }
         public SchedulerHandle(ulong serialNum, int index)
         {
@@ -53,7 +53,7 @@ namespace Kurisu.Framework.Schedulers
         {
             if (!SchedulerRunner.IsInitialized) return;
             if (!IsValid()) return;
-            SchedulerRunner.Instance.Cancel(this);
+            SchedulerRunner.Get().Cancel(this);
         }
         /// <summary>
         /// Pause a scheduled task if is valid
@@ -63,7 +63,7 @@ namespace Kurisu.Framework.Schedulers
         {
             if (!SchedulerRunner.IsInitialized) return;
             if (!IsValid()) return;
-            SchedulerRunner.Instance.Pause(this);
+            SchedulerRunner.Get().Pause(this);
         }
         /// <summary>
         /// Resume a scheduled task if is valid
@@ -73,7 +73,7 @@ namespace Kurisu.Framework.Schedulers
         {
             if (!SchedulerRunner.IsInitialized) return;
             if (!IsValid()) return;
-            SchedulerRunner.Instance.Resume(this);
+            SchedulerRunner.Get().Resume(this);
         }
 
         public void Dispose()

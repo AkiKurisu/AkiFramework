@@ -79,7 +79,7 @@ namespace Kurisu.Framework.AI.EQS
                 Physics.Linecast(fromPosition, target, out RaycastHit hit, layerMask);
                 if (hit.collider != null)
                 {
-                    if (Utils.CompareTags(hit.collider, filterTags) == false)
+                    if (FrameworkUtils.CompareTags(hit.collider, filterTags) == false)
                     {
                         Debug.DrawLine(hit.point, fromPosition, Color.cyan);
                         isVisible = false;
