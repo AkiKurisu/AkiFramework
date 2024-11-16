@@ -28,6 +28,11 @@ A Unity game framework designed for efficient development.
 
 ![SerializedType](./Docs/Images/serializedtype.png)
 
+[Resource](./Docs/Resource.md) 
+> Resource loading system, effect system based on Addressables. 
+
+![SoftAssetReference](./Docs/Images/soft_asset_reference.png)
+
 [Data Driven](./Docs/DataDriven.md)
 >Use Unreal-like DataTable workflow in Unity.
 
@@ -50,11 +55,6 @@ Modules are based on core features.
 > Mod workflow based on Addressables. 
 
 ![Mod Exporter](./Docs/Images/mod_exporter.png)
-
-[Resource](./Docs/Resource.md) 
-> Resource loading system, effect system based on Addressables. 
-
-![SoftAssetReference](./Docs/Images/soft_asset_reference.png)
 
 [UI](./Docs/UI.md) 
 > Build UGUI in script easily, useful for creating dynamic setting UI and debug menu.
