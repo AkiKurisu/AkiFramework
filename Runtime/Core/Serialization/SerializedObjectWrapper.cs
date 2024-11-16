@@ -1,3 +1,4 @@
+using System.Reflection;
 using UnityEngine;
 namespace Kurisu.Framework.Serialization
 {
@@ -8,6 +9,12 @@ namespace Kurisu.Framework.Serialization
     public abstract class SerializedObjectWrapper : ScriptableObject
     {
         public abstract object Value
+        {
+            get;
+            set;
+        }
+
+        public FieldInfo FieldInfo
         {
             get;
             set;
