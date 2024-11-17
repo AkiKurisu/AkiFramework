@@ -61,6 +61,11 @@ Modules are based on core features.
 
 ![UIPanel](./Docs/Images/ui_panel_view.png)
 
+[Ceres](./Docs/Ceres.md)
+> Node based visual scripting framework using Graphview.
+
+![ceres_ngd](./Docs/Images/ceres_ngd.png)
+
 ## Reference
 
 [R3](https://github.com/Cysharp/R3)
@@ -70,7 +75,6 @@ Modules are based on core features.
 [Unity.UIElements](https://github.com/Unity-Technologies/UnityCsReference/tree/2022.3/ModuleOverrides/com.unity.ui/Core)
 
 [Unity Timer](https://github.com/akbiggs/UnityTimer)
-
 
 ## License
 
