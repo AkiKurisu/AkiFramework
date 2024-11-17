@@ -264,6 +264,15 @@ namespace Kurisu.Framework.UI
             _value.OnNext(property.Value);
             return this;
         }
+        
+        public BaseField<TValue> Bind<T>(Func<TValue> getter, Action<TValue> setter, T unRegister) where T : IDisposableUnregister
+        {
+            this.AsObservable<ChangeEvent<TValue>>().SubscribeSafe(e => setter(e.NewValue)).AddTo(unRegister);
+            if(getter!=null)
+                _value.OnNext(getter());
+            return this;
+        }
+        
         public override void Dispose()
         {
             _value.Dispose();
