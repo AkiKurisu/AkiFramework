@@ -10,17 +10,25 @@ namespace Kurisu.Framework
     /// </summary>
     public readonly struct ActorHandle
     {
-        public readonly ulong Handle { get; }
+        public ulong Handle { get; }
+        
         public const int IndexBits = 24;
+        
         public const int SerialNumberBits = 40;
+        
         public const int MaxIndex = 1 << IndexBits;
+        
         public const ulong MaxSerialNumber = (ulong)1 << SerialNumberBits;
-        public readonly int GetIndex() => (int)(Handle & MaxIndex - 1);
-        public readonly ulong GetSerialNumber() => Handle >> IndexBits;
-        public readonly bool IsValid()
+        
+        public int GetIndex() => (int)(Handle & MaxIndex - 1);
+        
+        public ulong GetSerialNumber() => Handle >> IndexBits;
+        
+        public bool IsValid()
         {
             return Handle != 0;
         }
+        
         public ActorHandle(ulong serialNum, int index)
         {
             Assert.IsTrue(index >= 0 && index < MaxIndex);
@@ -34,15 +42,18 @@ namespace Kurisu.Framework
         {
             return left.Handle == right.Handle;
         }
+        
         public static bool operator !=(ActorHandle left, ActorHandle right)
         {
             return left.Handle != right.Handle;
         }
+        
         public override bool Equals(object obj)
         {
             if (obj is not ActorHandle handle) return false;
             return handle.Handle == Handle;
         }
+        
         public override int GetHashCode()
         {
             return Handle.GetHashCode();
@@ -53,70 +64,93 @@ namespace Kurisu.Framework
     /// </summary>
     public class GameWorld : MonoBehaviour
     {
-        private ulong serialNum = 1;
+        ~GameWorld()
+        {
+            _isInPendingDestroyed = false;
+        }
+        
+        private ulong _serialNum = 1;
+        
         private const int InitialCapacity = 100;
-        /// <summary>
-        /// Use <see cref="SparseList{T}"/> for fast look up
-        /// </summary>
-        /// <returns></returns>
-        internal SparseList<Actor> actorsInWorld = new(InitialCapacity, ActorHandle.MaxIndex);
-        internal readonly Subject<Unit> onActorsUpdate = new();
-        private WorldSubsystemCollection subsystemCollection;
-        private static GameWorld current;
-        private bool isSystemDirty = false;
-        private bool isDestroyed;
+        
+        internal readonly SparseList<Actor> ActorsInWorld = new(InitialCapacity, ActorHandle.MaxIndex);
+        
+        internal readonly Subject<Unit> OnActorsUpdate = new();
+        
+        private WorldSubsystemCollection _subsystemCollection;
+        
+        private static GameWorld _current;
+
+        private static bool _isInPendingDestroyed;
+        
+        private bool _isSystemDirty;
+        
+        private bool _isDestroyed;
+        
         private void Awake()
         {
-            if (current != null && current != this)
+            if (_current != null && _current != this)
             {
                 Destroy(gameObject);
                 return;
             }
-            current = this;
-            subsystemCollection = new WorldSubsystemCollection(this);
+            _current = this;
+            _subsystemCollection = new WorldSubsystemCollection(this);
         }
+        
         private void Start()
         {
-            subsystemCollection.Init();
+            _subsystemCollection.Init();
         }
+        
         private void Update()
         {
-            subsystemCollection.Tick();
-            if (isSystemDirty)
-            {
-                subsystemCollection.Rebuild();
-                isSystemDirty = false;
-            }
+            _subsystemCollection.Tick();
+            if (!_isSystemDirty) return;
+            _subsystemCollection.Rebuild();
+            _isSystemDirty = false;
         }
+        
         private void FixedUpdate()
         {
-            subsystemCollection.FixedTick();
-            if (isSystemDirty)
-            {
-                subsystemCollection.Rebuild();
-                isSystemDirty = false;
-            }
+            _subsystemCollection.FixedTick();
+            if (!_isSystemDirty) return;
+            _subsystemCollection.Rebuild();
+            _isSystemDirty = false;
         }
+        
         private void OnDestroy()
         {
-            if (current == this) current = null;
-            isDestroyed = true;
-            subsystemCollection.Dispose();
-            onActorsUpdate.Dispose();
+            _isDestroyed = true;
+            _isInPendingDestroyed = true;
+            _subsystemCollection?.Dispose();
+            OnActorsUpdate.Dispose();
         }
+
+        /// <summary>
+        /// Whether access to world is safe which will return null if world is being destroyed
+        /// </summary>
+        /// <returns></returns>
+        public static bool IsValid()
+        {
+            if (_current) return !_current._isDestroyed;
+            return !_isInPendingDestroyed;
+        }
+        
         public static GameWorld Get()
         {
-            if (!current)
+            /* Access to world in destroy stage is not allowed */
+            if (!IsValid()) return null;
+            
+            if (_current) return _current;
+            _current = FindAnyObjectByType<GameWorld>();
+            if (!_current)
             {
-                current = FindAnyObjectByType<GameWorld>();
-                if (!current)
-                {
-
-                    current = new GameObject(nameof(GameWorld)).AddComponent<GameWorld>();
-                }
+                _current = new GameObject(nameof(GameWorld)).AddComponent<GameWorld>();
             }
-            return current;
+            return _current;
         }
+        
         internal void RegisterActor(Actor actor, ref ActorHandle handle)
         {
             if (GetActor(handle) != null)
@@ -124,39 +158,39 @@ namespace Kurisu.Framework
                 Debug.LogError($"[GameWorld] {actor.gameObject.name} is already registered to world!");
                 return;
             }
-            int index = actorsInWorld.Add(actor);
-            handle = new ActorHandle(serialNum, index);
-            onActorsUpdate.OnNext(Unit.Default);
+            int index = ActorsInWorld.Add(actor);
+            handle = new ActorHandle(_serialNum, index);
+            OnActorsUpdate.OnNext(Unit.Default);
         }
+        
         internal void UnregisterActor(Actor actor)
         {
             var handle = actor.GetActorHandle();
             int index = handle.GetIndex();
-            if (actorsInWorld.IsAllocated(index))
+            if (!ActorsInWorld.IsAllocated(index)) return;
+            
+            var current = ActorsInWorld[index];
+            if (current.GetActorHandle().GetSerialNumber() != handle.GetSerialNumber())
             {
-                var current = actorsInWorld[index];
-                if (current.GetActorHandle().GetSerialNumber() != handle.GetSerialNumber())
-                {
-                    Debug.LogWarning($"[GameWorld] Actor {handle.Handle} has already been removed from world!");
-                    return;
-                }
-                // increase serial num as version update
-                ++serialNum;
-                actorsInWorld.RemoveAt(index);
-                onActorsUpdate.OnNext(Unit.Default);
+                Debug.LogWarning($"[GameWorld] Actor {handle.Handle} has already been removed from world!");
+                return;
             }
+            // increase serial num as version update
+            ++_serialNum;
+            ActorsInWorld.RemoveAt(index);
+            OnActorsUpdate.OnNext(Unit.Default);
         }
+        
         public Actor GetActor(ActorHandle handle)
         {
             int index = handle.GetIndex();
-            if (handle.IsValid() && actorsInWorld.IsAllocated(index))
-            {
-                var actor = actorsInWorld[index];
-                if (actor.GetActorHandle().GetSerialNumber() != handle.GetSerialNumber()) return null;
-                return actor;
-            }
-            return null;
+            if (!handle.IsValid() || !ActorsInWorld.IsAllocated(index)) return null;
+            
+            var actor = ActorsInWorld[index];
+            if (actor.GetActorHandle().GetSerialNumber() != handle.GetSerialNumber()) return null;
+            return actor;
         }
+        
         /// <summary>
         /// Get <see cref="SubsystemBase"/> from type <see cref="{T}"/>
         /// </summary>
@@ -164,8 +198,9 @@ namespace Kurisu.Framework
         /// <returns></returns>
         public T GetSubsystem<T>() where T : SubsystemBase
         {
-            return subsystemCollection.GetSubsystem<T>();
+            return _subsystemCollection.GetSubsystem<T>();
         }
+        
         /// <summary>
         /// Get <see cref="SubsystemBase"/> from type
         /// </summary>
@@ -173,8 +208,9 @@ namespace Kurisu.Framework
         /// <returns></returns>
         public SubsystemBase GetSubsystem(Type type)
         {
-            return subsystemCollection.GetSubsystem(type);
+            return _subsystemCollection.GetSubsystem(type);
         }
+        
         /// <summary>
         /// Register a <see cref="SubsystemBase"/> with type <see cref="{T}"/>
         /// </summary>
@@ -182,13 +218,13 @@ namespace Kurisu.Framework
         /// <typeparam name="T"></typeparam>
         public void RegisterSubsystem<T>(T subsystem) where T : SubsystemBase
         {
-            if (isDestroyed)
+            if (_isDestroyed)
             {
-                Debug.LogError($"[GameWorld] World is already destroyed!");
+                Debug.LogError($"[GameWorld] World has already been destroyed!");
                 return;
             }
-            subsystemCollection.RegisterSubsystem(subsystem);
-            isSystemDirty = true;
+            _subsystemCollection.RegisterSubsystem(subsystem);
+            _isSystemDirty = true;
         }
     }
 }

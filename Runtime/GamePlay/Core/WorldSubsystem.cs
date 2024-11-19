@@ -27,7 +27,7 @@ namespace Kurisu.Framework
                 else systems[type].SetWorld(world);
             }
             subsystems = systems.Values.ToArray();
-            actorsUpdateSubscription = world.onActorsUpdate.Subscribe(OnActorsUpdate);
+            actorsUpdateSubscription = world.OnActorsUpdate.Subscribe(OnActorsUpdate);
         }
         internal void RegisterSubsystem<T>(T subsystem) where T : SubsystemBase
         {
@@ -175,7 +175,7 @@ namespace Kurisu.Framework
                 Debug.LogWarning("[World Subsystem] System not bound to an actor world.");
                 return;
             }
-            foreach (var actor in world.actorsInWorld)
+            foreach (var actor in world.ActorsInWorld)
             {
                 actors.Add(actor);
             }
@@ -192,7 +192,7 @@ namespace Kurisu.Framework
                 Debug.LogWarning("[World Subsystem] System not bound to an actor world.");
                 return default;
             }
-            return world.actorsInWorld.Count;
+            return world.ActorsInWorld.Count;
         }
     }
     /// <summary>
@@ -215,6 +215,7 @@ namespace Kurisu.Framework
         /// <returns></returns>
         public static T Get<T>(GameWorld world) where T : WorldSubsystem, new()
         {
+            if (!GameWorld.IsValid()) return null;
             var system = world.GetSubsystem<T>();
             if (system == null)
             {
@@ -233,7 +234,7 @@ namespace Kurisu.Framework
         /// <returns></returns>
         public static T Get<T>() where T : WorldSubsystem, new()
         {
-            return Get<T>(GameWorld.Get());
+            return !GameWorld.IsValid() ? null : Get<T>(GameWorld.Get());
         }
     }
 }
