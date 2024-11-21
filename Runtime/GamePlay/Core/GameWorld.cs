@@ -64,10 +64,6 @@ namespace Kurisu.Framework
     /// </summary>
     public class GameWorld : MonoBehaviour
     {
-        ~GameWorld()
-        {
-            _isInPendingDestroyed = false;
-        }
         
         private ulong _serialNum = 1;
         
@@ -82,6 +78,8 @@ namespace Kurisu.Framework
         private static GameWorld _current;
 
         private static bool _isInPendingDestroyed;
+
+        private static double _inPendingDestroyedTimestamp;
         
         private bool _isSystemDirty;
         
@@ -123,6 +121,7 @@ namespace Kurisu.Framework
         {
             _isDestroyed = true;
             _isInPendingDestroyed = true;
+            _inPendingDestroyedTimestamp = Time.realtimeSinceStartupAsDouble;
             _subsystemCollection?.Dispose();
             OnActorsUpdate.Dispose();
         }
@@ -134,6 +133,15 @@ namespace Kurisu.Framework
         public static bool IsValid()
         {
             if (_current) return !_current._isDestroyed;
+
+            if (_isInPendingDestroyed)
+            {
+                double currentTime = Time.realtimeSinceStartupAsDouble;
+                if (currentTime - _inPendingDestroyedTimestamp > 0.001f)
+                {
+                    _isInPendingDestroyed = false;
+                }
+            }
             return !_isInPendingDestroyed;
         }
         

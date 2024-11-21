@@ -5,7 +5,9 @@ using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 using UObject = UnityEngine.Object;
 namespace Ceres.Graph
@@ -28,6 +30,7 @@ namespace Ceres.Graph
         /// <param name="graph"></param>
         void SetGraphData(CeresGraphData graph);
     }
+    
     /* Must set serializable to let managed reference work */
     [Serializable]
     public class CeresGraph: IDisposable
@@ -45,9 +48,9 @@ namespace Ceres.Graph
             }
         }
         
-        private readonly HashSet<SharedVariable> internalVariables = new();
+        private readonly HashSet<SharedVariable> _internalVariables = new();
         
-        private static readonly Dictionary<Type, List<FieldInfo>> fieldInfoLookup = new();
+        private static readonly Dictionary<Type, List<FieldInfo>> FieldInfoLookup = new();
         
         [SerializeReference]
         public List<SharedVariable> variables;
@@ -100,7 +103,7 @@ namespace Ceres.Graph
         /// <returns></returns>
         public virtual List<CeresNode> GetAllNodes()
         {
-            return nodes ?? new();
+            return nodes ?? new List<CeresNode>();
         }
         
         /// <summary>
@@ -109,17 +112,17 @@ namespace Ceres.Graph
         /// <param name="graph"></param>
         protected static void InitVariables_Imp(CeresGraph graph)
         {
-            HashSet<SharedVariable> internalVariables = graph.internalVariables;
+            var internalVariables = graph._internalVariables;
             foreach (var behavior in graph.GetAllNodes())
             {
                 var behaviorType = behavior.GetType();
-                if (!fieldInfoLookup.TryGetValue(behaviorType, out var fields))
+                if (!FieldInfoLookup.TryGetValue(behaviorType, out var fields))
                 {
                     fields = behaviorType
                             .GetAllFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                             .Where(x => x.FieldType.IsSubclassOf(typeof(SharedVariable)) || IsIListVariable(x.FieldType))
                             .ToList();
-                    fieldInfoLookup.Add(behaviorType, fields);
+                    FieldInfoLookup.Add(behaviorType, fields);
                 }
                 foreach (var fieldInfo in fields)
                 {
@@ -174,12 +177,12 @@ namespace Ceres.Graph
             {
                 variable.Unbind();
             }
-            foreach (var variable in internalVariables)
+            foreach (var variable in _internalVariables)
             {
                 variable.Unbind();
             }
             variables.Clear();
-            internalVariables.Clear();
+            _internalVariables.Clear();
             foreach (var node in GetAllNodes())
             {
                 node.Dispose();
@@ -259,7 +262,7 @@ namespace Ceres.Graph
                 var edge = edges[n];
                 var behavior = nodes[n];
                 if (nodeData != null && nodeData.Length > n)
-                    behavior.nodeData = nodeData[n];
+                    behavior.NodeData = nodeData[n];
                 for (int i = 0; i < edge.children.Length; i++)
                 {
                     int childIndex = edge.children[i];
@@ -270,11 +273,11 @@ namespace Ceres.Graph
                         var config = APIUpdateConfig.GetConfig();
                         if (config)
                         {
-                            var pair = config.FindPair(nodeData![childIndex].nodeType);
-                            if (pair != null)
+                            var redirectedType = config.Redirect(nodeData![childIndex].nodeType);
+                            if (redirectedType != null)
                             {
-                                Debug.Log($"<color=#3aff48>API Updater</color>: Update node {pair.sourceType.nodeType} to {pair.targetType.nodeType}");
-                                nodes[childIndex] = child = (CeresNode)Deserialize(nodeData[childIndex].serializedData, pair.targetType.Type);
+                                Debug.Log($"<color=#3aff48>API Updater</color>: Redirect node type {nodeData![childIndex].nodeType} to {redirectedType}");
+                                nodes[childIndex] = child = (CeresNode)Deserialize(nodeData[childIndex].serializedData, redirectedType);
                             }
                         }
 #endif
@@ -330,7 +333,7 @@ namespace Ceres.Graph
             string json = JsonUtility.ToJson(data, indented);
 #if UNITY_EDITOR
             JObject obj = JObject.Parse(json);
-            foreach (JProperty prop in obj.Descendants().OfType<JProperty>().ToList())
+            foreach (var prop in obj.Descendants().OfType<JProperty>().ToList())
             {
                 // Remove editor only fields manually
                 if (!serializeEditorData)
@@ -340,23 +343,22 @@ namespace Ceres.Graph
                         prop.Remove();
                     }
                 }
-                if (prop.Name == "instanceID")
+
+                if (prop.Name != "instanceID") continue;
+                string propertyName = prop.Name;
+                if (prop.Parent?.Parent != null) propertyName = (prop.Parent?.Parent as JProperty)?.Name;
+                var uObject = EditorUtility.InstanceIDToObject((int)prop.Value);
+                if (uObject == null) continue;
+                string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(uObject));
+                if (string.IsNullOrEmpty(guid))
                 {
-                    string propertyName = prop.Name;
-                    if (prop.Parent?.Parent != null) propertyName = (prop.Parent?.Parent as JProperty).Name;
-                    var UObject = EditorUtility.InstanceIDToObject((int)prop.Value);
-                    if (UObject == null) continue;
-                    string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(UObject));
-                    if (string.IsNullOrEmpty(guid))
-                    {
-                        // TODO: if reference objects inside prefab, may use its relative path
-                        if (verbose)
-                            Debug.LogWarning($"<color=#fcbe03>Ceres</color>: Can't serialize {propertyName} {UObject} in a Scene.");
-                        continue;
-                    }
-                    //Convert to GUID
-                    prop.Value = guid;
+                    // TODO: if reference objects inside prefab, may use its relative path
+                    if (verbose)
+                        Debug.LogWarning($"<color=#fcbe03>Ceres</color>: Can't serialize {propertyName} {uObject} in a Scene.");
+                    continue;
                 }
+                //Convert to GUID
+                prop.Value = guid;
             }
             return obj.ToString(indented ? Formatting.Indented : Formatting.None);
 #else
@@ -376,18 +378,16 @@ namespace Ceres.Graph
             if (!string.IsNullOrEmpty(serializedData))
             {
                 JObject obj = JObject.Parse(serializedData);
-                foreach (JProperty prop in obj.Descendants().OfType<JProperty>().ToList())
+                foreach (var prop in obj.Descendants().OfType<JProperty>().ToList())
                 {
-                    if (prop.Name == "instanceID")
+                    if (prop.Name != "instanceID") continue;
+                    var uObject = AssetDatabase.LoadAssetAtPath<UObject>(AssetDatabase.GUIDToAssetPath((string)prop.Value));
+                    if (uObject == null)
                     {
-                        var UObject = AssetDatabase.LoadAssetAtPath<UObject>(AssetDatabase.GUIDToAssetPath((string)prop.Value));
-                        if (UObject == null)
-                        {
-                            prop.Value = 0;
-                            continue;
-                        }
-                        prop.Value = UObject.GetInstanceID();
+                        prop.Value = 0;
+                        continue;
                     }
+                    prop.Value = uObject.GetInstanceID();
                 }
                 return JsonUtility.FromJson(obj.ToString(Formatting.Indented), type);
             }

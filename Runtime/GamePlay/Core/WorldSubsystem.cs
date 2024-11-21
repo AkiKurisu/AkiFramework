@@ -8,9 +8,12 @@ namespace Kurisu.Framework
 {
     internal class WorldSubsystemCollection : IDisposable
     {
-        private readonly Dictionary<Type, SubsystemBase> systems = new();
-        private SubsystemBase[] subsystems;
-        private readonly IDisposable actorsUpdateSubscription;
+        private readonly Dictionary<Type, SubsystemBase> _systems;
+        
+        private SubsystemBase[] _subsystems;
+        
+        private readonly IDisposable _actorsUpdateSubscription;
+        
         public WorldSubsystemCollection(GameWorld world)
         {
             var types = AppDomain.CurrentDomain
@@ -20,72 +23,70 @@ namespace Kurisu.Framework
                     .Where(x => x.IsSubclassOf(typeof(WorldSubsystem)) && !x.IsAbstract)
                     .Where(x => x.GetCustomAttribute<InitializeOnWorldCreateAttribute>() != null)
                     .ToList();
-            systems = types.ToDictionary(x => x, x => Activator.CreateInstance(x) as SubsystemBase);
+            _systems = types.ToDictionary(x => x, x => Activator.CreateInstance(x) as SubsystemBase);
             foreach (var type in types)
             {
-                if (!(systems[type] as WorldSubsystem).CanCreate(world)) systems.Remove(type);
-                else systems[type].SetWorld(world);
+                if (!((WorldSubsystem)_systems[type]).CanCreate(world)) _systems.Remove(type);
+                else _systems[type].SetWorld(world);
             }
-            subsystems = systems.Values.ToArray();
-            actorsUpdateSubscription = world.OnActorsUpdate.Subscribe(OnActorsUpdate);
+            _subsystems = _systems.Values.ToArray();
+            _actorsUpdateSubscription = world.OnActorsUpdate.Subscribe(OnActorsUpdate);
         }
         internal void RegisterSubsystem<T>(T subsystem) where T : SubsystemBase
         {
-            systems.Add(typeof(T), subsystem);
+            _systems.Add(typeof(T), subsystem);
             subsystem.InternalInit();
         }
         internal void Rebuild()
         {
-            subsystems = systems.Values.ToArray();
+            _subsystems = _systems.Values.ToArray();
             Init();
         }
         public T GetSubsystem<T>() where T : SubsystemBase
         {
-            if (systems.TryGetValue(typeof(T), out var subsystem))
+            if (_systems.TryGetValue(typeof(T), out var subsystem))
                 return (T)subsystem;
             return null;
         }
         public SubsystemBase GetSubsystem(Type type)
         {
-            if (systems.TryGetValue(type, out var subsystem))
-                return subsystem;
-            return null;
+            return _systems.GetValueOrDefault(type);
         }
         public void Init()
         {
-            for (int i = 0; i < subsystems.Length; ++i)
+            for (int i = 0; i < _subsystems.Length; ++i)
             {
-                subsystems[i].InternalInit();
+                _subsystems[i].InternalInit();
             }
         }
         public void Tick()
         {
-            for (int i = 0; i < subsystems.Length; ++i)
+            for (int i = 0; i < _subsystems.Length; ++i)
             {
-                subsystems[i].Tick();
+                _subsystems[i].Tick();
             }
         }
         public void FixedTick()
         {
-            for (int i = 0; i < subsystems.Length; ++i)
+            for (int i = 0; i < _subsystems.Length; ++i)
             {
-                subsystems[i].FixedTick();
+                _subsystems[i].FixedTick();
             }
         }
         public void Dispose()
         {
-            for (int i = 0; i < subsystems.Length; ++i)
+            for (int i = 0; i < _subsystems.Length; ++i)
             {
-                subsystems[i].InternalRelease();
+                _subsystems[i].InternalRelease();
             }
-            subsystems = null;
-            actorsUpdateSubscription.Dispose();
+            _subsystems = null;
+            _actorsUpdateSubscription.Dispose();
         }
         private void OnActorsUpdate(Unit _)
         {
-            for (int i = 0; i < subsystems.Length; ++i)
+            for (int i = 0; i < _subsystems.Length; ++i)
             {
-                subsystems[i].IsActorsDirty = true;
+                _subsystems[i].IsActorsDirty = true;
             }
         }
     }
@@ -110,7 +111,7 @@ namespace Kurisu.Framework
         /// <value></value>
         protected bool IsDestroyed { get; private set; }
 
-        private GameWorld world;
+        private GameWorld _world;
 
         /// <summary>
         /// Subsystem initialize phase, should bind callbacks and collect references in this phase
@@ -148,21 +149,21 @@ namespace Kurisu.Framework
         internal virtual void InternalRelease()
         {
             if (IsDestroyed) return;
-            world = null;
+            _world = null;
             IsDestroyed = true;
             Release();
         }
 
         internal void SetWorld(GameWorld world)
         {
-            this.world = world;
+            this._world = world;
         }
 
         /// <summary>
         /// Get attached world
         /// </summary>
         /// <returns></returns>
-        public GameWorld GetWorld() => world;
+        public GameWorld GetWorld() => _world;
 
         /// <summary>
         /// Get all actors in world, readonly
@@ -170,12 +171,12 @@ namespace Kurisu.Framework
         /// <returns></returns>
         protected void GetActorsInWorld(List<Actor> actors)
         {
-            if (!world)
+            if (!_world)
             {
                 Debug.LogWarning("[World Subsystem] System not bound to an actor world.");
                 return;
             }
-            foreach (var actor in world.ActorsInWorld)
+            foreach (var actor in _world.ActorsInWorld)
             {
                 actors.Add(actor);
             }
@@ -187,12 +188,12 @@ namespace Kurisu.Framework
         /// <returns></returns>
         protected int GetActorsNum()
         {
-            if (!world)
+            if (!_world)
             {
                 Debug.LogWarning("[World Subsystem] System not bound to an actor world.");
                 return default;
             }
-            return world.ActorsInWorld.Count;
+            return _world.ActorsInWorld.Count;
         }
     }
     /// <summary>

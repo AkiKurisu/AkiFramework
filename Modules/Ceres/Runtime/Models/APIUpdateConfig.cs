@@ -2,55 +2,65 @@ using System;
 using System.Linq;
 using Ceres.Graph;
 using UnityEngine;
+using UnityEngine.Serialization;
 namespace Ceres
 {
     [CreateAssetMenu(fileName = "APIUpdateConfig", menuName = "Ceres/APIUpdateConfig")]
     public class APIUpdateConfig : ScriptableObject
     {
         [Serializable]
-        public class SerializeType
+        public class SerializeNodeType
         {
-            private Type type;
-            public Type Type => type ??= ToType();
+            private Type _type;
+            
+            public Type Type => _type ??= ToType();
+            
             public string nodeType;
+            
             private Type ToType()
             {
                 var tokens = nodeType.Split(' ');
                 return new CeresNodeData.NodeType(tokens[0], tokens[1], tokens[2]).ToType();
             }
+            
             public string GetFullTypeName()
             {
                 return $"{Type.Assembly.GetName().Name} {Type.FullName}";
             }
-            public SerializeType() { }
-            public SerializeType(Type type)
+            
+            public SerializeNodeType() { }
+            
+            public SerializeNodeType(Type type)
             {
                 CeresNodeData.NodeType node = new(type);
                 nodeType = $"{node._class} {node._ns} {node._asm}";
             }
-            public SerializeType(CeresNodeData.NodeType nodeType)
+            
+            public SerializeNodeType(CeresNodeData.NodeType nodeType)
             {
                 this.nodeType = $"{nodeType._class} {nodeType._ns} {nodeType._asm}";
             }
         }
         [Serializable]
-        public class Pair
+        public class SerializeNodeTypeRedirector
         {
-            public SerializeType sourceType;
-            public SerializeType targetType;
-            public Pair() { }
-            public Pair(Type sourceType, Type targetType)
+            public SerializeNodeType sourceNodeType;
+            
+            public SerializeNodeType targetNodeType;
+            public SerializeNodeTypeRedirector() { }
+            public SerializeNodeTypeRedirector(Type sourceType, Type targetType)
             {
-                this.sourceType = new SerializeType(sourceType);
-                this.targetType = new SerializeType(targetType);
+                sourceNodeType = new SerializeNodeType(sourceType);
+                targetNodeType = new SerializeNodeType(targetType);
             }
         }
-        [field: SerializeField]
-        public Pair[] Pairs { get; set; }
-        public Pair FindPair(CeresNodeData.NodeType nodeType)
+        
+        public SerializeNodeTypeRedirector[] m_Redirectors;
+        public Type Redirect(CeresNodeData.NodeType nodeType)
         {
-            var serializeType = new SerializeType(nodeType);
-            return Pairs.FirstOrDefault(x => x.sourceType.nodeType == serializeType.nodeType);
+            var serializeType = new SerializeNodeType(nodeType);
+            var redirector = m_Redirectors.FirstOrDefault(x => x.sourceNodeType.nodeType == serializeType.nodeType);
+            return redirector?.targetNodeType.Type;
         }
 #if UNITY_EDITOR
         public static APIUpdateConfig GetConfig()

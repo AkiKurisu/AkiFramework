@@ -1,5 +1,5 @@
 using UnityEngine.UIElements;
-namespace Ceres
+namespace Ceres.Editor
 {
     public enum VariableChangeType
     {
@@ -10,8 +10,8 @@ namespace Ceres
     }
     public class VariableChangeEvent : EventBase<VariableChangeEvent>
     {
-        public SharedVariable Variable { get; protected set; }
-        public VariableChangeType ChangeType { get; protected set; }
+        public SharedVariable Variable { get; private set; }
+        public VariableChangeType ChangeType { get; private set; }
         public static VariableChangeEvent GetPooled(SharedVariable notifyVariable, VariableChangeType changeType)
         {
             VariableChangeEvent changeEvent = GetPooled();

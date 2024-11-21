@@ -9,26 +9,34 @@ namespace Kurisu.Framework
     [InitializeOnWorldCreate]
     public class ContainerSubsystem : WorldSubsystem
     {
-        private readonly IOCContainer container = new();
-        private readonly Dictionary<Type, Action<object>> typeCallBackMap = new();
-        /// <summary>
-        /// Register a callBack when target type instance is registered
-        /// </summary>
-        /// <param name="callBack"></param>
-        /// <typeparam name="T"></typeparam>
-        public void RegisterCallBack<T>(Action<T> callBack)
+        private readonly IOCContainer _container = new();
+        
+        private readonly Dictionary<Type, Action<object>> _typeCallbackMap = new();
+
+        public static ContainerSubsystem Get()
         {
-            Assert.IsNotNull(callBack, "[ContainerSubsystem] Instance callback is null, which is not expected.");
+            return WorldSubsystem.Get<ContainerSubsystem>();
+        }
+        
+        /// <summary>
+        /// Register a callback when target type instance is registered
+        /// </summary>
+        /// <param name="callback"></param>
+        /// <typeparam name="T"></typeparam>
+        public void RegisterCallback<T>(Action<T> callback)
+        {
+            Assert.IsNotNull(callback, "[ContainerSubsystem] Instance callback is null, which is not expected.");
             var type = typeof(T);
-            if (!typeCallBackMap.ContainsKey(type))
+            if (!_typeCallbackMap.ContainsKey(type))
             {
-                typeCallBackMap[type] = (obj) => callBack((T)obj);
+                _typeCallbackMap[type] = (obj) => callback((T)obj);
             }
             else
             {
-                typeCallBackMap[type] += (obj) => callBack((T)obj);
+                _typeCallbackMap[type] += (obj) => callback((T)obj);
             }
         }
+        
         /// <summary>
         /// Register target type instance
         /// </summary>
@@ -36,25 +44,37 @@ namespace Kurisu.Framework
         /// <typeparam name="T"></typeparam>
         public void Register<T>(T instance)
         {
-            container.Register(instance);
+            _container.Register(instance);
             var type = typeof(T);
-            if (typeCallBackMap.TryGetValue(type, out Action<object> callBack))
+            if (_typeCallbackMap.TryGetValue(type, out Action<object> callBack))
             {
                 callBack?.Invoke(instance);
             }
         }
+        
+        /// <summary>
+        /// Unregister target type instance
+        /// </summary>
+        /// <param name="instance"></param>
+        /// <typeparam name="T"></typeparam>
+        public void Unregister<T>(T instance)
+        {
+            _container.Unregister(instance);
+        }
+        
         /// <summary>
         /// Get target type instance
         /// </summary>
         /// <typeparam name="T"></typeparam>
         public T Resolve<T>() where T : class
         {
-            return container.Resolve<T>();
+            return _container.Resolve<T>();
         }
+        
         protected override void Release()
         {
-            container.Clear();
-            typeCallBackMap.Clear();
+            _container.Clear();
+            _typeCallbackMap.Clear();
         }
     }
 }

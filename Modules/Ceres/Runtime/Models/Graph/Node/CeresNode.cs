@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-using Ceres.Annotations;
 using UnityEngine;
 using UnityEngine.Pool;
 namespace Ceres.Graph
@@ -13,13 +12,12 @@ namespace Ceres.Graph
     [Serializable]
     public class CeresNode: IEnumerable<CeresNode>, IDisposable
     {
-        [HideInEditorWindow, NonSerialized]
-        public CeresNodeData nodeData = new();
+        public CeresNodeData NodeData { get; internal set; }= new();
 
-        public string GUID 
+        public string Guid 
         { 
-            get => nodeData.guid; 
-            set => nodeData.guid = value; 
+            get => NodeData.guid; 
+            set => NodeData.guid = value; 
         }
         
         /// <summary>
@@ -82,23 +80,26 @@ namespace Ceres.Graph
         public virtual CeresNodeData GetSerializedData()
         {
             /* Allows polymorphic serialization */
-            var data = nodeData.Clone();
+            var data = NodeData.Clone();
             data.Serialize(this);
             return data;
         }
         
         protected struct Enumerator : IEnumerator<CeresNode>
         {
-            private readonly Stack<CeresNode> stack;
-            private static readonly ObjectPool<Stack<CeresNode>> pool = new(() => new(), null, s => s.Clear());
-            private CeresNode currentNode;
+            private readonly Stack<CeresNode> _stack;
+            
+            private static readonly ObjectPool<Stack<CeresNode>> Pool = new(() => new(), null, s => s.Clear());
+            
+            private CeresNode _currentNode;
+            
             public Enumerator(CeresNode root)
             {
-                stack = pool.Get();
-                currentNode = null;
+                _stack = Pool.Get();
+                _currentNode = null;
                 if (root != null)
                 {
-                    stack.Push(root);
+                    _stack.Push(root);
                 }
             }
 
@@ -106,11 +107,11 @@ namespace Ceres.Graph
             {
                 get
                 {
-                    if (currentNode == null)
+                    if (_currentNode == null)
                     {
                         throw new InvalidOperationException();
                     }
-                    return currentNode;
+                    return _currentNode;
                 }
             }
 
@@ -118,32 +119,32 @@ namespace Ceres.Graph
 
             public void Dispose()
             {
-                pool.Release(stack);
-                currentNode = null;
+                Pool.Release(_stack);
+                _currentNode = null;
             }
             public bool MoveNext()
             {
-                if (stack.Count == 0)
+                if (_stack.Count == 0)
                 {
                     return false;
                 }
 
-                currentNode = stack.Pop();
-                int childrenCount = currentNode.GetChildrenCount();
+                _currentNode = _stack.Pop();
+                int childrenCount = _currentNode.GetChildrenCount();
                 for (int i = childrenCount - 1; i >= 0; i--)
                 {
-                    stack.Push(currentNode.GetChildAt(i));
+                    _stack.Push(_currentNode.GetChildAt(i));
                 }
                 return true;
             }
             public void Reset()
             {
-                stack.Clear();
-                if (currentNode != null)
+                _stack.Clear();
+                if (_currentNode != null)
                 {
-                    stack.Push(currentNode);
+                    _stack.Push(_currentNode);
                 }
-                currentNode = null;
+                _currentNode = null;
             }
         }
 
@@ -169,17 +170,20 @@ namespace Ceres.Graph
         [Serializable]
         public struct NodeType
         {
+            // ReSharper disable once InconsistentNaming
             public string _class;
 
+            // ReSharper disable once InconsistentNaming
             public string _ns;
             
+            // ReSharper disable once InconsistentNaming
             public string _asm;
             
-            public NodeType(string _class, string _ns, string _asm)
+            public NodeType(string inClass, string inNamespace, string inAssembly)
             {
-                this._class = _class;
-                this._ns = _ns;
-                this._asm = _asm;
+                _class = inClass;
+                _ns = inNamespace;
+                _asm = inAssembly;
             }
             
             public NodeType(Type type)

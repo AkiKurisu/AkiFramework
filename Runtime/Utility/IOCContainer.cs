@@ -27,7 +27,7 @@ namespace Kurisu.Framework
         /// </summary>
         /// <param name="instance"></param>
         /// <typeparam name="T"></typeparam>
-        public void UnRegister<T>(T instance)
+        public void Unregister<T>(T instance)
         {
             var type = typeof(T);
             if (instances.ContainsKey(type) && instances[type].Equals(instance))
