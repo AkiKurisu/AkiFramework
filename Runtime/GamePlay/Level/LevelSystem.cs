@@ -16,9 +16,10 @@ namespace Kurisu.Framework.Level
         public LevelSceneRow[] Scenes;
     }
 
-    public class LevelSceneDataTableManager : DataTableManager<LevelSceneDataTableManager>
+    public sealed class LevelSceneDataTableManager : DataTableManager<LevelSceneDataTableManager>
     {
         public const string TableKey = "LevelSceneDataTable";
+        
         public LevelSceneDataTableManager(object _) : base(_)
         {
         }
@@ -47,11 +48,12 @@ namespace Kurisu.Framework.Level
 
             }
         }
-        private LevelReference[] references;
+        
+        private LevelReference[] _references;
         
         public LevelReference[] GetLevelReferences()
         {
-            if (references != null) return references;
+            if (_references != null) return _references;
             
             var dict = new Dictionary<string, List<LevelSceneRow>>();
             foreach (var scene in DataTables.SelectMany(x=>x.Value.GetAllRows<LevelSceneRow>()))
@@ -65,7 +67,7 @@ namespace Kurisu.Framework.Level
                 }
                 cache.Add(scene);
             }
-            return references = dict.Select(x => new LevelReference()
+            return _references = dict.Select(x => new LevelReference()
             {
                 Scenes = x.Value.ToArray()
             }).ToArray();
@@ -74,8 +76,11 @@ namespace Kurisu.Framework.Level
     public static class LevelSystem
     {
         public static LevelReference EmptyLevel = new() { Scenes = Array.Empty<LevelSceneRow>() };
+        
         public static LevelReference LastLevel { get; private set; } = EmptyLevel;
+        
         public static LevelReference CurrentLevel { get; private set; } = EmptyLevel;
+        
         
         private static SceneInstance _mainScene;
 
@@ -105,7 +110,10 @@ namespace Kurisu.Framework.Level
             }
             else
             {
-                _mainScene = await Addressables.LoadSceneAsync(singleScene.reference.Address).Task;
+                _mainScene = await Addressables.LoadSceneAsync(singleScene.reference.Address, LoadSceneMode.Single, false).ToUniTask();
+                /* Since Unity destroy and awake MonoBehaviour in same frame, need notify world still valid in this frame */
+                GameWorld.Pin();
+                await _mainScene.ActivateAsync().ToUniTask();
             }
             // Parallel for the others
             using var parallel = UniParallel.Get();

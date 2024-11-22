@@ -77,9 +77,11 @@ namespace Kurisu.Framework
         
         private static GameWorld _current;
 
+        private static bool _isPinned;
+
         private static bool _isInPendingDestroyed;
 
-        private static double _inPendingDestroyedTimestamp;
+        private static int _inPendingDestroyedFrame;
         
         private bool _isSystemDirty;
         
@@ -120,10 +122,25 @@ namespace Kurisu.Framework
         private void OnDestroy()
         {
             _isDestroyed = true;
-            _isInPendingDestroyed = true;
-            _inPendingDestroyedTimestamp = Time.realtimeSinceStartupAsDouble;
+            if (_isPinned)
+            {
+                _isPinned = false;
+            }
+            else
+            {
+                _isInPendingDestroyed = true;
+                _inPendingDestroyedFrame = Time.frameCount;
+            }
             _subsystemCollection?.Dispose();
             OnActorsUpdate.Dispose();
+        }
+
+        /// <summary>
+        /// Make world valid in next frame
+        /// </summary>
+        internal static void Pin()
+        {
+            _isPinned = true;
         }
 
         /// <summary>
@@ -136,8 +153,7 @@ namespace Kurisu.Framework
 
             if (_isInPendingDestroyed)
             {
-                double currentTime = Time.realtimeSinceStartupAsDouble;
-                if (currentTime - _inPendingDestroyedTimestamp > 0.001f)
+                if (Time.frameCount > _inPendingDestroyedFrame)
                 {
                     _isInPendingDestroyed = false;
                 }

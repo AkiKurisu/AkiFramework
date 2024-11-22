@@ -1,9 +1,8 @@
 using System;
 using Kurisu.Framework.DataDriven;
-using Kurisu.Framework.Level;
 using Kurisu.Framework.Resource;
 using UnityEngine;
-namespace Kurisu.Framework
+namespace Kurisu.Framework.Level
 {
     [Serializable, AddressableDataTable(address:LevelSceneDataTableManager.TableKey)]
     public class LevelSceneRow : IDataTableRow
