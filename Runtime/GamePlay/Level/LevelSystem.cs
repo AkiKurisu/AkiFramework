@@ -110,10 +110,9 @@ namespace Kurisu.Framework.Level
             }
             else
             {
-                _mainScene = await Addressables.LoadSceneAsync(singleScene.reference.Address, LoadSceneMode.Single, false).ToUniTask();
                 /* Since Unity destroy and awake MonoBehaviour in same frame, need notify world still valid in this frame */
                 GameWorld.Pin();
-                await _mainScene.ActivateAsync().ToUniTask();
+                _mainScene = await Addressables.LoadSceneAsync(singleScene.reference.Address).ToUniTask();
             }
             // Parallel for the others
             using var parallel = UniParallel.Get();
