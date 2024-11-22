@@ -1,66 +1,131 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
+using Kurisu.Framework.DataDriven;
+using Kurisu.Framework.Resource;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.ResourceProviders;
+using UnityEngine.SceneManagement;
 namespace Kurisu.Framework.Level
 {
     public class LevelReference
     {
-        public string Name => Scenes.Length > 0 ? Scenes[0].LevelName : string.Empty;
-        public AddressableScene[] Scenes;
+        public string Name => Scenes.Length > 0 ? Scenes[0].levelName : string.Empty;
+        
+        public LevelSceneRow[] Scenes;
+    }
+
+    public class LevelSceneDataTableManager : DataTableManager<LevelSceneDataTableManager>
+    {
+        public const string TableKey = "LevelSceneDataTable";
+        public LevelSceneDataTableManager(object _) : base(_)
+        {
+        }
+
+        protected override async UniTask Initialize(bool sync)
+        {
+            try
+            {
+                if (sync)
+                {
+                    ResourceSystem.CheckAsset<DataTable>(TableKey);
+                    ResourceSystem.LoadAssetAsync<DataTable>(TableKey, (x) =>
+                    {
+                        RegisterDataTable(TableKey, x);
+                    }).WaitForCompletion();
+                    return;
+                }
+                await ResourceSystem.CheckAssetAsync<DataTable>(TableKey);
+                await ResourceSystem.LoadAssetAsync<DataTable>(TableKey, (x) =>
+                {
+                    RegisterDataTable(TableKey, x);
+                });
+            }
+            catch (InvalidResourceRequestException)
+            {
+
+            }
+        }
+        private LevelReference[] references;
+        
+        public LevelReference[] GetLevelReferences()
+        {
+            if (references != null) return references;
+            
+            var dict = new Dictionary<string, List<LevelSceneRow>>();
+            foreach (var scene in DataTables.SelectMany(x=>x.Value.GetAllRows<LevelSceneRow>()))
+            {
+                // Whether it can load in current platform
+                if (!scene.ValidateLoadPolicy()) continue;
+
+                if (!dict.TryGetValue(scene.levelName, out var cache))
+                {
+                    cache = dict[scene.levelName] = new List<LevelSceneRow>();
+                }
+                cache.Add(scene);
+            }
+            return references = dict.Select(x => new LevelReference()
+            {
+                Scenes = x.Value.ToArray()
+            }).ToArray();
+        }
     }
     public static class LevelSystem
     {
-        internal static HashSet<LevelConfig> managedConfigs = new();
-        public static LevelReference EmptyLevel = new() { Scenes = new AddressableScene[0] };
+        public static LevelReference EmptyLevel = new() { Scenes = Array.Empty<LevelSceneRow>() };
         public static LevelReference LastLevel { get; private set; } = EmptyLevel;
         public static LevelReference CurrentLevel { get; private set; } = EmptyLevel;
-        private static SceneInstance mainScene;
+        
+        private static SceneInstance _mainScene;
+
+        public async static UniTask LoadAsync(string levelName)
+        {
+            var reference = FindLevel(levelName);
+            if (reference != null)
+            {
+                await LoadAsync(reference);
+            }
+        }
+
         public async static UniTask LoadAsync(LevelReference reference)
         {
             LastLevel = CurrentLevel;
             CurrentLevel = reference;
             // First check has single load scene
-            var singleScene = reference.Scenes.FirstOrDefault(x => x.LoadMode == LoadLevelMode.Single);
-            bool hasDynamicScene = reference.Scenes.Any(x => x.LoadMode == LoadLevelMode.Dynamic);
+            var singleScene = reference.Scenes.FirstOrDefault(x => x.loadMode == LoadLevelMode.Single);
+            bool hasDynamicScene = reference.Scenes.Any(x => x.loadMode == LoadLevelMode.Dynamic);
             if (singleScene == null)
             {
                 // Unload current main scene if have no dynamic scene
-                if (!hasDynamicScene && !mainScene.Equals(default))
+                if (!hasDynamicScene && !_mainScene.Equals(default))
                 {
-                    await Addressables.UnloadSceneAsync(mainScene).Task;
+                    await Addressables.UnloadSceneAsync(_mainScene).Task;
                 }
             }
             else
             {
-                mainScene = await Addressables.LoadSceneAsync(singleScene.Reference.Address, UnityEngine.SceneManagement.LoadSceneMode.Single).Task;
+                _mainScene = await Addressables.LoadSceneAsync(singleScene.reference.Address).Task;
             }
             // Parallel for the others
             using var parallel = UniParallel.Get();
             foreach (var scene in reference.Scenes)
             {
-                if (scene.LoadMode >= LoadLevelMode.Additive)
+                if (scene.loadMode >= LoadLevelMode.Additive)
                 {
-                    parallel.Add(Addressables.LoadSceneAsync(scene.Reference.Address, UnityEngine.SceneManagement.LoadSceneMode.Additive).Task.AsUniTask());
+                    parallel.Add(Addressables.LoadSceneAsync(scene.reference.Address, LoadSceneMode.Additive).Task.AsUniTask());
                 }
             }
             await parallel;
         }
-        internal static void RegisterConfig(LevelConfig config)
-        {
-            managedConfigs.Add(config);
-        }
+
         public static LevelReference FindLevel(string levelName)
         {
-            foreach (var config in managedConfigs)
+            foreach (var level in LevelSceneDataTableManager.Get().GetLevelReferences())
             {
-                foreach (var level in config.GetLevelReferences())
+                if (level.Name == levelName)
                 {
-                    if (level.Name == levelName)
-                    {
-                        return level;
-                    }
+                    return level;
                 }
             }
             return EmptyLevel;

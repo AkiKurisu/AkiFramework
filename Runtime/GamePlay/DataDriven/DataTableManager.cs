@@ -23,7 +23,7 @@ namespace Kurisu.Framework.DataDriven
             foreach (var type in managerTypes)
             {
                 var manager = Activator.CreateInstance(type, args) as DataTableManager;
-                manager.Initialize(true).Forget();
+                manager!.Initialize(true).Forget();
             }
         }
         /// <summary>
@@ -44,24 +44,25 @@ namespace Kurisu.Framework.DataDriven
             foreach (var type in managerTypes)
             {
                 var manager = Activator.CreateInstance(type, args) as DataTableManager;
-                parallel.Add(manager.Initialize(false));
+                parallel.Add(manager!.Initialize(false));
             }
             await parallel;
         }
 
-        private readonly Dictionary<string, DataTable> dataTables = new();
+        protected readonly Dictionary<string, DataTable> DataTables = new();
 
         protected void RegisterDataTable(string name, DataTable dataTable)
         {
-            dataTables[name] = dataTable;
+            DataTables[name] = dataTable;
         }
         protected void RegisterDataTable(DataTable dataTable)
         {
-            dataTables[dataTable.name] = dataTable;
+            DataTables[dataTable.name] = dataTable;
         }
+        
         public DataTable GetDataTable(string name)
         {
-            if (dataTables.TryGetValue(name, out var table))
+            if (DataTables.TryGetValue(name, out var table))
             {
                 return table;
             }

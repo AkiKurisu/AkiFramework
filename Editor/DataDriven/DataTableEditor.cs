@@ -1,9 +1,11 @@
 using System.IO;
+using System.Reflection;
 using UnityEngine;
 using UnityEditor;
 using Kurisu.Framework.Serialization;
 using UEditor = UnityEditor.Editor;
 using Kurisu.Framework.Editor;
+using Kurisu.Framework.Resource.Editor;
 namespace Kurisu.Framework.DataDriven.Editor
 {
     public delegate void DrawToolBarDelegate(DataTableEditor tableEditor);
@@ -13,12 +15,15 @@ namespace Kurisu.Framework.DataDriven.Editor
     public class DataTableEditor : UEditor
     {
         public DataTable Table => target as DataTable;
-        private DataTableRowView dataTableRowView;
+        
+        private DataTableRowView _dataTableRowView;
+        
         public DataTableRowView GetDataTableRowView()
         {
-            dataTableRowView ??= CreateDataTableRowView(Table);
-            return dataTableRowView;
+            _dataTableRowView ??= CreateDataTableRowView(Table);
+            return _dataTableRowView;
         }
+        
         /// <summary>
         /// Implement to use customized <see cref="DataTableRowView"/>  
         /// </summary>
@@ -33,6 +38,7 @@ namespace Kurisu.Framework.DataDriven.Editor
             }
             return rowView;
         }
+        
         public override void OnInspectorGUI()
         {
             DrawDefaultTitle();
@@ -40,6 +46,7 @@ namespace Kurisu.Framework.DataDriven.Editor
             GUILayout.Space(10);
             DrawRowView();
         }
+        
         protected void DrawDefaultTitle()
         {
             GUILayout.Label("DataTable", new GUIStyle(GUI.skin.label)
@@ -48,9 +55,10 @@ namespace Kurisu.Framework.DataDriven.Editor
                 alignment = TextAnchor.MiddleCenter
             });
         }
+        
         protected virtual void DrawRowView()
         {
-            dataTableRowView = GetDataTableRowView();
+            _dataTableRowView = GetDataTableRowView();
             var typeProp = serializedObject.FindProperty("m_rowType");
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(typeProp, new GUIContent("Row Type", "Set DataTable Row Type"));
@@ -60,8 +68,9 @@ namespace Kurisu.Framework.DataDriven.Editor
                 RequestDataTableUpdate();
             }
             GUILayout.Space(5);
-            dataTableRowView.DrawGUI(serializedObject);
+            _dataTableRowView.DrawGUI(serializedObject);
         }
+        
         #region Cleanup
 
         // DataTableEditor use global object manager to cache wrapper.
@@ -80,9 +89,11 @@ namespace Kurisu.Framework.DataDriven.Editor
             GlobalObjectManager.Cleanup();
             Undo.undoRedoEvent -= OnUndo;
             Table.Cleanup();
+            DataTableEditorUtils.RegisterTableToAssetGroup(Table);
         }
 
         #endregion
+        
         /// <summary>
         /// Draw editor toolbar
         /// </summary>
@@ -120,6 +131,7 @@ namespace Kurisu.Framework.DataDriven.Editor
             DataTableEditorUtils.OnDrawRightTooBar?.Invoke(this);
             GUILayout.EndHorizontal();
         }
+        
         /// <summary>
         /// Request change DataTable in editor
         /// </summary>
@@ -129,15 +141,17 @@ namespace Kurisu.Framework.DataDriven.Editor
             RebuildEditorView();
             DataTableEditorUtils.OnDataTablePostUpdate?.Invoke(Table);
         }
+        
         /// <summary>
         /// Rebuild editor gui view, called on DataTable changed
         /// </summary>
         protected virtual void RebuildEditorView()
         {
-            dataTableRowView?.Rebuild();
+            _dataTableRowView?.Rebuild();
             serializedObject.Update();
         }
-        private void OnUndo(in UndoRedoInfo undo)
+        
+        protected virtual void OnUndo(in UndoRedoInfo undo)
         {
             // Manually fresh row view after undo
             RebuildEditorView();
