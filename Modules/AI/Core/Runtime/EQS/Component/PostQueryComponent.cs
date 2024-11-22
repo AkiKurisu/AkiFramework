@@ -64,7 +64,7 @@ namespace Kurisu.Framework.AI.EQS
         /// <returns></returns>
         public ReadOnlySpan<float3> GetPosts()
         {
-            return system.GetPosts(GetActor().GetActorHandle());
+            return system.GetPosts(GetActor().GetActorHandle()).AsReadOnlySpan();
         }
     }
 }

@@ -58,23 +58,21 @@ namespace Kurisu.Framework.AI.EQS
         /// </summary>
         private class PostQueryWorker
         {
-            private enum WorkerStatus
-            {
-                FREE, PENDING, RUNNING
-            }
-            private NativeList<float3> posts;
-            private NativeArray<RaycastHit> hits;
-            private NativeArray<RaycastCommand> raycastCommands;
-            private JobHandle jobHandle;
+            private NativeList<float3> _posts = new(Allocator.Persistent);
+            
+            private NativeArray<RaycastHit> _hits;
+            
+            private NativeArray<RaycastCommand> _raycastCommands;
+            
+            private JobHandle _jobHandle;
+            
             public bool IsRunning { get; private set; }
+            
             public bool HasPendingCommand { get; private set; }
-            public PostQueryWorker()
+
+            public NativeArray<float3>.ReadOnly GetPosts()
             {
-                posts = new(Allocator.Persistent);
-            }
-            public ReadOnlySpan<float3> GetPosts()
-            {
-                return posts.AsReadOnly();
+                return _posts.AsReadOnly();
             }
             public void SetPending()
             {
@@ -85,72 +83,84 @@ namespace Kurisu.Framework.AI.EQS
                 HasPendingCommand = false;
                 IsRunning = true;
                 int length = command.parameters.Step * command.parameters.Depth;
-                raycastCommands.DisposeSafe();
-                raycastCommands = new(length, Allocator.TempJob);
-                hits.DisposeSafe();
-                hits = new(length, Allocator.TempJob);
+                _raycastCommands.DisposeSafe();
+                _raycastCommands = new(length, Allocator.TempJob);
+                _hits.DisposeSafe();
+                _hits = new(length, Allocator.TempJob);
                 var job = new PrepareCommandJob()
                 {
                     command = command,
-                    raycastCommands = raycastCommands,
+                    raycastCommands = _raycastCommands,
                     length = length,
                     source = actorDatas[command.self.GetIndex()],
                     target = actorDatas[command.target.GetIndex()]
                 };
-                jobHandle = job.Schedule(length, 32, default);
-                jobHandle = RaycastCommand.ScheduleBatch(raycastCommands, hits, raycastCommands.Length, jobHandle);
+                _jobHandle = job.Schedule(length, 32, default);
+                _jobHandle = RaycastCommand.ScheduleBatch(_raycastCommands, _hits, _raycastCommands.Length, _jobHandle);
             }
             public void CompleteCommand()
             {
                 IsRunning = false;
-                jobHandle.Complete();
-                posts.Clear();
+                _jobHandle.Complete();
+                _posts.Clear();
                 bool hasHit = false;
-                foreach (var hit in hits)
+                foreach (var hit in _hits)
                 {
                     bool isHit = hit.point != default;
                     if (!hasHit && isHit)
                     {
-                        posts.Add(hit.point);
+                        _posts.Add(hit.point);
                     }
                     hasHit = isHit;
                 }
-                raycastCommands.Dispose();
-                hits.Dispose();
+                _raycastCommands.Dispose();
+                _hits.Dispose();
             }
             public void Dispose()
             {
-                posts.Dispose();
-                hits.DisposeSafe();
-                raycastCommands.DisposeSafe();
+                _posts.Dispose();
+                _hits.DisposeSafe();
+                _raycastCommands.DisposeSafe();
             }
         }
         private readonly Queue<PostQueryCommand> commandBuffer = new();
+        
         private SchedulerHandle updateTickHandle;
+        
         private SchedulerHandle lateUpdateTickHandle;
+        
         private NativeArray<ActorHandle> batchHandles;
+        
         private int batchLength;
+        
         private readonly Dictionary<ActorHandle, PostQueryWorker> workerDic = new();
+        
         /// <summary>
         /// Set system parallel workers count
         /// </summary>
         /// <value></value>
         public static int MaxWorkerCount { get; set; } = DefaultWorkerCount;
+        
         /// <summary>
         /// Default parallel workers count: 5
         /// </summary>
         public const int DefaultWorkerCount = 5;
+        
         /// <summary>
         /// Set sysytem tick frame
         /// </summary>
         /// <value></value>
         public static int FramePerTick { get; set; } = DefaultFramePerTick;
+        
         /// <summary>
         /// Default tick frame: 2 fps
         /// </summary>
         public const int DefaultFramePerTick = 25;
+        
         private static readonly ProfilerMarker ConsumeCommandsPM = new("PostQuerySystem.ConsumeCommands");
+        
         private static readonly ProfilerMarker CompleteCommandsPM = new("PostQuerySystem.CompleteCommands");
+        
         protected override void Initialize()
         {
             Assert.IsFalse(FramePerTick <= 3);
@@ -229,7 +239,7 @@ namespace Kurisu.Framework.AI.EQS
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public ReadOnlySpan<float3> GetPosts(ActorHandle handle)
+        public NativeArray<float3>.ReadOnly GetPosts(ActorHandle handle)
         {
             if (workerDic.TryGetValue(handle, out var worker))
                 return worker.GetPosts();
