@@ -1,14 +1,19 @@
 using System.IO;
-using System.Reflection;
 using UnityEngine;
 using UnityEditor;
 using Kurisu.Framework.Serialization;
 using UEditor = UnityEditor.Editor;
 using Kurisu.Framework.Editor;
-using Kurisu.Framework.Resource.Editor;
 namespace Kurisu.Framework.DataDriven.Editor
 {
+    /// <summary>
+    /// Delegate for draw editor toolbar
+    /// </summary>
     public delegate void DrawToolBarDelegate(DataTableEditor tableEditor);
+    
+    /// <summary>
+    /// Delegate for observe DataTable update in editor
+    /// </summary>
     public delegate void DataTableUpdateDelegate(DataTable tableEditor);
 
     [CustomEditor(typeof(DataTable))]
@@ -89,6 +94,10 @@ namespace Kurisu.Framework.DataDriven.Editor
             GlobalObjectManager.Cleanup();
             Undo.undoRedoEvent -= OnUndo;
             Table.Cleanup();
+            /* Trigger save assets to force cleanup editor cache */
+            EditorUtility.SetDirty(Table);
+            AssetDatabase.SaveAssetIfDirty(Table);
+            /* Auto register table if it has AddressableDataTableAttribute */
             DataTableEditorUtils.RegisterTableToAssetGroup(Table);
         }
 
