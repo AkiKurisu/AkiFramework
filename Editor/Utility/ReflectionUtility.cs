@@ -4,7 +4,7 @@ using System.Reflection;
 using UnityEditor;
 namespace Kurisu.Framework.Editor
 {
-    public class ReflectionUtility
+    public static class ReflectionEditorUtility
     {
         //Duplicate from NaughtyAttributes by Denis Rizov see "https://github.com/dbrizov"
         public static object GetTargetObjectWithProperty(SerializedProperty property)

@@ -108,12 +108,12 @@ namespace Kurisu.Framework.Resource.Editor
                 }
                 else
                 {
-                    object target = ReflectionUtility.GetTargetObjectWithProperty(property);
-                    var method = target.GetType()
-                                        .GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-                                        .Where(m => m.GetParameters().Length == 1)
-                                        .Where(x => x.Name == processMethod)
-                                        .FirstOrDefault();
+                    var target = ReflectionEditorUtility.GetTargetObjectWithProperty(property);
+                    var method = target
+                        .GetType()
+                        .GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
+                        .Where(m => m.GetParameters().Length == 1)
+                        .FirstOrDefault(x => x.Name == processMethod);
                     if (method != null)
                         addressProp.stringValue = (string)method.Invoke(target, new object[1] { Object });
                     else

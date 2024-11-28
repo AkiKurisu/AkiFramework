@@ -61,11 +61,6 @@ Modules are based on core features.
 
 ![UIPanel](./Docs/Images/ui_panel_view.png)
 
-[Ceres](./Docs/Ceres.md)
-> Node based visual scripting framework using Graphview.
-
-![ceres_ngd](./Docs/Images/ceres_ngd.png)
-
 ## Reference
 
 [R3](https://github.com/Cysharp/R3)

@@ -99,7 +99,7 @@ namespace Kurisu.Framework.Serialization.Editor
             {
                 do
                 {
-                    var propertyObject = ReflectionUtility.GetTargetObjectWithProperty(property);
+                    var propertyObject = ReflectionEditorUtility.GetTargetObjectWithProperty(property);
                     if (property.propertyType == SerializedPropertyType.Generic)
                     {
                         EditorGUI.LabelField(startRect, JsonConvert.SerializeObject(propertyObject));
