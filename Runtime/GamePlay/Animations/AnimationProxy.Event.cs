@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using Kurisu.Framework.Events;
-using Kurisu.Framework.Schedulers;
+using Chris.Events;
+using Chris.Schedulers;
 using UnityEngine;
 using UnityEngine.Animations;
-namespace Kurisu.Framework.Animations
+namespace Chris.Animations
 {
     public class AnimationNotifyEvent : EventBase<AnimationNotifyEvent>
     {

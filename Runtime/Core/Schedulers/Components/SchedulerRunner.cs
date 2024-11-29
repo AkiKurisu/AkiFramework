@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Kurisu.Framework.Collections;
-using Kurisu.Framework.Pool;
+using Chris.Collections;
+using Chris.Pool;
 using Unity.Profiling;
 using UnityEngine;
-namespace Kurisu.Framework.Schedulers
+namespace Chris.Schedulers
 {
     /// <summary>
     /// Manages updating all the <see cref="IScheduled"/> tasks that are running in the scene.

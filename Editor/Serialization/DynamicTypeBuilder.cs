@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-namespace Kurisu.Framework.Serialization.Editor
+namespace Chris.Serialization.Editor
 {
     public static class DynamicTypeBuilder
     {

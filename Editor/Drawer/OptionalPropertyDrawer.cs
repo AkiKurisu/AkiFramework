@@ -1,6 +1,6 @@
 using UnityEditor;
 using UnityEngine;
-namespace Kurisu.Framework.Editor
+namespace Chris.Editor
 {
     [CustomPropertyDrawer(typeof(Optional<>))]
     public class OptionalPropertyDrawer : PropertyDrawer

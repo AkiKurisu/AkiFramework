@@ -1,5 +1,5 @@
 using System;
-namespace Kurisu.Framework.Tasks
+namespace Chris.Tasks
 {
     /// <summary>
     /// Represent an immediately completed task for callBack purpose

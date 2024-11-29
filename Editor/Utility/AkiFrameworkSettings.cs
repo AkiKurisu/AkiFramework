@@ -1,9 +1,9 @@
-using Kurisu.Framework.DataDriven.Editor;
-using Kurisu.Framework.Serialization;
+using Chris.DataDriven.Editor;
+using Chris.Serialization;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-namespace Kurisu.Framework.Editor
+namespace Chris.Editor
 {
     [FilePath("ProjectSettings/AkiFrameworkSettings.asset", FilePathAttribute.Location.ProjectFolder)]
     public class AkiFrameworkSettings : ScriptableSingleton<AkiFrameworkSettings>

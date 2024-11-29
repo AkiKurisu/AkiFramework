@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
-namespace Kurisu.Framework.Schedulers.Editor
+namespace Chris.Schedulers.Editor
 {
     public class SchedulerDebuggerTreeView : TreeView
     {

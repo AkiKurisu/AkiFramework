@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
-namespace Kurisu.Framework.Animations
+namespace Chris.Animations
 {
     /// <summary>
     /// Animation proxy that can cross fade multi <see cref="RuntimeAnimatorController"/> 

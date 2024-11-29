@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Kurisu.Framework.Schedulers;
+using Chris.Schedulers;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -7,7 +7,7 @@ using Unity.Mathematics;
 using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Assertions;
-namespace Kurisu.Framework.AI.EQS
+namespace Chris.AI.EQS
 {
     public struct FieldViewQueryCommand
     {

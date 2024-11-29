@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     [Serializable]
     internal class EventDebuggerRecordList

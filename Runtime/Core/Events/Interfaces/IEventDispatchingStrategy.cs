@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     // determines in which event phase an event handler wants to handle events
     // the handler always gets called if it is the target CallBackHandler

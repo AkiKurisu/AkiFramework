@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Linq;
 using Kurisu.GOAP;
-namespace Kurisu.Framework.AI.GOAP
+namespace Chris.AI.GOAP
 {
     [RequireComponent(typeof(WorldState))]
     [RequireComponent(typeof(GOAPPlanner))]

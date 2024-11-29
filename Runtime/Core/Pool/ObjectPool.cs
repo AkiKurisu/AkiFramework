@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-namespace Kurisu.Framework.Pool
+namespace Chris.Pool
 {
 #pragma warning disable IDE1006
     /// <summary>

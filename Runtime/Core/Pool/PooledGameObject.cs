@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using Kurisu.Framework.React;
-using Kurisu.Framework.Schedulers;
+using Chris.React;
+using Chris.Schedulers;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.SceneManagement;
-namespace Kurisu.Framework.Pool
+namespace Chris.Pool
 {
     /// <summary>
     /// Wrapper for pooling gameObject

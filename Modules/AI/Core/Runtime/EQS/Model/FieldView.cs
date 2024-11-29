@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-namespace Kurisu.Framework.AI.EQS
+namespace Chris.AI.EQS
 {
     /// <summary>
     /// Represents a field of view for AI. 

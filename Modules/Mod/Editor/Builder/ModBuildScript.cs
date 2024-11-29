@@ -26,7 +26,7 @@ using UnityEngine.ResourceManagement.Util;
 using UnityEngine.Serialization;
 using static UnityEditor.AddressableAssets.Build.ContentUpdateScript;
 using Debug = UnityEngine.Debug;
-namespace Kurisu.Framework.Mod.Editor
+namespace Chris.Mod.Editor
 {   
     // Custom build script for mod
     [CreateAssetMenu(fileName = "ModBuild.asset", menuName = "Addressables/Content Builders/Mod Build Script")]

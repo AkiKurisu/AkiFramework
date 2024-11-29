@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using UnityEngine;
-namespace Kurisu.Framework
+namespace Chris
 {
     public static class FrameworkUtils
     {

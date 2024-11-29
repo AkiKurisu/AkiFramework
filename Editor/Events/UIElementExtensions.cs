@@ -1,6 +1,6 @@
 using System;
 using UnityEngine.UIElements;
-namespace Kurisu.Framework.Events.Editor
+namespace Chris.Events.Editor
 {
     internal class MissingVisualElementException : Exception
     {

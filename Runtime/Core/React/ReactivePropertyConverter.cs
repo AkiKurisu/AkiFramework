@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using R3;
 using UnityEngine;
-namespace Kurisu.Framework.React
+namespace Chris.React
 {
     /// <summary>
     /// Serialization helper for <see cref="ReactiveProperty{T}"/> when use <see cref="JsonConverter"/>

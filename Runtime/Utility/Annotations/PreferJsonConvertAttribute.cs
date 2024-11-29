@@ -1,5 +1,5 @@
 using System;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// Prefer to use <see cref="JsonConvert"/> instead of <see cref="JsonUtility"/>

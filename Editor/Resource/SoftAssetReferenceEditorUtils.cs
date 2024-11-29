@@ -5,11 +5,11 @@ using System;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using System.Collections.Generic;
+using Chris.Serialization;
 using UObject = UnityEngine.Object;
-using Kurisu.Framework.Serialization;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine.Assertions;
-namespace Kurisu.Framework.Resource.Editor
+namespace Chris.Resource.Editor
 {
     public static class SoftAssetReferenceEditorUtils
     {

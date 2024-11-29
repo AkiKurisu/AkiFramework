@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using UEditor = UnityEditor.Editor;
-namespace Kurisu.Framework.Tasks.Editor
+namespace Chris.Tasks.Editor
 {
     [CustomEditor(typeof(TaskRunner))]
     public class TaskRunnerEditor : UEditor

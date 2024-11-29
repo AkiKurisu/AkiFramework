@@ -1,5 +1,5 @@
 using System;
-namespace Kurisu.Framework.Schedulers
+namespace Chris.Schedulers
 {
     /// <summary>
     /// Interface for task can be scheduled

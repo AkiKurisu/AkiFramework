@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using UnityEngine;
 using Object = UnityEngine.Object;
-namespace Kurisu.Framework.Mod
+namespace Chris.Mod
 {
     /// <summary>
     /// Class defines mod's information

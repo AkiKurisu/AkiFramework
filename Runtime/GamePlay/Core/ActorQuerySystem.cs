@@ -3,7 +3,7 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// Actor world basic data

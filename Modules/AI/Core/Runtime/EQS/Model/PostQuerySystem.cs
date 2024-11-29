@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Kurisu.Framework.Schedulers;
+using Chris.Schedulers;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
@@ -8,7 +8,7 @@ using UnityEngine;
 using Unity.Burst;
 using Unity.Profiling;
 using UnityEngine.Assertions;
-namespace Kurisu.Framework.AI.EQS
+namespace Chris.AI.EQS
 {
     /// <summary>
     /// Command for schedule post query job

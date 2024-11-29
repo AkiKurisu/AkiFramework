@@ -1,4 +1,4 @@
-namespace Kurisu.Framework.AI
+namespace Chris.AI
 {
     public interface IAITask
     {

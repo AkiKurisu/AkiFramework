@@ -4,7 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using R3;
 using UnityEngine.Networking;
-namespace Kurisu.Framework.Mod
+namespace Chris.Mod
 {
     public class ModDownloader : IDisposable
     {

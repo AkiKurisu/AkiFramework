@@ -3,7 +3,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
-namespace Kurisu.Framework.Editor
+namespace Chris.Editor
 {
     // reflection call of UnityEditor.SplitterGUILayout
     internal static class SplitterGUILayout

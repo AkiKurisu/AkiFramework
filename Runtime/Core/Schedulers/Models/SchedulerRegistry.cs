@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.Profiling;
-namespace Kurisu.Framework.Schedulers
+namespace Chris.Schedulers
 {
     internal static class SchedulerRegistry
     {

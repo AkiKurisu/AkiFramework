@@ -5,12 +5,12 @@ using System.Reflection;
 using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
-using Kurisu.Framework.Serialization;
-using Kurisu.Framework.Serialization.Editor;
 using System.Collections.ObjectModel;
-using Kurisu.Framework.Editor;
+using Chris.Serialization;
+using Chris.Serialization.Editor;
+using Chris.Editor;
 
-namespace Kurisu.Framework.DataDriven.Editor
+namespace Chris.DataDriven.Editor
 {
     /// <summary>
     /// GUI class for drawing DataTable rows

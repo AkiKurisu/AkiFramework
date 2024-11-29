@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine.Assertions;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// World lifetime scope IOC subsystem

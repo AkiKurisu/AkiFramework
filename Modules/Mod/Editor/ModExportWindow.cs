@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
-namespace Kurisu.Framework.Mod.Editor
+namespace Chris.Mod.Editor
 {
     public class ModExportWindow : EditorWindow
     {

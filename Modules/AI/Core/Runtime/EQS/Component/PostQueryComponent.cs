@@ -1,7 +1,7 @@
 using System;
 using Unity.Mathematics;
 using UnityEngine;
-namespace Kurisu.Framework.AI.EQS
+namespace Chris.AI.EQS
 {
     /// <summary>
     /// Post Query data provider associated with an Actor as component

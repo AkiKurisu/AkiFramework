@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace Kurisu.Framework.Animations
+namespace Chris.Animations
 {
     /// <summary>
     /// MonoBehaviour to preview animation pose using <see cref="AnimationProxy"/>

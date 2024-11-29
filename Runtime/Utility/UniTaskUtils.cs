@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine.Assertions;
 using UnityEngine.Pool;
-namespace Kurisu.Framework
+namespace Chris
 {
     public class UniParallel : List<UniTask>, IDisposable
     {

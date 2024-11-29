@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Kurisu.Framework.Tasks;
+using Chris.Tasks;
 using UnityEngine;
 using UnityEngine.Pool;
-namespace Kurisu.Framework.Animations
+namespace Chris.Animations
 {
     public partial class AnimationProxy
     {

@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-namespace Kurisu.Framework.Serialization.Editor
+namespace Chris.Serialization.Editor
 {
     [Serializable]
     public class SerializedObjectWrapper<T> : SerializedObjectWrapper

@@ -1,4 +1,4 @@
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     internal interface ICoordinatorDebugger
     {

@@ -1,5 +1,5 @@
 using Newtonsoft.Json;
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     /// <summary>
     /// Base interface for ChangeEvent.

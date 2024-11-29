@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Chris.DataDriven;
+using Chris.Resource;
 using Cysharp.Threading.Tasks;
-using Kurisu.Framework.DataDriven;
-using Kurisu.Framework.Resource;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
-namespace Kurisu.Framework.Level
+namespace Chris.Level
 {
     public class LevelReference
     {

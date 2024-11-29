@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Kurisu.Framework.Events;
-using Kurisu.Framework.Pool;
+using Chris.Events;
+using Chris.Pool;
 using UnityEngine;
 using UnityEngine.Pool;
-namespace Kurisu.Framework.Tasks
+namespace Chris.Tasks
 {
     public enum TaskStatus
     {

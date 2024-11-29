@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
+using Chris.Collections;
+using Chris.Resource;
 using Cysharp.Threading.Tasks;
-using Kurisu.Framework.Collections;
-using Kurisu.Framework.Resource;
 using UnityEngine;
 using UnityEngine.Pool;
-namespace Kurisu.Framework.Audios
+namespace Chris.Audios
 {
     /// <summary>
     /// Command structure of character voice

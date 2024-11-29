@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using ToggleEvent = UnityEngine.UIElements.ChangeEvent<bool>;
-namespace Kurisu.Framework.Events.Editor
+namespace Chris.Events.Editor
 {
     class EventTypeChoice : IComparable<EventTypeChoice>
     {

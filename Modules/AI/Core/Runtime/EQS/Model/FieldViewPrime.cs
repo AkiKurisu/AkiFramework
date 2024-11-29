@@ -1,7 +1,7 @@
 using System;
 using Unity.Collections;
 using UnityEngine;
-namespace Kurisu.Framework.AI.EQS
+namespace Chris.AI.EQS
 {
     /// <summary>
     /// Represents an advanced field of view for AI mentioned in "Naughty Dog: Human Enemy AI In Last of The Us". 

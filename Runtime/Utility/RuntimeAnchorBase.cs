@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
-namespace Kurisu.Framework
+namespace Chris
 {
 	public class RuntimeAnchorBase<T> : DescriptiveScriptableObject
 	{

@@ -1,6 +1,6 @@
 using UnityEngine;
 using Object = UnityEngine.Object;
-namespace Kurisu.Framework.Pool
+namespace Chris.Pool
 {
     public class PooledComponent<T, K> : PooledGameObject where K : Component where T : PooledComponent<T, K>, new()
     {

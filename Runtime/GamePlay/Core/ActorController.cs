@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace Kurisu.Framework
+namespace Chris
 {
     public class ActorController : MonoBehaviour
     {

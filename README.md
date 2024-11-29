@@ -1,6 +1,6 @@
 <div align="center">
 
-# AkiFramework
+# Chris
 
 A Unity game framework designed for efficient development.
 
@@ -60,6 +60,19 @@ Modules are based on core features.
 > Build UGUI in script easily, useful for creating dynamic setting UI and debug menu.
 
 ![UIPanel](./Docs/Images/ui_panel_view.png)
+
+## Dependencies
+
+```json
+"dependencies": {
+    "com.cysharp.unitask":"2.5.3",
+    "com.unity.addressables": "1.21.0",
+    "com.unity.nuget.newtonsoft-json": "3.2.1",
+    "com.unity.collections": "2.2.1",
+    "com.unity.burst": "1.8.9",
+    "com.unity.mathematics": "1.3.1"
+  }
+```
 
 ## Reference
 

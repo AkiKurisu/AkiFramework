@@ -1,6 +1,6 @@
 using System.Reflection;
 using UnityEngine;
-namespace Kurisu.Framework.Serialization
+namespace Chris.Serialization
 {
     /// <summary>
     /// Serialized object wrapper for custom object.

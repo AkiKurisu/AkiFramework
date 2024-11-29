@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
+using Chris.Serialization;
 using Cysharp.Threading.Tasks;
-using Kurisu.Framework.Serialization;
 using UnityEngine;
 using UnityEngine.Pool;
-namespace Kurisu.Framework.UI
+namespace Chris.UI
 {
     /// <summary>
     /// Virtual panel item data structure

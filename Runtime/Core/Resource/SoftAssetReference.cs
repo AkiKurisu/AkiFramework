@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using Object = UnityEngine.Object;
-namespace Kurisu.Framework.Resource
+namespace Chris.Resource
 {
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
     public class AssetReferenceConstraintAttribute : PropertyAttribute

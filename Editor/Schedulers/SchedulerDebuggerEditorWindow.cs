@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
-using Kurisu.Framework.Editor;
+using Chris.Editor;
 using Unity.CodeEditor;
-namespace Kurisu.Framework.Schedulers.Editor
+namespace Chris.Schedulers.Editor
 {
     // EditorWindow is modified from R3.Unity
     public class SchedulerDebuggerEditorWindow : EditorWindow

@@ -2,7 +2,7 @@ using ICSharpCode.SharpZipLib.Zip;
 using System;
 using System.IO;
 using UnityEngine;
-namespace Kurisu.Framework.Mod
+namespace Chris.Mod
 {
     public class ZipWrapper
     {

@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     public class EventSystem : MonoEventCoordinator
     {

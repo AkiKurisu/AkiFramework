@@ -1,6 +1,6 @@
 using System;
 using UnityEngine.Assertions;
-namespace Kurisu.Framework.Schedulers
+namespace Chris.Schedulers
 {
     /// <summary>
     /// Handle give you access to track scheduled task

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-namespace Kurisu.Framework
+namespace Chris
 {
 	public class RuntimeAnchorSetBase<T> : ManagedObject
 	{

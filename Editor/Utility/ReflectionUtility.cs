@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Reflection;
 using UnityEditor;
-namespace Kurisu.Framework.Editor
+namespace Chris.Editor
 {
     public static class ReflectionEditorUtility
     {

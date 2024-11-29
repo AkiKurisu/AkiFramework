@@ -1,14 +1,15 @@
 using Cysharp.Threading.Tasks;
-using Kurisu.Framework.Pool;
-using Kurisu.Framework.React;
-using Kurisu.Framework.Schedulers;
+using Chris.React;
 using UnityEngine;
 using R3;
 using System;
 using UnityEngine.Assertions;
 using System.Collections.Generic;
-using Kurisu.Framework.Resource;
-namespace Kurisu.Framework.Audios
+using Chris.Pool;
+using Chris.Resource;
+using Chris.Schedulers;
+
+namespace Chris.Audios
 {
     public static class AudioSystem
     {

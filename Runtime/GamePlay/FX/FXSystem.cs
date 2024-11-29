@@ -1,12 +1,12 @@
+using Chris.Pool;
+using Chris.Resource;
 using Cysharp.Threading.Tasks;
-using Kurisu.Framework.Pool;
-using Kurisu.Framework.React;
-using Kurisu.Framework.Resource;
+using Chris.React;
 using R3;
 using UnityEngine;
 using UnityEngine.Assertions;
 using Object = UnityEngine.Object;
-namespace Kurisu.Framework.FX
+namespace Chris.FX
 {
     // TODO: Add fx preloading
     public static class FXSystem

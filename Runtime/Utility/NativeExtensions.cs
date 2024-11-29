@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using Unity.Collections;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// Extensions for Native Collections

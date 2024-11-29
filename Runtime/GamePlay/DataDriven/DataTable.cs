@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Kurisu.Framework.Serialization;
+using Chris.Serialization;
 using UnityEngine;
-namespace Kurisu.Framework.DataDriven
+namespace Chris.DataDriven
 {
     public interface IDataTableRow { }
     [Serializable]

@@ -3,7 +3,7 @@ using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine;
-namespace Kurisu.Framework.Mod.Editor
+namespace Chris.Mod.Editor
 {
     [CreateAssetMenu(fileName = "ExcludeDefaultBundleBuilder", menuName = "Mod/Builder/ExcludeDefaultBundleBuilder")]
     public class ExcludeDefaultBundleBuilder : CustomBuilder

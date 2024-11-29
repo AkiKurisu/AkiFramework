@@ -1,5 +1,5 @@
 using System;
-namespace Kurisu.Framework.DataDriven
+namespace Chris.DataDriven
 {
     /// <summary>
     /// Auto manage dataTable with this row to Addressables

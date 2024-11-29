@@ -1,5 +1,5 @@
 using System;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// Notify framework stack trace to trace frame use this method or constructor

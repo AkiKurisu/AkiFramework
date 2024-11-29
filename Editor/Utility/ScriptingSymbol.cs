@@ -1,7 +1,7 @@
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Build;
-namespace Kurisu.Framework.Editor
+namespace Chris.Editor
 {
     public static class ScriptingSymbol
     {

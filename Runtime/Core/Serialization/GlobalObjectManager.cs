@@ -1,8 +1,8 @@
 using System;
-using Kurisu.Framework.Collections;
+using Chris.Collections;
 using UnityEngine.Assertions;
 using UObject = UnityEngine.Object;
-namespace Kurisu.Framework.Serialization
+namespace Chris.Serialization
 {
     /// <summary>
     /// Class for managing dynamically load/created <see cref="UObject"/> 

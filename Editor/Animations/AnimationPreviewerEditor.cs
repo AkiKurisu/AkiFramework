@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using UEditor = UnityEditor.Editor;
-namespace Kurisu.Framework.Animations.Editor
+namespace Chris.Animations.Editor
 {
     [CustomEditor(typeof(AnimationPreviewer))]
     public class AnimationPreviewerEditor : UEditor

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using R3;
 using UnityEngine;
-namespace Kurisu.Framework
+namespace Chris
 {
     internal class WorldSubsystemCollection : IDisposable
     {

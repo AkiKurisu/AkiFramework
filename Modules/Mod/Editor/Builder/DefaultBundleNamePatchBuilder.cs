@@ -1,7 +1,7 @@
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Build;
 using UnityEngine;
-namespace Kurisu.Framework.Mod.Editor
+namespace Chris.Mod.Editor
 {
     [CreateAssetMenu(fileName = "DefaultBundleNamePatchBuilder", menuName = "Mod/Builder/DefaultBundleNamePatchBuilder")]
     public class DefaultBundleNamePatchBuilder : CustomBuilder

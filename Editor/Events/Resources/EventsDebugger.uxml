@@ -1,4 +1,4 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xmlns:akie="Kurisu.Framework.Events.Editor" editor-extension-mode="True">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xmlns:akie="Chris.Events.Editor" editor-extension-mode="True">
     <ui:VisualElement name="eventsDebugger">
         <uie:Toolbar name="searchToolbar" class="toolbar">
             <akie:EventTypeSearchField name="filter-event-type" />

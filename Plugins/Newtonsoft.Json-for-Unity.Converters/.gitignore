@@ -1,6 +1,0 @@
-
-# Ignore the built files
-Plugins/*/*.dll
-Plugins/*/*.dll.mdb
-Plugins/*/*.pdb
-Plugins/*/*.xml

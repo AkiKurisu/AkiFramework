@@ -1,7 +1,8 @@
 using UnityEngine;
 using System;
-using Kurisu.Framework.Pool;
-namespace Kurisu.Framework.Schedulers
+using Chris.Pool;
+
+namespace Chris.Schedulers
 {
     internal class FrameCounter : IScheduled
     {

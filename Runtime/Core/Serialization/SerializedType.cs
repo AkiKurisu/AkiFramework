@@ -5,7 +5,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-namespace Kurisu.Framework.Serialization
+namespace Chris.Serialization
 {
     // Modified from Unity
     public static class SerializedType

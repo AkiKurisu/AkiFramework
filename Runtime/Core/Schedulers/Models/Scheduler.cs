@@ -1,5 +1,5 @@
 using System;
-namespace Kurisu.Framework.Schedulers
+namespace Chris.Schedulers
 {
     /// <summary>
     /// Scheduler tick frame type

@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-namespace Kurisu.Framework.AI
+namespace Chris.AI
 {
     public class TaskIDAttribute : PropertyAttribute { }
     /// <summary>

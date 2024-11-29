@@ -1,5 +1,5 @@
 using System;
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     /// <summary>
     /// Defines the structure of a callback that can be registered onto an element for an event type

@@ -1,6 +1,6 @@
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
-namespace Kurisu.Framework.Mod.Editor
+namespace Chris.Mod.Editor
 {
     [CreateAssetMenu(fileName = "ModExportConfig", menuName = "Mod/ModExportConfig")]
     public class ModExportConfig : ScriptableObject

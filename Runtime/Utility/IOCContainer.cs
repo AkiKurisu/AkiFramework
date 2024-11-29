@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System;
-namespace Kurisu.Framework
+namespace Chris
 {
     internal class IOCContainer
     {

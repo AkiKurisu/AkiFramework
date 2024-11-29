@@ -1,5 +1,5 @@
 using System.IO;
-namespace Kurisu.Framework
+namespace Chris
 {
     public class LazyDirectory
     {

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-namespace Kurisu.Framework.Events.Editor
+namespace Chris.Events.Editor
 {
     class EventLog
     {

@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// A replacement of <see cref="Nullable{T}"/> that can be edited in the inspector

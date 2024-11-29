@@ -1,10 +1,11 @@
 using System.IO;
+using Chris.Editor;
+using Chris.Serialization;
 using UnityEngine;
 using UnityEditor;
-using Kurisu.Framework.Serialization;
 using UEditor = UnityEditor.Editor;
-using Kurisu.Framework.Editor;
-namespace Kurisu.Framework.DataDriven.Editor
+
+namespace Chris.DataDriven.Editor
 {
     /// <summary>
     /// Delegate for draw editor toolbar

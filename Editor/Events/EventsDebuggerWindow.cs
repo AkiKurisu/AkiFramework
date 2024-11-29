@@ -13,7 +13,7 @@ using StringChangeEvent = UnityEngine.UIElements.ChangeEvent<string>;
 using Newtonsoft.Json.Linq;
 using System.Text;
 using Newtonsoft.Json;
-namespace Kurisu.Framework.Events.Editor
+namespace Chris.Events.Editor
 {
     internal class EventsDebuggerWindow : EditorWindow
     {

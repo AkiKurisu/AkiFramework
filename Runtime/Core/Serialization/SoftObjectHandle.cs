@@ -1,6 +1,6 @@
 using UnityEngine.Assertions;
 using UObject = UnityEngine.Object;
-namespace Kurisu.Framework.Serialization
+namespace Chris.Serialization
 {
     /// <summary>
     /// Soft Ptr for UnityEngine.Object

@@ -1,9 +1,9 @@
 using System;
-using Kurisu.Framework.Collections;
+using Chris.Collections;
 using R3;
 using UnityEngine;
 using UnityEngine.Assertions;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// Struct to represent an GamePlay actor level entity

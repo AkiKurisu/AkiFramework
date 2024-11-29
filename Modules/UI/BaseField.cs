@@ -1,15 +1,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using Chris.Events;
+using Chris.React;
+using Chris.Resource;
 using UnityEngine;
-using Kurisu.Framework.Events;
-using Kurisu.Framework.React;
-using Kurisu.Framework.Resource;
 using R3;
 using UnityEngine.UI;
 using UnityEngine.Pool;
 using UObject = UnityEngine.Object;
-namespace Kurisu.Framework.UI
+namespace Chris.UI
 {
     public static class UIEntry
     {

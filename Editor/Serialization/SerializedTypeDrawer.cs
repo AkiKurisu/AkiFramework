@@ -5,7 +5,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-namespace Kurisu.Framework.Serialization.Editor
+namespace Chris.Serialization.Editor
 {
     [CustomPropertyDrawer(typeof(SerializedType<>))]
     public class SerializedTypeDrawer : PropertyDrawer

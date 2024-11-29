@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     /// <summary>
     /// Interface for class capable of handling events.

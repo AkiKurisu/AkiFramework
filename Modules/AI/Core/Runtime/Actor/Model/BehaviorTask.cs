@@ -1,9 +1,9 @@
 using System;
+using Chris.Tasks;
 using Kurisu.AkiBT;
-using Kurisu.Framework.Tasks;
 using UnityEngine;
 using Object = UnityEngine.Object;
-namespace Kurisu.Framework.AI
+namespace Chris.AI
 {
     /// <summary>
     /// Task to run a behavior tree inside a agent-authority state machine.

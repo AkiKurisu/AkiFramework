@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Kurisu.Framework.Pool;
+using Chris.Pool;
 using Debug = UnityEngine.Debug;
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     public enum DispatchMode
     {

@@ -1,12 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Chris.Collections;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Cysharp.Threading.Tasks;
-using Kurisu.Framework.Collections;
-namespace Kurisu.Framework.Resource
+
+namespace Chris.Resource
 {
     /// <summary>
     /// Exception thrown when request resource address is invalid

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Collections;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-namespace Kurisu.Framework.Resource
+namespace Chris.Resource
 {
     /// <summary>
     /// Loading and cache specific asset as a group and release them by control version

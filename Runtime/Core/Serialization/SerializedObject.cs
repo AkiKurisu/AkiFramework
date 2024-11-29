@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-namespace Kurisu.Framework.Serialization
+namespace Chris.Serialization
 {
     public class SerializedObjectBase
     {

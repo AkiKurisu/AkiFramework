@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-namespace Kurisu.Framework.UI
+namespace Chris.UI
 {
     public static class UIExtensions
     {

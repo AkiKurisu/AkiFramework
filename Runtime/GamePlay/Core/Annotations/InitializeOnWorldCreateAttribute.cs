@@ -1,5 +1,5 @@
 using System;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// Whether <see cref="WorldSubsystem"/> should be created and initialize when world create

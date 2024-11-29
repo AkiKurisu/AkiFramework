@@ -1,12 +1,12 @@
 using System.Linq;
-using Kurisu.Framework.UI;
-using Kurisu.Framework.React;
+using Chris.Events;
+using Chris.UI;
+using Chris.React;
 using R3;
 using UnityEngine;
 using UnityEngine.UI;
-using Kurisu.Framework.Events;
 using Cysharp.Threading.Tasks;
-namespace Kurisu.Framework.Mod.UI
+namespace Chris.Mod.UI
 {
     public class ModSettingsPanel : UIPanel
     {
@@ -42,25 +42,32 @@ namespace Kurisu.Framework.Mod.UI
     public class ModConfigField : BaseField<int>
     {
         private static readonly IUIFactory defaultFactory = new UIFactory();
+        
         public class UIFactory : UIFactory<ModConfigField>
         {
 
         }
+        
         public ModConfigField(string displayName, string[] optionNames = null, int initialValue = 0) : base(initialValue, defaultFactory)
         {
             DisplayName = displayName;
-            this.optionNames = optionNames;
+            _optionNames = optionNames;
         }
+        
         public string DisplayName { get; }
-        private readonly string[] optionNames;
-        private Toggle[] toggles;
-        private Button deleteButton;
+        
+        private readonly string[] _optionNames;
+        
+        private Toggle[] _toggles;
+        
+        private Button _deleteButton;
+        
         protected override GameObject OnCreateView(Transform parent)
         {
             GameObject tr = Instantiate(parent);
-            toggles = tr.GetComponentsInChildren<Toggle>();
-            deleteButton = tr.GetComponentInChildren<Button>();
-            (from item in toggles.Select((Toggle val, int idx) => new { val, idx })
+            _toggles = tr.GetComponentsInChildren<Toggle>();
+            _deleteButton = tr.GetComponentInChildren<Button>();
+            (from item in _toggles.Select((Toggle val, int idx) => new { val, idx })
              where item.val != null
              select item).ToList().ForEach(item =>
             {
@@ -70,22 +77,22 @@ namespace Kurisu.Framework.Mod.UI
                  {
                      SetValue(item.idx);
                  }).AddTo(this);
-                if (optionNames != null)
+                if (_optionNames != null)
                 {
                     Text text = item.val.GetComponentInChildren<Text>();
-                    text.text = optionNames[item.idx];
+                    text.text = _optionNames[item.idx];
                 }
             });
             OnNotifyViewChanged.Subscribe(b =>
             {
-                for (int i = 0; i < toggles.Length; ++i)
+                for (int i = 0; i < _toggles.Length; ++i)
                 {
-                    toggles[i].SetIsOnWithoutNotify(i == b);
+                    _toggles[i].SetIsOnWithoutNotify(i == b);
                 }
             });
-            if (deleteButton)
+            if (_deleteButton)
             {
-                deleteButton.OnClickAsObservable().Subscribe(_ =>
+                _deleteButton.OnClickAsObservable().Subscribe(_ =>
                 {
                     SetValue(2);
                 });

@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-namespace Kurisu.Framework.Level
+namespace Chris.Level
 {
     public enum LoadLevelMode
     {

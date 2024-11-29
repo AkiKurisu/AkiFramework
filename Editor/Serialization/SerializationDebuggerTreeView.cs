@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UObject = UnityEngine.Object;
-namespace Kurisu.Framework.Serialization.Editor
+namespace Chris.Serialization.Editor
 {
     public class SerializationDebuggerTreeView : TreeView
     {

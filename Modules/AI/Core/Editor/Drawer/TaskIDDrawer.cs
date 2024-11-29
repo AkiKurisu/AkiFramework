@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-namespace Kurisu.Framework.AI
+namespace Chris.AI
 {
     [CustomPropertyDrawer(typeof(TaskIDAttribute), true)]
     public class TaskIDDrawer : PropertyDrawer

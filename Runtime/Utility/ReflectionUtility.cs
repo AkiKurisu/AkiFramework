@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using Object = UnityEngine.Object;
-namespace Kurisu.Framework
+namespace Chris
 {
     public static class ReflectionUtility
     {

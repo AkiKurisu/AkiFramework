@@ -4,7 +4,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-namespace Kurisu.Framework
+namespace Chris
 {
 	/// <summary>
 	/// Update mesh collider using JobSystem, but may still cause visible overhead.

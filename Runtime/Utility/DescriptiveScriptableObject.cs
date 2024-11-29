@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// Base class for all ScriptableObjects with a developer-facing description.

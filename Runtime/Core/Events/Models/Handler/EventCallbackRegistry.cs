@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     /// <summary>
     /// Use this enum to specify during which phases the event handler is executed.

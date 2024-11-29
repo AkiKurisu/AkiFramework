@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Animations;
 using UAnimator = UnityEngine.Animator;
-namespace Kurisu.Framework.Animations
+namespace Chris.Animations
 {
     /// <summary>
     /// Proxy layer handle

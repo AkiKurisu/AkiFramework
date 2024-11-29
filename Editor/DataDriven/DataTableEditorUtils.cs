@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Kurisu.Framework.Editor;
-using Kurisu.Framework.Resource.Editor;
+using Chris.Editor;
+using Chris.Resource.Editor;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
-namespace Kurisu.Framework.DataDriven.Editor
+namespace Chris.DataDriven.Editor
 {
     /// <summary>
     /// Utility for editing DataTable in editor script

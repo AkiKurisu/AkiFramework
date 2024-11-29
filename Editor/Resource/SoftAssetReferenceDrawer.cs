@@ -3,12 +3,12 @@ using UnityEditor;
 using System.Reflection;
 using System.Linq;
 using System;
-using Kurisu.Framework.Editor;
+using Chris.Editor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UObject = UnityEngine.Object;
 using Object = UnityEngine.Object;
-namespace Kurisu.Framework.Resource.Editor
+namespace Chris.Resource.Editor
 {
     public abstract class AssetReferenceDrawer : PropertyDrawer
     {

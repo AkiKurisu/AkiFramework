@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-namespace Kurisu.Framework
+namespace Chris
 {
     public abstract class ActorComponent : MonoBehaviour
     {

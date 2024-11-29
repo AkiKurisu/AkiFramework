@@ -1,9 +1,9 @@
+using Chris.Editor;
+using Chris.Tasks;
 using Kurisu.AkiBT.Editor;
-using Kurisu.Framework.Editor;
 using UnityEditor;
-using Kurisu.Framework.Tasks;
 using UnityEngine;
-namespace Kurisu.Framework.AI.Editor
+namespace Chris.AI.Editor
 {
     [CustomPropertyDrawer(typeof(BehaviorTask))]
     public class BehaviorTaskDrawer : PropertyDrawer

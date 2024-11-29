@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Kurisu.Framework.Tasks;
+using Chris.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
-namespace Kurisu.Framework.AI
+namespace Chris.AI
 {
     public abstract class AIDirector : MonoBehaviour
     {

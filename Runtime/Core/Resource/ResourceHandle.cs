@@ -1,7 +1,7 @@
 using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine.ResourceManagement.AsyncOperations;
-namespace Kurisu.Framework.Resource
+namespace Chris.Resource
 {
     /// <summary>
     /// A lightweight encapsulation of <see cref="AsyncOperationHandle"/>

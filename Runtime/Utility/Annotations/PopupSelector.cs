@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-namespace Kurisu.Framework
+namespace Chris
 {
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
     public class PopupSelector : PropertyAttribute

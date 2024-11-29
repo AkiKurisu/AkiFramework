@@ -1,4 +1,4 @@
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     /// <summary>
     /// Interface for classes capable of having callbacks to handle events.

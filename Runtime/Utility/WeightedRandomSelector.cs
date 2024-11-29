@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-namespace Kurisu.Framework
+namespace Chris
 {
     public class WeightedRandomSelector<T>
     {

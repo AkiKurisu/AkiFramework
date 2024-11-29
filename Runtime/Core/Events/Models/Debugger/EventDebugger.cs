@@ -6,7 +6,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Assertions;
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     internal readonly struct EventDebuggerLogCall : IDisposable
     {

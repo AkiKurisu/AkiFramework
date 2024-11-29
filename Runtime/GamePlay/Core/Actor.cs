@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// Actor is an MonoBehaviour identifier to place GameObject in framework's GamePlay level.

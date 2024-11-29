@@ -2,7 +2,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-namespace Kurisu.Framework.Resource
+namespace Chris.Resource
 {
     public static class ResourceSystemExtension
     {

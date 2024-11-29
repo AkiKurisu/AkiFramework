@@ -5,7 +5,7 @@ using System.IO;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Build;
 using Newtonsoft.Json;
-namespace Kurisu.Framework.Mod.Editor
+namespace Chris.Mod.Editor
 {
     public class ModExporter
     {

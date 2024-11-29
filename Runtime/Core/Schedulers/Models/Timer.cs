@@ -1,7 +1,8 @@
 using UnityEngine;
 using System;
-using Kurisu.Framework.Pool;
-namespace Kurisu.Framework.Schedulers
+using Chris.Pool;
+
+namespace Chris.Schedulers
 {
     /// <summary>
     /// Allows you to run events on a delay without the use of <see cref="Coroutine"/>s

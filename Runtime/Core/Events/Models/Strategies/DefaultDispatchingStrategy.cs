@@ -1,4 +1,4 @@
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     public class DefaultDispatchingStrategy : IEventDispatchingStrategy
     {

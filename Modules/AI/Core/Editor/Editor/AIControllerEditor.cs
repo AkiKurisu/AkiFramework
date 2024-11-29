@@ -1,8 +1,8 @@
 using System.Linq;
-using Kurisu.Framework.Tasks.Editor;
+using Chris.Tasks.Editor;
 using UnityEditor;
 using UnityEngine;
-namespace Kurisu.Framework.AI.Editor
+namespace Chris.AI.Editor
 {
     [CustomEditor(typeof(AIController), true)]
     [CanEditMultipleObjects]

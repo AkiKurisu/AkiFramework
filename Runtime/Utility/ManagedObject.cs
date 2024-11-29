@@ -1,7 +1,7 @@
 ﻿#if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace Kurisu.Framework
+namespace Chris
 {
 
     /// <summary>

@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 using R3;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-namespace Kurisu.Framework.Mod
+namespace Chris.Mod
 {
     public static class ModAPI
     {

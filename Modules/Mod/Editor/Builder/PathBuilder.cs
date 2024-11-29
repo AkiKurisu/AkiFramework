@@ -8,7 +8,7 @@ using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.ResourceLocators;
-namespace Kurisu.Framework.Mod.Editor
+namespace Chris.Mod.Editor
 {
     public class PathBuilder : IModBuilder
     {
