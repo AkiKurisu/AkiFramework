@@ -37,7 +37,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         protected virtual DataTableRowView CreateDataTableRowView(DataTable table)
         {
             var rowView = new DataTableRowView(table);
-            if (AkiFrameworkSettings.Instance.InlineRowReadOnly)
+            if (AkiFrameworkSettings.instance.InlineRowReadOnly)
             {
                 rowView.ReadOnly = true;
             }

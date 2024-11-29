@@ -5,13 +5,21 @@ using UnityEngine;
 using UnityEngine.UIElements;
 namespace Kurisu.Framework.Editor
 {
-    [FilePath("ProjectSettings/AkiFrameworkSettings.asset")]
+    [FilePath("ProjectSettings/AkiFrameworkSettings.asset", FilePathAttribute.Location.ProjectFolder)]
     public class AkiFrameworkSettings : ScriptableSingleton<AkiFrameworkSettings>
     {
         public bool SchdulerStackTrace = true;
+        
         public SerializedType<IDataTableJsonSerializer> DataTableJsonSerializer = SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
+        
         public bool InitializeDataTableManagerOnLoad = false;
+        
         public bool InlineRowReadOnly = false;
+
+        public static void SaveSettings()
+        {
+            instance.Save(true);
+        }
     }
 
     internal class AkiFrameworkSettingsProvider : SettingsProvider
@@ -31,7 +39,7 @@ namespace Kurisu.Framework.Editor
         private AkiFrameworkSettings settings;
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
-            settingsObject = new(settings = AkiFrameworkSettings.Instance);
+            settingsObject = new(settings = AkiFrameworkSettings.instance);
         }
         public override void OnGUI(string searchContext)
         {
@@ -49,7 +57,7 @@ namespace Kurisu.Framework.Editor
                     ScriptingSymbol.RemoveScriptingSymbol(StackTraceSchedulerDisableSymbol);
                 else
                     ScriptingSymbol.AddScriptingSymbol(StackTraceSchedulerDisableSymbol);
-                AkiFrameworkSettings.Save();
+                AkiFrameworkSettings.SaveSettings();
             }
             GUILayout.EndVertical();
         }
@@ -62,15 +70,15 @@ namespace Kurisu.Framework.Editor
             EditorGUILayout.PropertyField(settingsObject.FindProperty(nameof(AkiFrameworkSettings.InlineRowReadOnly)), Styles.s_InlineRowReadOnly);
             if (settingsObject.ApplyModifiedPropertiesWithoutUndo())
             {
-                if (AkiFrameworkSettings.Instance.DataTableJsonSerializer.GetType() == null)
+                if (AkiFrameworkSettings.instance.DataTableJsonSerializer.GetObjectType() == null)
                 {
-                    AkiFrameworkSettings.Instance.DataTableJsonSerializer = SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
+                    AkiFrameworkSettings.instance.DataTableJsonSerializer = SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
                 }
                 if (settings.InitializeDataTableManagerOnLoad)
                     ScriptingSymbol.AddScriptingSymbol(InitializeDataTableManagerOnLoadSymbol);
                 else
                     ScriptingSymbol.RemoveScriptingSymbol(InitializeDataTableManagerOnLoadSymbol);
-                AkiFrameworkSettings.Save();
+                AkiFrameworkSettings.SaveSettings();
             }
             GUILayout.EndVertical();
         }
