@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
-namespace Kurisu.Framework.Mod.Editor
+namespace Chris.Mod.Editor
 {
     public interface IModBuilder
     {

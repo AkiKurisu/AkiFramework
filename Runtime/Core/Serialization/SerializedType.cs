@@ -3,16 +3,20 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-namespace Kurisu.Framework.Serialization
+using UnityEngine;
+
+namespace Chris.Serialization
 {
     // Modified from Unity
     public static class SerializedType
     {
-        #region Private helpers
-        private struct SerializedTypeData
+        [Serializable]
+        public struct SerializedTypeData
         {
             public string typeName;
+            
             public string genericTypeName;
+            
             public bool isGeneric;
         }
         private static string StripTypeNameString(string str, int index)
@@ -25,11 +29,11 @@ namespace Kurisu.Framework.Serialization
 
         private static string StripAllFromTypeNameString(string str, string toStrip)
         {
-            int lastIndex = str.IndexOf(toStrip);
+            int lastIndex = str.IndexOf(toStrip, StringComparison.Ordinal);
             while (lastIndex != -1)
             {
                 str = StripTypeNameString(str, lastIndex);
-                lastIndex = str.IndexOf(toStrip, lastIndex);
+                lastIndex = str.IndexOf(toStrip, lastIndex, StringComparison.Ordinal);
             }
             return str;
         }
@@ -58,7 +62,7 @@ namespace Kurisu.Framework.Serialization
 
             SerializedTypeData data;
             data.isGeneric = IsGeneric(serializedTypeString);
-            data.typeName = serializedTypeString.Substring(0, serializedTypeString.IndexOf('#'));
+            data.typeName = serializedTypeString[..serializedTypeString.IndexOf('#')];
             data.genericTypeName = serializedTypeString.Substring(data.typeName.Length + 1,
                 serializedTypeString.IndexOf('#', data.typeName.Length + 1) - data.typeName.Length - 1);
             return data;
@@ -69,14 +73,12 @@ namespace Kurisu.Framework.Serialization
             return data.typeName + "#" + data.genericTypeName + "#" + (data.isGeneric ? "1" : "0");
         }
 
-        private static Type FromString(SerializedTypeData data)
+        private static Type FromData(SerializedTypeData data)
         {
             return Type.GetType(data.typeName, true);
         }
 
-        #endregion
-
-        #region Public Helpers
+        #region Public API
         public static Type GenericType(Type t)
         {
             if (t.IsArray)
@@ -100,11 +102,9 @@ namespace Kurisu.Framework.Serialization
                 return SafeTypeName(t);
             if (t.GetGenericTypeDefinition() != typeof(List<>))
                 throw new ArgumentException("Internal error: got unsupported generic type");
-            return string.Format("System.Collections.Generic.List<{0}>", SafeTypeName(t.GetGenericArguments()[0]));
+            return $"System.Collections.Generic.List<{SafeTypeName(t.GetGenericArguments()[0])}>";
         }
-
-        #endregion
-
+        
         public static string ToString(Type t)
         {
             var data = new SerializedTypeData();
@@ -113,24 +113,29 @@ namespace Kurisu.Framework.Serialization
                 return string.Empty;
 
             data.typeName = string.Empty;
-            data.isGeneric = t.ContainsGenericParameters;
+            data.isGeneric = t.ContainsGenericParameters && !t.IsGenericTypeDefinition;
 
-            if (data.isGeneric && t.IsGenericType)
-                data.typeName = ToShortTypeName(t.GetGenericTypeDefinition());
-            else if (data.isGeneric && t.IsArray)
-                data.typeName = "T[]";
-            else if (data.isGeneric)
-                data.typeName = "T";
-            else
-                data.typeName = ToShortTypeName(t);
+            data.typeName = data.isGeneric switch
+            {
+                true when t.IsGenericType => ToShortTypeName(t.GetGenericTypeDefinition()),
+                true when t.IsArray => "T[]",
+                true => "T",
+                _ => ToShortTypeName(t)
+            };
 
             return ToString(data);
         }
 
         public static Type FromString(string serializedTypeString)
         {
-            if (string.IsNullOrEmpty(serializedTypeString) || IsGeneric(serializedTypeString))
+            if (string.IsNullOrEmpty(serializedTypeString))
                 return null;
+            /* Only support generic definition */
+            if (IsGeneric(serializedTypeString))
+            {
+                Debug.LogError("SerializedType not support generic type has assigned generic parameters");
+                return null;
+            }
             if (SerializedTypeRedirector.TryRedirect(serializedTypeString, out var type))
             {
                 return type;
@@ -214,11 +219,12 @@ namespace Kurisu.Framework.Serialization
                 if (args[0].IsGenericType)
                     return false;
 
-                return t.GetGenericTypeDefinition() == FromString(data).GetGenericTypeDefinition();
+                return t.GetGenericTypeDefinition() == FromData(data).GetGenericTypeDefinition();
             }
 
             return data.typeName == "T" || data.typeName == "T[]"; // no constraints right now
         }
+        #endregion
     }
     /// <summary>
     /// Serialized type that will serialize metadata of class implementing T
@@ -288,25 +294,28 @@ namespace Kurisu.Framework.Serialization
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public class FormerlySerializedTypeAttribute : Attribute
     {
-        private readonly string m_oldSerializedType;
-
-        public string OldSerializedType => m_oldSerializedType;
+        public string OldSerializedType { get; }
         public FormerlySerializedTypeAttribute(string oldSerializedType)
         {
-            m_oldSerializedType = oldSerializedType;
+            OldSerializedType = oldSerializedType;
         }
     }
+
     /// <summary>
     /// Attribute type that will not show in SerializedType search window
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public class HideInSerializedTypeAttribute : Attribute { }
+    public class HideInSerializedTypeAttribute : Attribute
+    {
+        
+    }
+    
     public static class SerializedTypeRedirector
     {
-        private static readonly Lazy<Dictionary<string, Type>> updatableType;
+        private static readonly Lazy<Dictionary<string, Type>> UpdatableType;
         static SerializedTypeRedirector()
         {
-            updatableType = new Lazy<Dictionary<string, Type>>(() =>
+            UpdatableType = new Lazy<Dictionary<string, Type>>(() =>
             {
                 return AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
                                                     .Where(x => x.GetCustomAttribute<FormerlySerializedTypeAttribute>() != null)
@@ -321,7 +330,7 @@ namespace Kurisu.Framework.Serialization
         /// <returns></returns>
         public static bool TryRedirect(string stringType, out Type type)
         {
-            return updatableType.Value.TryGetValue(stringType, out type);
+            return UpdatableType.Value.TryGetValue(stringType, out type);
         }
     }
 }

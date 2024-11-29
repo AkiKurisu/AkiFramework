@@ -1,59 +1,65 @@
 using System.Collections.Generic;
 using System.Linq;
-namespace Kurisu.Framework
+namespace Chris
 {
-    public class WeightedRandomSelector<T>
+    public sealed class WeightedRandomSelector<T>
     {
-        private readonly List<T> items;
-        private readonly List<double> weights;
-        private readonly System.Random random;
-        private T lastSelected;
-        public int Count => items.Count;
+        private readonly List<T> _items;
+        
+        private readonly List<double> _weights;
+        
+        private readonly System.Random _random;
+        
+        private T _lastSelected;
+        public int Count => _items.Count;
         public WeightedRandomSelector(int capacity)
         {
-            items = new List<T>(capacity);
-            weights = new List<double>(capacity);
-            random = new System.Random();
+            _items = new List<T>(capacity);
+            _weights = new List<double>(capacity);
+            _random = new System.Random();
         }
         public WeightedRandomSelector()
         {
-            items = new List<T>();
-            weights = new List<double>();
-            random = new System.Random();
+            _items = new List<T>();
+            _weights = new List<double>();
+            _random = new System.Random();
         }
         public void AddItem(T item, double weight = 1)
         {
-            items.Add(item);
-            weights.Add(weight);
+            _items.Add(item);
+            _weights.Add(weight);
         }
 
         public T GetRandomItem(double decayFactor = 0.9)
         {
-            double totalWeight = weights.Sum() - (lastSelected != null ? weights[items.IndexOf(lastSelected)] : 0);
-            double randomNumber = random.NextDouble() * totalWeight;
-            double cumulativeWeight = 0;
-            for (int i = 0; i < items.Count; i++)
+            while (true)
             {
-                if (items[i].Equals(lastSelected))
+                double totalWeight = _weights.Sum() - (_lastSelected != null ? _weights[_items.IndexOf(_lastSelected)] : 0);
+                double randomNumber = _random.NextDouble() * totalWeight;
+                double cumulativeWeight = 0;
+                for (int i = 0; i < _items.Count; i++)
                 {
-                    // Skip the last selected item
-                    continue;
+                    if (_items[i].Equals(_lastSelected))
+                    {
+                        // Skip the last selected item
+                        continue;
+                    }
+
+                    cumulativeWeight += _weights[i];
+                    if (randomNumber < cumulativeWeight)
+                    {
+                        T selected = _items[i];
+                        // Decrease the weight of the selected item for future selections
+                        _weights[i] *= decayFactor;
+                        // Update the last selected item
+                        return _lastSelected = selected;
+                    }
                 }
 
-                cumulativeWeight += weights[i];
-                if (randomNumber < cumulativeWeight)
-                {
-                    T selected = items[i];
-                    // Decrease the weight of the selected item for future selections
-                    weights[i] *= decayFactor;
-                    // Update the last selected item
-                    return lastSelected = selected;
-                }
+                // If all items are the last selected item, reset the lastSelected to default
+                _lastSelected = default;
+                // Perform the selection again
             }
-            // If all items are the last selected item, reset the lastSelected to default
-            lastSelected = default;
-            // Perform the selection again
-            return GetRandomItem(decayFactor);
         }
     }
 }

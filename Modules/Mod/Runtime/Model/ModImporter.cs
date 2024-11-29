@@ -6,7 +6,7 @@ using System.Text;
 using Cysharp.Threading.Tasks;
 using System.Linq;
 using Newtonsoft.Json;
-namespace Kurisu.Framework.Mod
+namespace Chris.Mod
 {
     public interface IModValidator
     {

@@ -3,7 +3,7 @@ using System.Threading;
 using R3;
 using R3.Triggers;
 using UnityEngine;
-namespace Kurisu.Framework.React
+namespace Chris.React
 {
     /// <summary>
     /// Unregister scope interface for managing <see cref="IDisposable"/> 

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-namespace Kurisu.Framework.AI.EQS
+namespace Chris.AI.EQS
 {
     /// <summary>
     /// Field view prime query data provider associated with an Actor as component

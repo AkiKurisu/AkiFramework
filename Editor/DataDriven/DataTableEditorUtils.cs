@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
-using Kurisu.Framework.Editor;
+using System.Reflection;
+using Chris.Editor;
+using Chris.Resource.Editor;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
-namespace Kurisu.Framework.DataDriven.Editor
+namespace Chris.DataDriven.Editor
 {
     /// <summary>
     /// Utility for editing DataTable in editor script
@@ -12,22 +14,27 @@ namespace Kurisu.Framework.DataDriven.Editor
     public static class DataTableEditorUtils
     {
         public static GUIStyle ToolBarButtonStyle => new("LargeButton");
+        
         /// <summary>
         /// Call before dataTable internal update
         /// </summary>
         public static DataTableUpdateDelegate OnDataTablePreUpdate;
+        
         /// <summary>
         /// Call after dataTable internal update
         /// </summary>
         public static DataTableUpdateDelegate OnDataTablePostUpdate;
+        
         /// <summary>
         /// Subscribe to add custom left toolbar
         /// </summary>
         public static DrawToolBarDelegate OnDrawLeftTooBar;
+        
         /// <summary>
         /// Subscribe to add custom right toolbar
         /// </summary>
         public static DrawToolBarDelegate OnDrawRightTooBar;
+        
         /// <summary>
         /// Set row struct type
         /// </summary>
@@ -38,6 +45,7 @@ namespace Kurisu.Framework.DataDriven.Editor
             dataTable.SetRowStruct(typeof(T));
             EditorUtility.SetDirty(dataTable);
         }
+        
         /// <summary>
         /// Set row struct type
         /// </summary>
@@ -49,6 +57,7 @@ namespace Kurisu.Framework.DataDriven.Editor
             dataTable.SetRowStruct(rowType);
             EditorUtility.SetDirty(dataTable);
         }
+        
         /// <summary>
         /// Export dataTable to json
         /// </summary>
@@ -56,8 +65,9 @@ namespace Kurisu.Framework.DataDriven.Editor
         /// <returns></returns>
         public static string ExportJson(DataTable dataTable)
         {
-            return AkiFrameworkSettings.Instance.DataTableJsonSerializer.GetObject().Serialize(dataTable);
+            return ChrisSettings.instance.DataTableJsonSerializer.GetObject().Serialize(dataTable);
         }
+        
         /// <summary>
         /// Import json and overwrite dataTable
         /// </summary>
@@ -66,8 +76,9 @@ namespace Kurisu.Framework.DataDriven.Editor
         public static void ImportJson(DataTable dataTable, string jsonData)
         {
             Undo.RecordObject(dataTable, "Overwrite DataTable from Json");
-            AkiFrameworkSettings.Instance.DataTableJsonSerializer.GetObject().Deserialize(dataTable, jsonData);
+            ChrisSettings.instance.DataTableJsonSerializer.GetObject().Deserialize(dataTable, jsonData);
         }
+        
         /// <summary>
         /// Validate input row id and out right one
         /// </summary>
@@ -86,6 +97,7 @@ namespace Kurisu.Framework.DataDriven.Editor
             result = newRowId;
             return true;
         }
+        
         /// <summary>
         /// Get a valid new row id
         /// </summary>
@@ -95,6 +107,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         {
             return dataTable.NewRowId();
         }
+        
         /// <summary>
         /// Get data rows from table without modify default object
         /// </summary>
@@ -103,6 +116,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         {
             return dataTable.GetAllRowsSafe<T>();
         }
+        
         /// <summary>
         /// Get data rows from table without modify default object
         /// </summary>
@@ -112,6 +126,7 @@ namespace Kurisu.Framework.DataDriven.Editor
         {
             return dataTable.GetAllRowsSafe();
         }
+        
         /// <summary>
         /// Get all data rows as map with RowId as key without modify default object
         /// </summary>
@@ -120,8 +135,9 @@ namespace Kurisu.Framework.DataDriven.Editor
         {
             return dataTable.GetRowMapSafe();
         }
+        
         /// <summary>
-        /// Post processing after update DataTable, which will clear editor object cache and keep row struct type right.
+        /// Post-processing after update DataTable, which will clear editor object cache and keep row struct type right.
         /// </summary>
         /// <remarks>
         /// When use version control, update object handle will let file checkout.
@@ -132,12 +148,43 @@ namespace Kurisu.Framework.DataDriven.Editor
             dataTable.InternalUpdate();
             dataTable.Cleanup();
         }
+        
+        /// <summary>
+        /// Clear DataTable editor object cache
+        /// </summary>
+        /// <param name="dataTable"></param>
+        public static void Cleanup(DataTable dataTable)
+        { ;
+            dataTable.Cleanup();
+        }
+        
+        /// <summary>
+        /// Register a DataTable if defined <see cref="AddressableDataTableAttribute"/>
+        /// </summary>
+        /// <param name="dataTable"></param>
+        public static void RegisterTableToAssetGroup(DataTable dataTable)
+        {
+            var structType = dataTable.GetRowStruct()?.GetType() ?? null;
+            if (structType == null) return;
+            
+            var addressableAttribute = structType.GetCustomAttribute<AddressableDataTableAttribute>();
+            if (addressableAttribute == null) return;
+            
+            string address = addressableAttribute.Address ?? dataTable.name;
+            var group = ResourceEditorUtils.GetOrCreateAssetGroup(addressableAttribute.Group);
+            group.AddAsset(dataTable).address = address;
+        }
     }
+    
     public interface IDataTableJsonSerializer
     {
         string Serialize(DataTable dataTable);
         void Deserialize(DataTable dataTable, string jsonData);
     }
+    
+    /// <summary>
+    /// Default json serializer using Unity built-in <see cref="JsonUtility"/>
+    /// </summary>
     public class DataTableJsonSerializer : IDataTableJsonSerializer
     {
         public string Serialize(DataTable dataTable)

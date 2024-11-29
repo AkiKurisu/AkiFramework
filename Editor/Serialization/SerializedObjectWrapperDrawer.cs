@@ -1,8 +1,8 @@
+using Chris.Editor;
 using UnityEngine;
 using UnityEditor;
-using Kurisu.Framework.Editor;
 using Newtonsoft.Json;
-namespace Kurisu.Framework.Serialization.Editor
+namespace Chris.Serialization.Editor
 {
     // Thanks to https://gist.github.com/tomkail/ba4136e6aa990f4dc94e0d39ec6a058c
     public class SerializedObjectWrapperDrawer
@@ -99,7 +99,7 @@ namespace Kurisu.Framework.Serialization.Editor
             {
                 do
                 {
-                    var propertyObject = ReflectionUtility.GetTargetObjectWithProperty(property);
+                    var propertyObject = ReflectionEditorUtility.GetTargetObjectWithProperty(property);
                     if (property.propertyType == SerializedPropertyType.Generic)
                     {
                         EditorGUI.LabelField(startRect, JsonConvert.SerializeObject(propertyObject));

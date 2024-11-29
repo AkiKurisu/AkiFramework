@@ -2,7 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-namespace Kurisu.Framework.Collections
+namespace Chris.Collections
 {
     /// <summary>
     /// Similar to UE TSparseArray.

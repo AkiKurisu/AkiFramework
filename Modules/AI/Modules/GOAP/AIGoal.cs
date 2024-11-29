@@ -1,5 +1,5 @@
 using Kurisu.GOAP;
-namespace Kurisu.Framework.AI.GOAP
+namespace Chris.AI.GOAP
 {
     public abstract class AIGoal : GOAPGoal
     {

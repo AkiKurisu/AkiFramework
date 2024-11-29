@@ -1,4 +1,4 @@
-namespace Kurisu.Framework.Events.Editor
+namespace Chris.Events.Editor
 {
     class EventLogLine
     {

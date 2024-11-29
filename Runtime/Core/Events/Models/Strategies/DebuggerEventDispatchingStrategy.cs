@@ -1,4 +1,4 @@
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     class DebuggerEventDispatchingStrategy : IEventDispatchingStrategy
     {

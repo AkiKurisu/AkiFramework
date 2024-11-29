@@ -1,7 +1,7 @@
 using UnityEngine;
 using Kurisu.AkiBT;
 using Kurisu.GOAP;
-namespace Kurisu.Framework.AI.GOAP
+namespace Chris.AI.GOAP
 {
     [AkiGroup("GOAP")]
     [AkiInfo("Action: Set State of GOAP WorldState")]

@@ -1,9 +1,9 @@
 using System;
 using System.Threading;
-using Kurisu.Framework.Events;
+using Chris.Events;
 using R3;
 using UnityEngine.UI;
-namespace Kurisu.Framework.React
+namespace Chris.React
 {
     public static class ObservableExtensions
     {

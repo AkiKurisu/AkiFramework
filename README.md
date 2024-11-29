@@ -1,10 +1,8 @@
 <div align="center">
 
-# AkiFramework
+# Chris
 
-This is a code collection that i really used in my games, will be update through my development. 
-
-I supposed these code are useful but also not-must-be-included, which is my personal understanding of "Game Framework" should be, so that you can pick code you like and use in your project for free.
+A Unity game framework designed for efficient development.
 
 </div>
 
@@ -18,6 +16,8 @@ I supposed these code are useful but also not-must-be-included, which is my pers
 [Pool](./Docs/Pool.md) 
 > Zero allocation GameObject/Component pooling. 
 
+![Pooling Performance](./Docs/Images/pooling-performance.png)
+
 [Schedulers](./Docs/Schedulers.md) 
 > Zero allocation timer/frame counter. 
 
@@ -27,6 +27,11 @@ I supposed these code are useful but also not-must-be-included, which is my pers
 > Powerful serialization tool for workflow.
 
 ![SerializedType](./Docs/Images/serializedtype.png)
+
+[Resource](./Docs/Resource.md) 
+> Resource loading system, effect system based on Addressables. 
+
+![SoftAssetReference](./Docs/Images/soft_asset_reference.png)
 
 [Data Driven](./Docs/DataDriven.md)
 >Use Unreal-like DataTable workflow in Unity.
@@ -47,15 +52,27 @@ Modules are based on core features.
 ![FieldViewPrime](./Docs/Images/fov-prime.gif)
 
 [Mod](./Docs/Mod.md) 
-> Simple mod system based on Addressables. 
+> Mod workflow based on Addressables. 
 
-[Resource](./Docs/Resource.md) 
-> Resource loading system, effect system based on Addressables. 
+![Mod Exporter](./Docs/Images/mod_exporter.png)
 
 [UI](./Docs/UI.md) 
 > Build UGUI in script easily, useful for creating dynamic setting UI and debug menu.
 
 ![UIPanel](./Docs/Images/ui_panel_view.png)
+
+## Dependencies
+
+```json
+"dependencies": {
+    "com.cysharp.unitask":"2.5.3",
+    "com.unity.addressables": "1.21.0",
+    "com.unity.nuget.newtonsoft-json": "3.2.1",
+    "com.unity.collections": "2.2.1",
+    "com.unity.burst": "1.8.9",
+    "com.unity.mathematics": "1.3.1"
+  }
+```
 
 ## Reference
 
@@ -66,7 +83,6 @@ Modules are based on core features.
 [Unity.UIElements](https://github.com/Unity-Technologies/UnityCsReference/tree/2022.3/ModuleOverrides/com.unity.ui/Core)
 
 [Unity Timer](https://github.com/akbiggs/UnityTimer)
-
 
 ## License
 

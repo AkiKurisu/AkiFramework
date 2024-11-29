@@ -1,9 +1,9 @@
 
 using System;
 using System.Threading;
-using Kurisu.Framework.Events;
+using Chris.Events;
 using R3;
-namespace Kurisu.Framework.React
+namespace Chris.React
 {
     internal sealed class FromEventHandler<T> : Observable<T> where T : EventBase<T>, new()
     {

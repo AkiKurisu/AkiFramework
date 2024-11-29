@@ -1,7 +1,7 @@
 using System;
 using Unity.Collections;
 using UnityEngine;
-namespace Kurisu.Framework.AI.EQS
+namespace Chris.AI.EQS
 {
     /// <summary>
     /// Represents an advanced field of view for AI mentioned in "Naughty Dog: Human Enemy AI In Last of The Us". 
@@ -72,7 +72,7 @@ namespace Kurisu.Framework.AI.EQS
             Physics.Linecast(fromPosition, target, out RaycastHit hit, layerMask);
             if (hit.collider != null)
             {
-                if (Utils.CompareTags(hit.collider, filterTags) == false)
+                if (FrameworkUtils.CompareTags(hit.collider, filterTags) == false)
                 {
                     Debug.DrawLine(hit.point, fromPosition, Color.cyan);
                     isVisible = false;

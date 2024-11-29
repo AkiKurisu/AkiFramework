@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// Generic singleton, use as little as possible

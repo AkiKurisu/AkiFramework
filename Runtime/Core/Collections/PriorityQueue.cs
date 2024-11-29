@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-namespace Kurisu.Framework.Collections
+namespace Chris.Collections
 {
     // From https://visualstudiomagazine.com/articles/2012/11/01/priority-queues-with-c.aspx
     public class PriorityQueue<T> where T : IComparable<T>

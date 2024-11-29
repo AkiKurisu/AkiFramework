@@ -1,12 +1,12 @@
 using System;
-using Kurisu.Framework.Editor;
-using Kurisu.Framework.Serialization;
-using Kurisu.Framework.Serialization.Editor;
+using Chris.Editor;
+using Chris.Serialization;
+using Chris.Serialization.Editor;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
 using UEditor = UnityEditor.Editor;
-namespace Kurisu.Framework.DataDriven.Editor
+namespace Chris.DataDriven.Editor
 {
     /// <summary>
     /// Edit data table in additional EditorWindow instead of Inspector, useful when data row contains a lot of content

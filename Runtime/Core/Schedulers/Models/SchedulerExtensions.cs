@@ -1,6 +1,6 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
-namespace Kurisu.Framework.Schedulers
+namespace Chris.Schedulers
 {
     public static class SchedulerExtensions
     {

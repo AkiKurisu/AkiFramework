@@ -6,7 +6,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Assertions;
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     internal readonly struct EventDebuggerLogCall : IDisposable
     {
@@ -410,7 +410,7 @@ namespace Kurisu.Framework.Events
                 try
                 {
                     Type eventType = Type.GetType(eventBase.EventType);
-                    var getPooledMethod = Utils.GetStaticMethodWithNoParametersInBase(eventType, "GetPooled");
+                    var getPooledMethod = FrameworkUtils.GetStaticMethodWithNoParametersInBase(eventType, "GetPooled");
                     Assert.IsTrue(getPooledMethod != null);
                     newEvent = (EventBase)getPooledMethod.Invoke(null, null);
                     JsonConvert.PopulateObject(eventBase.JsonData, newEvent);

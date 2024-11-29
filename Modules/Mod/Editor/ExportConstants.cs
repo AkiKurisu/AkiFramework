@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.IO;
-namespace Kurisu.Framework.Mod.Editor
+namespace Chris.Mod.Editor
 {
     public class ExportConstants
     {

@@ -1,4 +1,4 @@
-namespace Kurisu.Framework.Tasks
+namespace Chris.Tasks
 {
     public static class TaskExtensions
     {

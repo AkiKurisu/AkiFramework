@@ -1,4 +1,4 @@
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     /// <summary>
     /// Interface for controls that hold a value and can notify when it is changed by user input.

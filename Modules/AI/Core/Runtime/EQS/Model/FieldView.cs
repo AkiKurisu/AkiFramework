@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
-namespace Kurisu.Framework.AI.EQS
+namespace Chris.AI.EQS
 {
     /// <summary>
     /// Represents a field of view for AI. 
@@ -79,7 +79,7 @@ namespace Kurisu.Framework.AI.EQS
                 Physics.Linecast(fromPosition, target, out RaycastHit hit, layerMask);
                 if (hit.collider != null)
                 {
-                    if (Utils.CompareTags(hit.collider, filterTags) == false)
+                    if (FrameworkUtils.CompareTags(hit.collider, filterTags) == false)
                     {
                         Debug.DrawLine(hit.point, fromPosition, Color.cyan);
                         isVisible = false;

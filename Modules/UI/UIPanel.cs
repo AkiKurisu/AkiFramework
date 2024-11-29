@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
+using Chris.Serialization;
 using Cysharp.Threading.Tasks;
-using Kurisu.Framework.Serialization;
 using UnityEngine;
-namespace Kurisu.Framework.UI
+using UnityEngine.Pool;
+namespace Chris.UI
 {
     /// <summary>
     /// Virtual panel item data structure
@@ -88,7 +89,7 @@ namespace Kurisu.Framework.UI
             var items = new PanelItem[initialItems.Length];
             for (var i = 0; i < items.Length; ++i)
             {
-                items[i].Fields = new List<BaseField>();
+                items[i].Fields = ListPool<BaseField>.Get();
                 // use default array order
                 items[i].Order = i;
                 initialItems[i].GetObject().CreatePanelItem(this, ref items[i]);
@@ -104,6 +105,7 @@ namespace Kurisu.Framework.UI
                     panelField.Add(new SpaceField(ItemSpace));
                 }
                 panelField.AddRange(item.Fields);
+                ListPool<BaseField>.Release(item.Fields);
                 isFirst = false;
             }
 

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-namespace Kurisu.Framework.Mod
+namespace Chris.Mod
 {
     /// <summary>
     /// Configuration of mod importer

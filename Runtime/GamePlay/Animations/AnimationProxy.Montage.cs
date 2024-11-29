@@ -1,9 +1,9 @@
 using System;
-using Kurisu.Framework.Schedulers;
+using Chris.Schedulers;
 using UnityEngine;
 using UnityEngine.Animations;
 using UnityEngine.Playables;
-namespace Kurisu.Framework.Animations
+namespace Chris.Animations
 {
     public partial class AnimationProxy
     {

@@ -1,10 +1,10 @@
 # Mod
 
-Simple and efficient mod system based on Addressables. 
+Efficient mod workflow based on Addressables. 
 
 ## Features
 
-Build mods in other project for your game.
+- Build mods in other project for your game.
 
 ## Runtime API
 
@@ -19,9 +19,11 @@ private async UniTaskVoid LoadMod()
 ```
 ## Editor Export
 
-Use Mod Exporter to create new addressable group and build only the mod group you edited.
+Use `Mod Exporter` to create new addressable group and build only the mod group you edited.
 
 You can inherit ``CustomBuilder`` and add it to export config to write mod additional meta data such as game assets sub catalog into `ModInfo` or make a pre-process such as looping the group's addressable entries.
+
+![Mod Exporter](./Images/mod_exporter.png)
 
 ## Build Notice
 

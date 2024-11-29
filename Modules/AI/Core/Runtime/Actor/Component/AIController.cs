@@ -1,8 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Chris.Tasks;
 using Kurisu.AkiBT;
-using Kurisu.Framework.Tasks;
-namespace Kurisu.Framework.AI
+
+namespace Chris.AI
 {
     [RequireComponent(typeof(BlackBoardComponent))]
     public abstract class AIController : ActorController

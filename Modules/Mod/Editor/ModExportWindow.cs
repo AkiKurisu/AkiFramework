@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
-namespace Kurisu.Framework.Mod.Editor
+namespace Chris.Mod.Editor
 {
     public class ModExportWindow : EditorWindow
     {
@@ -71,7 +71,9 @@ namespace Kurisu.Framework.Mod.Editor
                 schema.IncludeInBuild = false;
                 schema.BuildPath.SetVariableByName(AddressableAssetSettingsDefaultObject.Settings, AddressableAssetSettings.kRemoteBuildPath);
                 schema.LoadPath.SetVariableByName(AddressableAssetSettingsDefaultObject.Settings, AddressableAssetSettings.kRemoteLoadPath);
+#pragma warning disable UNT0018 // System.Reflection features in performance critical messages
                 m_UseCustomPaths.SetValue(schema, false);
+#pragma warning restore UNT0018 // System.Reflection features in performance critical messages
             }
             GUI.backgroundColor = new Color(253 / 255f, 163 / 255f, 255 / 255f);
             if (GUILayout.Button("Export", GUILayout.MinWidth(100)))
@@ -89,12 +91,16 @@ namespace Kurisu.Framework.Mod.Editor
         private void DrawExportConfig()
         {
             EditorGUI.BeginChangeCheck();
-            SerializedProperty iterator = exportConfigObject.GetIterator();
-            iterator.NextVisible(true);
-            while (iterator.NextVisible(false))
-            {
-                EditorGUILayout.PropertyField(iterator, true);
-            }
+            GUILayout.BeginHorizontal();
+            GUILayout.BeginVertical();
+            EditorGUILayout.PropertyField(exportConfigObject.FindProperty("authorName"), true);
+            EditorGUILayout.PropertyField(exportConfigObject.FindProperty("modName"), true);
+            EditorGUILayout.PropertyField(exportConfigObject.FindProperty("version"), true);
+            GUILayout.EndVertical();
+            exportConfig.modIcon = (Texture2D)EditorGUILayout.ObjectField("Icon", exportConfig.modIcon, typeof(Texture2D), false);
+            GUILayout.EndHorizontal();
+            EditorGUILayout.PropertyField(exportConfigObject.FindProperty("description"), true);
+            EditorGUILayout.PropertyField(exportConfigObject.FindProperty("customBuilders"), true);
             if (EditorGUI.EndChangeCheck())
             {
                 exportConfigObject.ApplyModifiedProperties();

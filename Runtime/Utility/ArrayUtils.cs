@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-namespace Kurisu.Framework
+namespace Chris
 {
     // Code from UnityEditor.ArrayUtility
     // Helpers for builtin arrays ...

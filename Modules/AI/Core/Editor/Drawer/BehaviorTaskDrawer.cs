@@ -1,9 +1,9 @@
+using Chris.Editor;
+using Chris.Tasks;
 using Kurisu.AkiBT.Editor;
-using Kurisu.Framework.Editor;
 using UnityEditor;
-using Kurisu.Framework.Tasks;
 using UnityEngine;
-namespace Kurisu.Framework.AI.Editor
+namespace Chris.AI.Editor
 {
     [CustomPropertyDrawer(typeof(BehaviorTask))]
     public class BehaviorTaskDrawer : PropertyDrawer
@@ -29,7 +29,7 @@ namespace Kurisu.Framework.AI.Editor
             EditorGUI.PropertyField(rect, property.FindPropertyRelative("behaviorTreeAsset"));
             rect.y += rect.height + EditorGUIUtility.standardVerticalSpacing;
             GUI.enabled = Application.isPlaying;
-            var task = ReflectionUtility.GetTargetObjectWithProperty(property) as BehaviorTask;
+            var task = ReflectionEditorUtility.GetTargetObjectWithProperty(property) as BehaviorTask;
             var color = GUI.backgroundColor;
             GUI.backgroundColor = GetStatusColor(task.GetStatus());
             if (GUI.Button(rect, "Debug Task Behavior"))

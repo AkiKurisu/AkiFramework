@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
-using Kurisu.Framework.Editor;
-namespace Kurisu.Framework.Serialization.Editor
+using Chris.Editor;
+
+namespace Chris.Serialization.Editor
 {
     // EditorWindow is modified from R3.Unity
     public class SerializationDebuggerEditorWindow : EditorWindow

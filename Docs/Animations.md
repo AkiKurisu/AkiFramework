@@ -4,7 +4,9 @@ Create dynamic animation sequence and cutscene from script based on Playables.
 
 ## Features
 
-- Crossfade multi `RuntimeAnimatorController` and `AnimationClip`.
+- Use `AnimationProxy` to play montage by `RuntimeAnimatorController` and `AnimationClip`.
+- Support multi layers and events.
+- Use `AnimationPreviewer` to preview `AnimationClip` in Editor Mode and Play Mode.
 
 ## AnimationProxy Example
 
@@ -48,3 +50,7 @@ public class SequenceExample : MonoBehaviour
     }
 }
 ```
+
+## Debugger
+
+Recommend to use [Unity PlayableGraph Monitor](`https://github.com/SolarianZ/UnityPlayableGraphMonitorTool`)

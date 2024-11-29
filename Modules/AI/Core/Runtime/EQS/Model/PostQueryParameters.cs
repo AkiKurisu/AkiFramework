@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Profiling;
 using UnityEngine;
-namespace Kurisu.Framework.AI.EQS
+namespace Chris.AI.EQS
 {
     /// <summary>
     /// Reference article: "Naughty Dog: Human Enemy AI In Last of The Us" with only runtime raycast detect.

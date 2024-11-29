@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using Toolbar = UnityEditor.UIElements.Toolbar;
 using Object = UnityEngine.Object;
-namespace Kurisu.Framework.Events.Editor
+namespace Chris.Events.Editor
 {
     internal interface ICoordinatorChoice
     {

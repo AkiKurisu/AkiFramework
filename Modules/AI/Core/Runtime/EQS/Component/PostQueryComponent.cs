@@ -1,7 +1,7 @@
 using System;
 using Unity.Mathematics;
 using UnityEngine;
-namespace Kurisu.Framework.AI.EQS
+namespace Chris.AI.EQS
 {
     /// <summary>
     /// Post Query data provider associated with an Actor as component
@@ -64,7 +64,7 @@ namespace Kurisu.Framework.AI.EQS
         /// <returns></returns>
         public ReadOnlySpan<float3> GetPosts()
         {
-            return system.GetPosts(GetActor().GetActorHandle());
+            return system.GetPosts(GetActor().GetActorHandle()).AsReadOnlySpan();
         }
     }
 }

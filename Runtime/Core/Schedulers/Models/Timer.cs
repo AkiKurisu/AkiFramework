@@ -1,7 +1,8 @@
 using UnityEngine;
 using System;
-using Kurisu.Framework.Pool;
-namespace Kurisu.Framework.Schedulers
+using Chris.Pool;
+
+namespace Chris.Schedulers
 {
     /// <summary>
     /// Allows you to run events on a delay without the use of <see cref="Coroutine"/>s
@@ -77,8 +78,8 @@ namespace Kurisu.Framework.Schedulers
            TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool useRealTime = false)
         {
             Timer timer = pool.Get();
-            timer.Init(SchedulerRunner.Instance.NewHandle(), duration, ref onComplete, ref onUpdate, isLooped, useRealTime);
-            SchedulerRunner.Instance.Register(timer, tickFrame, onComplete.IsValid() ? onComplete.GetDelegate() : onUpdate.GetDelegate());
+            timer.Init(SchedulerRunner.Get().NewHandle(), duration, ref onComplete, ref onUpdate, isLooped, useRealTime);
+            SchedulerRunner.Get().Register(timer, tickFrame, onComplete.IsValid() ? onComplete.GetDelegate() : onUpdate.GetDelegate());
             return timer;
         }
         #endregion
@@ -94,7 +95,7 @@ namespace Kurisu.Framework.Schedulers
         }
         public void Dispose()
         {
-            SchedulerRunner.Instance.Unregister(this, _onComplete.IsValid() ? _onComplete.GetDelegate() : _onUpdate.GetDelegate());
+            SchedulerRunner.Get().Unregister(this, _onComplete.IsValid() ? _onComplete.GetDelegate() : _onUpdate.GetDelegate());
             _onUpdate = default;
             _onComplete = default;
             pool.Release(this);

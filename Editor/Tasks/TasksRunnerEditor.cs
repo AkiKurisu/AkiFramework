@@ -1,9 +1,10 @@
 using UnityEditor;
 using UnityEngine;
-namespace Kurisu.Framework.Tasks.Editor
+using UEditor = UnityEditor.Editor;
+namespace Chris.Tasks.Editor
 {
     [CustomEditor(typeof(TaskRunner))]
-    public class TaskRunnerEditor : UnityEditor.Editor
+    public class TaskRunnerEditor : UEditor
     {
         private TaskRunner Manager => target as TaskRunner;
         private int ManagedTaskCount => Manager._tasks.Count;

@@ -1,5 +1,6 @@
-using Kurisu.Framework.Schedulers;
-namespace Kurisu.Framework.Tasks
+using Chris.Schedulers;
+
+namespace Chris.Tasks
 {
     /// <summary>
     /// Represent a delay task use scheduler so that can be tracked

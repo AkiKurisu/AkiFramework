@@ -3,7 +3,7 @@ using UnityEditor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-namespace Kurisu.Framework.Editor
+namespace Chris.Editor
 {
     [CustomPropertyDrawer(typeof(PopupSelector), true)]
     public class PopupSelectorDrawer : PropertyDrawer

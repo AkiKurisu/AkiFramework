@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Kurisu.Framework.Pool;
-namespace Kurisu.Framework.Events
+using Chris.Pool;
+
+namespace Chris.Events
 {
     internal class PropagationPaths
     {

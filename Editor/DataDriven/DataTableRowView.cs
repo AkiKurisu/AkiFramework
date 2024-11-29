@@ -5,10 +5,12 @@ using System.Reflection;
 using UnityEngine;
 using UnityEditor;
 using UnityEditorInternal;
-using Kurisu.Framework.Serialization;
-using Kurisu.Framework.Serialization.Editor;
 using System.Collections.ObjectModel;
-namespace Kurisu.Framework.DataDriven.Editor
+using Chris.Serialization;
+using Chris.Serialization.Editor;
+using Chris.Editor;
+
+namespace Chris.DataDriven.Editor
 {
     /// <summary>
     /// GUI class for drawing DataTable rows
@@ -16,41 +18,51 @@ namespace Kurisu.Framework.DataDriven.Editor
     public class DataTableRowView
     {
         private const int ColumSpace = 5;
-        private ReorderableList reorderableList;
+        
+        private ReorderableList _reorderableList;
+        
         public DataTable Table { get; }
-        private SerializedObject serializedObject;
-        private int selectIndex;
-        public bool ReadOnly { get; set; } = false;
+        
+        private SerializedObject _serializedObject;
+        
+        private int _selectIndex;
+        
+        public bool ReadOnly { get; set; }
+                
+        private static readonly int[] DefaultIndices = Array.Empty<int>();
+        
         public DataTableRowView(DataTable dataTable)
         {
             Table = dataTable;
         }
+        
         public void DrawGUI()
         {
-            serializedObject = new SerializedObject(Table);
-            DrawGUI(serializedObject);
-            serializedObject.Dispose();
+            _serializedObject = new SerializedObject(Table);
+            DrawGUI(_serializedObject);
+            _serializedObject.Dispose();
         }
+        
         public void DrawGUI(SerializedObject serializedObject)
         {
-            this.serializedObject = serializedObject;
+            this._serializedObject = serializedObject;
             var rowsProp = serializedObject.FindProperty("m_rows");
             bool canEdit = true;
             EditorGUI.BeginChangeCheck();
             var rowStructType = Table.GetRowStructType();
             if (rowStructType != null)
             {
-                var header = GetSerializedFieldsName(rowStructType);
+                var header = ReflectionUtility.GetSerializedFieldsName(rowStructType);
                 header.Insert(0, "Row Id");
                 var rows = Table.GetAllRows();
-                reorderableList ??= new ReorderableList(rows, rowStructType, true, true, true, true);
-                if (selectIndex >= 0)
+                _reorderableList ??= new ReorderableList(rows, rowStructType, true, true, true, true);
+                if (_selectIndex >= 0)
                 {
-                    SelectRow(selectIndex);
-                    selectIndex = -1;
+                    SelectRow(_selectIndex);
+                    _selectIndex = -1;
                 }
-                reorderableList.multiSelect = true;
-                reorderableList.elementHeightCallback = (int index) =>
+                _reorderableList.multiSelect = true;
+                _reorderableList.elementHeightCallback = (int index) =>
                 {
                     var prop = rowsProp.GetArrayElementAtIndex(index);
                     if (ReadOnly)
@@ -59,11 +71,11 @@ namespace Kurisu.Framework.DataDriven.Editor
                     }
                     return GetDataTableRowHeight(rowStructType, prop);
                 };
-                reorderableList.drawHeaderCallback = (Rect rect) =>
+                _reorderableList.drawHeaderCallback = (Rect rect) =>
                 {
                     DrawDataTableHeader(rect, header);
                 };
-                reorderableList.drawElementCallback = (Rect rect, int index, bool selected, bool focused) =>
+                _reorderableList.drawElementCallback = (Rect rect, int index, bool selected, bool focused) =>
                 {
                     var prop = rowsProp.GetArrayElementAtIndex(index);
                     if (ReadOnly)
@@ -75,14 +87,14 @@ namespace Kurisu.Framework.DataDriven.Editor
                         DrawDataTableRow(rect, header.Count, rowStructType, prop);
                     }
                 };
-                reorderableList.onAddCallback = list =>
+                _reorderableList.onAddCallback = list =>
                 {
                     Table.AddRow(Table.NewRowId(), (IDataTableRow)Activator.CreateInstance(rowStructType));
                     canEdit = false;
                     RequestDataTableUpdate();
                     GUIUtility.ExitGUI();
                 };
-                reorderableList.onRemoveCallback = list =>
+                _reorderableList.onRemoveCallback = list =>
                 {
                     if (rows.Length == 0) return;
 
@@ -96,13 +108,13 @@ namespace Kurisu.Framework.DataDriven.Editor
                     RequestDataTableUpdate();
                     GUIUtility.ExitGUI();
                 };
-                reorderableList.onReorderCallbackWithDetails = (list, oldIndex, newIndex) =>
+                _reorderableList.onReorderCallbackWithDetails = (list, oldIndex, newIndex) =>
                 {
                     Table.ReorderRow(oldIndex, newIndex);
                     canEdit = false;
                     RequestDataTableUpdate();
                 };
-                reorderableList.DoLayoutList();
+                _reorderableList.DoLayoutList();
             }
 
             Event evt = Event.current;
@@ -125,26 +137,28 @@ namespace Kurisu.Framework.DataDriven.Editor
                 RequestDataTableUpdate();
             }
         }
-        private static readonly int[] defaultIndices = new int[0];
+        
         /// <summary>
         /// Get row view selected indices
         /// </summary>
         /// <returns></returns>
         public ReadOnlyCollection<int> GetSelectedIndices()
         {
-            if (reorderableList == null) return new ReadOnlyCollection<int>(defaultIndices);
-            return reorderableList.selectedIndices;
+            if (_reorderableList == null) return new ReadOnlyCollection<int>(DefaultIndices);
+            return _reorderableList.selectedIndices;
         }
+        
         /// <summary>
         /// Get row view selected rows
         /// </summary>
         /// <returns></returns>
         public IDataTableRow[] GetSelectedRows()
         {
-            if (reorderableList == null) return new IDataTableRow[0];
+            if (_reorderableList == null) return new IDataTableRow[0];
             var rows = Table.GetAllRows();
-            return reorderableList.selectedIndices.Select(x => rows[x]).ToArray();
+            return _reorderableList.selectedIndices.Select(x => rows[x]).ToArray();
         }
+        
         /// <summary>
         /// Get row view selected rows in serialized property format
         /// </summary>
@@ -153,29 +167,32 @@ namespace Kurisu.Framework.DataDriven.Editor
         {
             var rows = Table.GetAllRows();
             var rowsProp = serializedObject.FindProperty("m_rows");
-            return reorderableList.selectedIndices.Select(x => rowsProp.GetArrayElementAtIndex(x)).ToArray();
+            return _reorderableList.selectedIndices.Select(x => rowsProp.GetArrayElementAtIndex(x)).ToArray();
         }
+        
         protected void RequestDataTableUpdate()
         {
             DataTableEditorUtils.OnDataTablePreUpdate?.Invoke(Table);
             Rebuild();
             DataTableEditorUtils.OnDataTablePostUpdate?.Invoke(Table);
         }
+        
         /// <summary>
         /// Select target row in view
         /// </summary>
         /// <param name="index"></param>
         public void SelectRow(int index)
         {
-            if (reorderableList == null)
+            if (_reorderableList == null)
             {
                 // Cache pre-select index when list view is not prepared
-                selectIndex = index;
+                _selectIndex = index;
                 return;
             }
-            if (selectIndex < reorderableList.count)
-                reorderableList.Select(index);
+            if (_selectIndex < _reorderableList.count)
+                _reorderableList.Select(index);
         }
+        
         /// <summary>
         /// Rebuild rows view
         /// </summary>
@@ -184,76 +201,8 @@ namespace Kurisu.Framework.DataDriven.Editor
             // ensure row type is matched with row struct before drawing
             Table.InternalUpdate();
             // rebuild reorderable list next editor frame
-            reorderableList = null;
-            serializedObject.Update();
-        }
-        /// <summary>
-        /// Get all fields of type that Unity can serialize
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        private static List<string> GetSerializedFieldsName(Type type)
-        {
-            List<FieldInfo> fieldInfos = new();
-            GetAllSerializableFields(type, fieldInfos);
-            return fieldInfos.Select(x => x.Name)
-                            .ToList();
-        }
-        private static void GetAllSerializableFields(Type type, List<FieldInfo> fieldInfos)
-        {
-            if (type.BaseType != null)
-            {
-                GetAllSerializableFields(type.BaseType, fieldInfos);
-            }
-
-            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-            foreach (FieldInfo field in fields)
-            {
-                if (!ValidateSerializedField(field))
-                {
-                    continue;
-                }
-
-                fieldInfos.Add(field);
-            }
-        }
-
-        private static bool ValidateSerializedField(FieldInfo field)
-        {
-            if (field.IsStatic) return false;
-
-            if (field.IsInitOnly) return false;
-
-            if (!field.IsPublic && !Attribute.IsDefined(field, typeof(SerializeField), false)) return false;
-
-            if (!field.FieldType.IsSerializable && !typeof(UnityEngine.Object).IsAssignableFrom(field.FieldType)
-                && !field.FieldType.IsPrimitive && !field.FieldType.IsEnum
-                && !typeof(List<>).IsAssignableFrom(field.FieldType) && !field.FieldType.IsArray
-                && !field.FieldType.IsGenericType
-                && !Attribute.IsDefined(field.FieldType, typeof(SerializableAttribute), false)
-                && !IsUnityBuiltInTypes(field.FieldType))
-                return false;
-
-            return true;
-        }
-
-        private static bool IsUnityBuiltInTypes(Type type)
-        {
-            if (type.Equals(typeof(AnimationCurve))) return true;
-            else if (type.Equals(typeof(Bounds))) return true;
-            else if (type.Equals(typeof(BoundsInt))) return true;
-            else if (type.Equals(typeof(Color))) return true;
-            else if (type.Equals(typeof(Enum))) return true;
-            else if (type.Equals(typeof(UnityEngine.Object))) return true;
-            else if (type.Equals(typeof(Quaternion))) return true;
-            else if (type.Equals(typeof(Rect))) return true;
-            else if (type.Equals(typeof(RectInt))) return true;
-            else if (type.Equals(typeof(Vector2))) return true;
-            else if (type.Equals(typeof(Vector2Int))) return true;
-            else if (type.Equals(typeof(Vector3))) return true;
-            else if (type.Equals(typeof(Vector3Int))) return true;
-            else if (type.Equals(typeof(Vector4))) return true;
-            return false;
+            _reorderableList = null;
+            _serializedObject.Update();
         }
 
         private void DrawDataTableRow(Rect rect, int columNum, Type elementType, SerializedProperty property)

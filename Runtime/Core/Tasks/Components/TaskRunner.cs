@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using Kurisu.Framework.Events;
-using Kurisu.Framework.React;
+using Chris.Events;
+using Chris.React;
 using UnityEngine;
 using R3;
-namespace Kurisu.Framework.Tasks
+namespace Chris.Tasks
 {
     internal class TaskRunner : MonoBehaviour
     {

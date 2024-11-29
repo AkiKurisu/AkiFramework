@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace Kurisu.Framework.Mod.Editor
+namespace Chris.Mod.Editor
 {
     public abstract class CustomBuilder : ScriptableObject, IModBuilder
     {

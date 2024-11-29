@@ -1,5 +1,5 @@
 using System;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// Notify framework stack trace to trace frame use this method or constructor
@@ -7,6 +7,6 @@ namespace Kurisu.Framework
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Constructor, Inherited = false, AllowMultiple = false)]
     public sealed class StackTraceFrameAttribute : Attribute
     {
-        public StackTraceFrameAttribute() { }
+
     }
 }

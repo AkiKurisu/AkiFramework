@@ -1,6 +1,6 @@
 using System.IO;
 using UnityEngine;
-namespace Kurisu.Framework.Mod
+namespace Chris.Mod
 {
         public class ImportConstants
         {

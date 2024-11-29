@@ -1,2 +1,2 @@
 using System.Runtime.CompilerServices;
-[assembly: InternalsVisibleTo("Kurisu.Framework.AI.Editor")]
+[assembly: InternalsVisibleTo("Chris.AI.Editor")]

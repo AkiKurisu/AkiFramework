@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Kurisu.Framework.Pool;
+using Chris.Pool;
 using Newtonsoft.Json;
 using UnityEngine;
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     /// <summary>
     /// The base class for all events.  

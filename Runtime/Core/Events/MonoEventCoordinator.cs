@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-namespace Kurisu.Framework.Events
+namespace Chris.Events
 {
     public enum MonoDispatchType
     {

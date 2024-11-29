@@ -2,7 +2,11 @@
 
 Use Unreal-like DataTable workflow in Unity.
 
-## Example
+## Customize Data Row
+
+Implement `IDataTableRow` and add `[Serializable]` attribute.
+
+### Example
 
 ```C#
 using System;
@@ -20,7 +24,53 @@ public class MyDataRow : IDataTableRow
     public string name;
 }
 ```
+## Runtime Loading
 
+Recommend to implement `DataTableManager<T>` for managing DataTable.
+
+Use `await DataTableManager.InitializeAsync()` to initialize managers at start of your game.
+
+Or enable `Initialize Managers` in `AkiFrameworkSettings` to initialize managers before scene load automatically.
+
+### Example
+
+```C#
+public class MyDataTableManager : DataTableManager<MyDataTableManager>
+{
+    public MyDataTableManager(object _) : base(_)
+    {
+    }
+
+    private const string TableKey = "MyDataTable";
+
+    protected sealed override async UniTask Initialize(bool sync)
+    {
+        try
+        {
+            if (sync)
+            {
+                ResourceSystem.LoadAssetAsync<DataTable>(TableKey, (x) =>
+                {
+                    RegisterDataTable(TableKey, x);
+                }).WaitForCompletion();
+                return;
+            }
+            await ResourceSystem.LoadAssetAsync<DataTable>(TableKey, (x) =>
+            {
+                RegisterDataTable(TableKey, x);
+            });
+        }
+        catch (InvalidResourceRequestException)
+        {
+
+        }
+    }
+    public DataTable GetDataTable()
+    {
+        return GetDataTable(TableKey);
+    }
+}
+```
 
 ## Editor
 

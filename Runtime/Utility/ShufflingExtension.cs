@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// Shuffling extension used for card game

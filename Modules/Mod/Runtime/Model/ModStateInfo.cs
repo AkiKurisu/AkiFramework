@@ -1,5 +1,5 @@
 using System;
-namespace Kurisu.Framework.Mod
+namespace Chris.Mod
 {
     /// <summary>
     /// Status of installed mod

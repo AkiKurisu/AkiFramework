@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Kurisu.Framework.Collections;
-using Kurisu.Framework.Pool;
+using Chris.Collections;
+using Chris.Pool;
 using Unity.Profiling;
 using UnityEngine;
-namespace Kurisu.Framework.Schedulers
+namespace Chris.Schedulers
 {
     /// <summary>
     /// Manages updating all the <see cref="IScheduled"/> tasks that are running in the scene.
@@ -98,11 +98,10 @@ namespace Kurisu.Framework.Schedulers
         private bool isDestroyed;
         private bool isGateOpen;
         private int lastFrame;
-        public static SchedulerRunner Instance => instance != null ? instance : GetInstance();
         public static bool IsInitialized => instance != null;
         private static SchedulerRunner instance;
         private static readonly ProfilerMarker UpdateStepPM = new("SchedulerRunner.UpdateAll.UpdateStep");
-        private static SchedulerRunner GetInstance()
+        public static SchedulerRunner Get()
         {
 #if UNITY_EDITOR
             if (!Application.isPlaying)

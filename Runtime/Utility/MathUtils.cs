@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
-namespace Kurisu.Framework
+namespace Chris
 {
     /// <summary>
     /// Utils for Mathematics
