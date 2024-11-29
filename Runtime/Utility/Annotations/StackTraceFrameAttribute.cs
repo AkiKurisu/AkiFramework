@@ -7,6 +7,6 @@ namespace Chris
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Constructor, Inherited = false, AllowMultiple = false)]
     public sealed class StackTraceFrameAttribute : Attribute
     {
-        public StackTraceFrameAttribute() { }
+
     }
 }

@@ -4,7 +4,8 @@ namespace Chris
 {
     internal class IOCContainer
     {
-        private readonly Dictionary<Type, object> instances = new();
+        private readonly Dictionary<Type, object> _instances = new();
+        
         /// <summary>
         /// Register instance
         /// </summary>
@@ -13,15 +14,9 @@ namespace Chris
         public void Register<T>(T instance)
         {
             var type = typeof(T);
-            if (instances.ContainsKey(type))
-            {
-                instances[type] = instance;
-            }
-            else
-            {
-                instances.Add(type, instance);
-            }
+            _instances[type] = instance;
         }
+        
         /// <summary>
         /// UnRegister instance
         /// </summary>
@@ -30,11 +25,12 @@ namespace Chris
         public void Unregister<T>(T instance)
         {
             var type = typeof(T);
-            if (instances.ContainsKey(type) && instances[type].Equals(instance))
+            if (_instances.ContainsKey(type) && _instances[type].Equals(instance))
             {
-                instances.Remove(type);
+                _instances.Remove(type);
             }
         }
+        
         /// <summary>
         /// Get registered instance
         /// </summary>
@@ -42,18 +38,19 @@ namespace Chris
         public T Resolve<T>() where T : class
         {
             var type = typeof(T);
-            if (instances.TryGetValue(type, out object obj))
+            if (_instances.TryGetValue(type, out var obj))
             {
                 return obj as T;
             }
             return null;
         }
+        
         /// <summary>
         /// Clear registered instances
         /// </summary>
         public void Clear()
         {
-            instances.Clear();
+            _instances.Clear();
         }
     }
 }

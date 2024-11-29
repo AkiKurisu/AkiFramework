@@ -5,8 +5,8 @@ using UnityEngine;
 using UnityEngine.UIElements;
 namespace Chris.Editor
 {
-    [FilePath("ProjectSettings/AkiFrameworkSettings.asset", FilePathAttribute.Location.ProjectFolder)]
-    public class AkiFrameworkSettings : ScriptableSingleton<AkiFrameworkSettings>
+    [FilePath("ProjectSettings/ChrisSettings.asset", FilePathAttribute.Location.ProjectFolder)]
+    public class ChrisSettings : ScriptableSingleton<ChrisSettings>
     {
         public bool SchdulerStackTrace = true;
         
@@ -22,24 +22,36 @@ namespace Chris.Editor
         }
     }
 
-    internal class AkiFrameworkSettingsProvider : SettingsProvider
+    internal class ChrisSettingsProvider : SettingsProvider
     {
-        private SerializedObject settingsObject;
+        private SerializedObject _settingsObject;
         private class Styles
         {
             public static GUIContent s_StackTraceScheduler = new("Stack Trace", "Allow trace scheduled task in editor");
+            
             public static GUIContent s_DataTableJsonSerializer = new("Json Serializer", "Set DataTable json serializer type");
+            
             public static GUIContent s_InitializeDataTableManagerOnLoad = new("Initialize Managers", "Initialize all DataManager instances before scene loaded");
+            
             public static GUIContent s_InlineRowReadOnly = new("Inline Row ReadOnly", "Enable to let DataTableRow in inspector list view readonly");
-
         }
-        public AkiFrameworkSettingsProvider(string path, SettingsScope scope = SettingsScope.User) : base(path, scope) { }
+        public ChrisSettingsProvider(string path, SettingsScope scope = SettingsScope.User) : base(path, scope) { }
+        
         private const string StackTraceSchedulerDisableSymbol = "AF_SCHEDULER_STACK_TRACE_DISABLE";
+        
         private const string InitializeDataTableManagerOnLoadSymbol = "AF_INITIALIZE_DATATABLE_MANAGER_ON_LOAD";
-        private AkiFrameworkSettings settings;
+        
+        private ChrisSettings _settings;
+        
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
-            settingsObject = new(settings = AkiFrameworkSettings.instance);
+            if(ChrisSettings.instance.DataTableJsonSerializer.GetObjectType() == null)
+            {
+                ChrisSettings.instance.DataTableJsonSerializer =
+                    SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
+                ChrisSettings.SaveSettings();
+            }  
+            _settingsObject = new(_settings = ChrisSettings.instance);
         }
         public override void OnGUI(string searchContext)
         {
@@ -50,14 +62,14 @@ namespace Chris.Editor
         {
             GUILayout.BeginVertical("Scheduler Settings", GUI.skin.box);
             GUILayout.Space(EditorGUIUtility.singleLineHeight);
-            EditorGUILayout.PropertyField(settingsObject.FindProperty(nameof(AkiFrameworkSettings.SchdulerStackTrace)), Styles.s_StackTraceScheduler);
-            if (settingsObject.ApplyModifiedPropertiesWithoutUndo())
+            EditorGUILayout.PropertyField(_settingsObject.FindProperty(nameof(ChrisSettings.SchdulerStackTrace)), Styles.s_StackTraceScheduler);
+            if (_settingsObject.ApplyModifiedPropertiesWithoutUndo())
             {
-                if (settings.SchdulerStackTrace)
+                if (_settings.SchdulerStackTrace)
                     ScriptingSymbol.RemoveScriptingSymbol(StackTraceSchedulerDisableSymbol);
                 else
                     ScriptingSymbol.AddScriptingSymbol(StackTraceSchedulerDisableSymbol);
-                AkiFrameworkSettings.SaveSettings();
+                ChrisSettings.SaveSettings();
             }
             GUILayout.EndVertical();
         }
@@ -65,27 +77,27 @@ namespace Chris.Editor
         {
             GUILayout.BeginVertical("DataTable Settings", GUI.skin.box);
             GUILayout.Space(EditorGUIUtility.singleLineHeight);
-            EditorGUILayout.PropertyField(settingsObject.FindProperty(nameof(AkiFrameworkSettings.DataTableJsonSerializer)), Styles.s_DataTableJsonSerializer);
-            EditorGUILayout.PropertyField(settingsObject.FindProperty(nameof(AkiFrameworkSettings.InitializeDataTableManagerOnLoad)), Styles.s_InitializeDataTableManagerOnLoad);
-            EditorGUILayout.PropertyField(settingsObject.FindProperty(nameof(AkiFrameworkSettings.InlineRowReadOnly)), Styles.s_InlineRowReadOnly);
-            if (settingsObject.ApplyModifiedPropertiesWithoutUndo())
+            EditorGUILayout.PropertyField(_settingsObject.FindProperty(nameof(ChrisSettings.DataTableJsonSerializer)), Styles.s_DataTableJsonSerializer);
+            EditorGUILayout.PropertyField(_settingsObject.FindProperty(nameof(ChrisSettings.InitializeDataTableManagerOnLoad)), Styles.s_InitializeDataTableManagerOnLoad);
+            EditorGUILayout.PropertyField(_settingsObject.FindProperty(nameof(ChrisSettings.InlineRowReadOnly)), Styles.s_InlineRowReadOnly);
+            if (_settingsObject.ApplyModifiedPropertiesWithoutUndo())
             {
-                if (AkiFrameworkSettings.instance.DataTableJsonSerializer.GetObjectType() == null)
+                if (ChrisSettings.instance.DataTableJsonSerializer.GetObjectType() == null)
                 {
-                    AkiFrameworkSettings.instance.DataTableJsonSerializer = SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
+                    ChrisSettings.instance.DataTableJsonSerializer = SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
                 }
-                if (settings.InitializeDataTableManagerOnLoad)
+                if (_settings.InitializeDataTableManagerOnLoad)
                     ScriptingSymbol.AddScriptingSymbol(InitializeDataTableManagerOnLoadSymbol);
                 else
                     ScriptingSymbol.RemoveScriptingSymbol(InitializeDataTableManagerOnLoadSymbol);
-                AkiFrameworkSettings.SaveSettings();
+                ChrisSettings.SaveSettings();
             }
             GUILayout.EndVertical();
         }
         [SettingsProvider]
         public static SettingsProvider CreateSettingsProvider()
         {
-            var provider = new AkiFrameworkSettingsProvider("Project/AkiFramework Settings", SettingsScope.Project)
+            var provider = new ChrisSettingsProvider("Project/Chris Settings", SettingsScope.Project)
             {
                 keywords = GetSearchKeywordsFromGUIContentProperties<Styles>()
             };

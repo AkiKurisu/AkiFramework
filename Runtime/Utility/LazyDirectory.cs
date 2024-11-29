@@ -3,23 +3,25 @@ namespace Chris
 {
     public class LazyDirectory
     {
-        private readonly string path;
-        private bool initialized;
+        private readonly string _path;
+        
+        private bool _initialized;
+        
         public LazyDirectory(string path)
         {
-            this.path = path;
+            _path = path;
         }
+        
         public string GetPath()
         {
-            if (initialized)
+            if (!_initialized) return _path;
+            
+            if (!Directory.Exists(_path))
             {
-                if (!Directory.Exists(path))
-                {
-                    Directory.CreateDirectory(path);
-                }
-                initialized = true;
+                Directory.CreateDirectory(_path);
             }
-            return path;
+            _initialized = true;
+            return _path;
         }
     }
 }

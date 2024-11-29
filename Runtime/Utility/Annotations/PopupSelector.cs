@@ -5,27 +5,30 @@ namespace Chris
     [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
     public class PopupSelector : PropertyAttribute
     {
-        private readonly Type mType;
-        private readonly string mTitle;
+        public Type PopupType { get; }
+        
+        public string PopupTitle  { get; }
+        
         public PopupSelector(Type type)
         {
-            mType = type;
+            PopupType = type;
         }
+        
         public PopupSelector(Type type, string title)
         {
-            mType = type;
-            mTitle = title;
+            PopupType = type;
+            PopupTitle = title;
         }
+        
         public PopupSelector()
         {
-            mType = typeof(PopupSet);
+            PopupType = typeof(PopupSet);
         }
+        
         public PopupSelector(string title)
         {
-            mType = typeof(PopupSet);
-            mTitle = title;
+            PopupType = typeof(PopupSet);
+            PopupTitle = title;
         }
-        public Type PopupType => mType;
-        public string PopupTitle => mTitle;
     }
 }
