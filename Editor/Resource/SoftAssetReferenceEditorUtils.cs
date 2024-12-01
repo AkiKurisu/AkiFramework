@@ -120,7 +120,7 @@ namespace Chris.Resource.Editor
         public static AddressableAssetGroup GetOrCreateAssetGroup(string groupName)
         {
             var group = AddressableAssetSettingsDefaultObject.Settings.groups.FirstOrDefault(x => x.name == groupName);
-            if (group != null) return group;
+            if (group) return group;
             group = AddressableAssetSettingsDefaultObject.Settings.CreateGroup(groupName, false, false, true, AddressableAssetSettingsDefaultObject.Settings.DefaultGroup.Schemas);
             // Ensure address is included in build
             BundledAssetGroupSchema infoSchema = group.GetSchema<BundledAssetGroupSchema>();

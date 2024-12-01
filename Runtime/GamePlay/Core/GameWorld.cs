@@ -122,25 +122,26 @@ namespace Chris
         private void OnDestroy()
         {
             _isDestroyed = true;
-            if (_isPinned)
-            {
-                _isPinned = false;
-            }
-            else
-            {
-                _isInPendingDestroyed = true;
-                _inPendingDestroyedFrame = Time.frameCount;
-            }
+            _isInPendingDestroyed = true;
+            _inPendingDestroyedFrame = Time.frameCount;
             _subsystemCollection?.Dispose();
             OnActorsUpdate.Dispose();
         }
 
         /// <summary>
-        /// Make world valid in next frame
+        /// Make world always valid
         /// </summary>
         internal static void Pin()
         {
             _isPinned = true;
+        }
+        
+        /// <summary>
+        /// Reverse pin
+        /// </summary>
+        internal static void UnPin()
+        {
+            _isPinned = false;
         }
 
         /// <summary>
@@ -150,7 +151,7 @@ namespace Chris
         public static bool IsValid()
         {
             if (_current) return !_current._isDestroyed;
-
+            
             if (_isInPendingDestroyed)
             {
                 if (Time.frameCount > _inPendingDestroyedFrame)
@@ -158,6 +159,12 @@ namespace Chris
                     _isInPendingDestroyed = false;
                 }
             }
+            
+            if (_isPinned)
+            {
+                return true;
+            }
+            
             return !_isInPendingDestroyed;
         }
         
