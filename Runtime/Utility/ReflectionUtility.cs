@@ -3,11 +3,132 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using Object = UnityEngine.Object;
+using UnityEngine.Assertions;
+using UObject = UnityEngine.Object;
 namespace Chris
 {
     public static class ReflectionUtility
     {
+        /// <summary>
+        /// Gets all fields from an object and its hierarchy inheritance.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <param name="flags">The flags.</param>
+        /// <returns>All fields of the type.</returns>
+        public static List<FieldInfo> GetAllFields(this Type type, BindingFlags flags)
+        {
+            // Early exit if Object type
+            if (type == typeof(object))
+            {
+                return new List<FieldInfo>();
+            }
+
+            // Recursive call
+            var fields = type.BaseType.GetAllFields(flags);
+            fields.AddRange(type.GetFields(flags | BindingFlags.DeclaredOnly));
+            return fields;
+        }
+
+        /// <summary>
+        /// Perform a deep copy of the class.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="obj">The object.</param>
+        /// <returns>A deep copy of obj.</returns>
+        /// <exception cref="ArgumentNullException">Object cannot be null</exception>
+        public static T DeepCopy<T>(T obj)
+        {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(nameof(obj), "object can not be null");
+            }
+            return (T)DoCopy(obj);
+        }
+
+
+        /// <summary>
+        /// Does the copy.
+        /// </summary>
+        /// <param name="obj">The object.</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException">Unknown type</exception>
+        private static object DoCopy(object obj)
+        {
+            if (obj == null)
+            {
+                return null;
+            }
+
+            // Value type
+            var type = obj.GetType();
+            if (type.IsValueType || type == typeof(string))
+            {
+                return obj;
+            }
+
+            // Array
+
+            if (type.IsArray)
+            {
+                Type elementType = type.GetElementType();
+                var array = obj as Array;
+                Array copied = Array.CreateInstance(elementType, array.Length);
+                for (int i = 0; i < array.Length; i++)
+                {
+                    copied.SetValue(DoCopy(array.GetValue(i)), i);
+                }
+                return Convert.ChangeType(copied, obj.GetType());
+            }
+
+            // Unity Object
+            if (typeof(UnityEngine.Object).IsAssignableFrom(type))
+            {
+                return obj;
+            }
+
+            // Class -> Recursion
+            if (type.IsClass)
+            {
+                var copy = Activator.CreateInstance(obj.GetType());
+
+                var fields = type.GetAllFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                foreach (FieldInfo field in fields)
+                {
+                    var fieldValue = field.GetValue(obj);
+                    if (fieldValue != null)
+                    {
+                        field.SetValue(copy, DoCopy(fieldValue));
+                    }
+                }
+
+                return copy;
+            }
+
+            // Fallback
+            throw new ArgumentException("Unknown type");
+        }
+        
+                
+        /// <summary>
+        /// Get type first generic argument type
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static Type GetGenericArgumentType(Type type)
+        {
+            /* Prevent stackoverflow */
+            const int maxDepth = 10;
+            int depth = 0;
+            while (type != null && !type.IsGenericType && depth < maxDepth)
+            {
+                type = type.BaseType;
+                depth ++;
+            }
+            Assert.IsNotNull(type);
+            Assert.IsTrue(type.GetGenericArguments().Length > 0);
+            return type.GetGenericArguments()[0];
+        }
+        
          /// <summary>
         /// Get all field names of type that Unity can serialize
         /// </summary>
@@ -40,8 +161,9 @@ namespace Chris
                 GetAllSerializableFields(type.BaseType, fieldInfos);
             }
 
-            FieldInfo[] fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
-            foreach (FieldInfo field in fields)
+            var fields = type.GetFields(BindingFlags.Instance | BindingFlags.Public 
+                                                        | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+            foreach (var field in fields)
             {
                 if (!ValidateSerializedField(field))
                 {
@@ -60,7 +182,7 @@ namespace Chris
 
             if (!field.IsPublic && !Attribute.IsDefined(field, typeof(SerializeField), false)) return false;
 
-            if (!field.FieldType.IsSerializable && !typeof(UnityEngine.Object).IsAssignableFrom(field.FieldType)
+            if (!field.FieldType.IsSerializable && !typeof(UObject).IsAssignableFrom(field.FieldType)
                 && !field.FieldType.IsPrimitive && !field.FieldType.IsEnum
                 && !typeof(List<>).IsAssignableFrom(field.FieldType) && !field.FieldType.IsArray
                 && !field.FieldType.IsGenericType
@@ -71,23 +193,39 @@ namespace Chris
             return true;
         }
 
+        private static readonly HashSet<Type> SerializableNumericTypes = new HashSet<Type>()
+        {
+            typeof(byte), typeof(sbyte),
+            typeof(int), typeof(uint),
+            typeof(long), typeof(ulong),
+            typeof(short), typeof(ushort),
+            typeof(float),
+            typeof(double)
+        };
+
+        public static bool IsSerializableNumericTypes(Type type)
+        {
+            return SerializableNumericTypes.Contains(type);
+        }
+        
+        private static readonly HashSet<Type> UnityBuiltinTypes = new HashSet<Type>()
+        {
+            typeof(AnimationCurve), 
+            typeof(Bounds), typeof(BoundsInt), 
+            typeof(Color),
+            typeof(Enum), 
+            typeof(UObject),
+            typeof(Quaternion), 
+            typeof(Rect), typeof(RectInt), 
+            typeof(Vector2), typeof(Vector2Int),
+            typeof(Vector3), typeof(Vector3Int), 
+            typeof(Vector4)
+        };
+        
+
         public static bool IsUnityBuiltinTypes(Type type)
         {
-            if (type == typeof(AnimationCurve)) return true;
-            if (type == typeof(Bounds)) return true;
-            if (type == typeof(BoundsInt)) return true;
-            if (type == typeof(Color)) return true;
-            if (type == typeof(Enum)) return true;
-            if (type == typeof(Object)) return true;
-            if (type == typeof(Quaternion)) return true;
-            if (type == typeof(Rect)) return true;
-            if (type == typeof(RectInt)) return true;
-            if (type == typeof(Vector2)) return true;
-            if (type == typeof(Vector2Int)) return true;
-            if (type == typeof(Vector3)) return true;
-            if (type == typeof(Vector3Int)) return true;
-            if (type == typeof(Vector4)) return true;
-            return false;
+            return UnityBuiltinTypes.Contains(type);
         }
     }
 }

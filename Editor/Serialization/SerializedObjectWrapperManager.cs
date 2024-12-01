@@ -36,7 +36,16 @@ namespace Chris.Serialization.Editor
             // Validate wrapped type
             if (!wrapper || wrapper.Value.GetType() != type || wrapper.FieldInfo != null)
             {
-                wrapper = Wrap(Activator.CreateInstance(type));
+                object value;
+                if (type.IsArray)
+                {
+                    value = Array.CreateInstance(type.GetElementType()!, 0);
+                }
+                else
+                {
+                    value = Activator.CreateInstance(type);
+                }
+                wrapper = Wrap(value);
                 GlobalObjectManager.UnregisterObject(softObjectHandle);
                 GlobalObjectManager.RegisterObject(wrapper, ref softObjectHandle);
             }

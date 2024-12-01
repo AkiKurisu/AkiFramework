@@ -7,7 +7,9 @@ namespace Chris.Serialization.Editor
     public class SerializedObjectDrawer : PropertyDrawer
     {
         private const string NullType = "Null";
+        
         private static readonly GUIStyle DropdownStyle = new("ExposablePopupMenu");
+        
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             var reference = property.FindPropertyRelative("serializedTypeString");
@@ -38,7 +40,7 @@ namespace Chris.Serialization.Editor
             var type = SerializedType.FromString(reference.stringValue);
             SerializedObjectWrapper wrapper = SerializedObjectWrapperManager.GetWrapper(type, handle);
             string id = type != null ? type.Name : NullType;
-            if (type != null && wrapper == null)
+            if (type != null && !wrapper)
             {
                 wrapper = SerializedObjectWrapperManager.CreateWrapper(type, ref handle);
                 objectHandleProp.ulongValue = handle.Handle;
@@ -81,7 +83,82 @@ namespace Chris.Serialization.Editor
                 SearchWindow.Open(new SearchWindowContext(GUIUtility.GUIToScreenPoint(Event.current.mousePosition)), provider);
             }
             position.x = x;
-            if (wrapper != null && !string.IsNullOrEmpty(json.stringValue))
+            if (wrapper && !string.IsNullOrEmpty(json.stringValue))
+            {
+                JsonUtility.FromJsonOverwrite(json.stringValue, wrapper.Value);
+            }
+            if (wrapper)
+            {
+                position.x = x;
+                position.y += position.height + EditorGUIUtility.standardVerticalSpacing;
+                position.height = totalHeight - position.height - EditorGUIUtility.standardVerticalSpacing;
+                position.width = width;
+                GUI.Box(position, "", "Box");
+                EditorGUI.BeginChangeCheck();
+                SerializedObjectWrapperDrawer.DrawGUI(position, wrapper);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    json.stringValue = JsonUtility.ToJson(wrapper.Value);
+                }
+            }
+            EditorGUI.EndProperty();
+        }
+    }
+    
+    [CustomPropertyDrawer(typeof(SerializedObjectBase))]
+    public class SerializedObjectBaseDrawer : PropertyDrawer
+    {
+        private const string NullType = "Null";
+        
+        private static readonly GUIStyle DropdownStyle = new("ExposablePopupMenu");
+        
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            var reference = property.FindPropertyRelative("serializedTypeString");
+            var objectHandleProp = property.FindPropertyRelative("objectHandle");
+            var handle = new SoftObjectHandle(objectHandleProp.ulongValue);
+            var type = SerializedType.FromString(reference.stringValue);
+            var wrapper = SerializedObjectWrapperManager.CreateWrapper(type, ref handle);
+            if (objectHandleProp.ulongValue != handle.Handle)
+            {
+                objectHandleProp.ulongValue = handle.Handle;
+                property.serializedObject.ApplyModifiedProperties();
+            }
+
+            return SerializedObjectWrapperDrawer.CalculatePropertyHeight(wrapper);
+        }
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            DrawGUI(position, property, label);
+        }
+        private void DrawGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            var reference = property.FindPropertyRelative("serializedTypeString");
+            var json = property.FindPropertyRelative("jsonData");
+            var objectHandleProp = property.FindPropertyRelative("objectHandle");
+            var handle = new SoftObjectHandle(objectHandleProp.ulongValue);
+            var type = SerializedType.FromString(reference.stringValue);
+            SerializedObjectWrapper wrapper = SerializedObjectWrapperManager.GetWrapper(type, handle);
+            string id = type != null ? type.Name : NullType;
+            if (type != null && !wrapper)
+            {
+                wrapper = SerializedObjectWrapperManager.CreateWrapper(type, ref handle);
+                objectHandleProp.ulongValue = handle.Handle;
+                property.serializedObject.ApplyModifiedProperties();
+            }
+
+            EditorGUI.BeginProperty(position, label, property);
+            var totalHeight = position.height;
+            position.height = EditorGUIUtility.singleLineHeight;
+
+            float width = position.width;
+            float x = position.x;
+            position.width = GUI.skin.label.CalcSize(label).x;
+            GUI.Label(position, label);
+            position.x += position.width + 10;
+            position.width = width - position.width - 10;
+            position.x = x;
+            if (wrapper && !string.IsNullOrEmpty(json.stringValue))
             {
                 JsonUtility.FromJsonOverwrite(json.stringValue, wrapper.Value);
             }
