@@ -10,7 +10,7 @@ namespace Chris.Serialization.Editor
     {
         static SerializationDebuggerEditorWindow window;
 
-        [MenuItem("Tools/AkiFramework/Serialization Debugger")]
+        [MenuItem("Tools/Chris/Serialization Debugger")]
         public static void OpenWindow()
         {
             if (window != null)

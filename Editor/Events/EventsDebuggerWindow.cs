@@ -20,7 +20,7 @@ namespace Chris.Events.Editor
         [SerializeField]
         private EventsDebuggerImpl m_DebuggerImpl;
 
-        [MenuItem("Tools/AkiFramework/Event Debugger")]
+        [MenuItem("Tools/Chris/Event Debugger")]
         public static void ShowEventDebugger()
         {
             var window = GetWindow<EventsDebuggerWindow>();

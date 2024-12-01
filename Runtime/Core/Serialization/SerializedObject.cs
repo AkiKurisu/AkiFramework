@@ -12,6 +12,7 @@ namespace Chris.Serialization
         [Serializable]
         private class Box<T>: Box
         {
+            // ReSharper disable once InconsistentNaming
             public T m_Value;
             
             public override object GetValue()
@@ -65,6 +66,11 @@ namespace Chris.Serialization
             }
             return type;
         }
+
+        private static bool IsTypeNeedBox(Type type)
+        {
+            return type.IsArray || type.IsPrimitive || type == typeof(string);
+        }
         
         public Type GetBoxType()
         {
@@ -74,7 +80,7 @@ namespace Chris.Serialization
                 return null;
             }
             
-            if (type.IsArray || type.IsPrimitive)
+            if (IsTypeNeedBox(type))
             {
                 return typeof(Box<>).MakeGenericType(type);
             }
@@ -119,7 +125,7 @@ namespace Chris.Serialization
 
         public static object DeserializeObject(string jsonData, Type objectType)
         {
-            if (objectType.IsArray || objectType.IsPrimitive)
+            if (IsTypeNeedBox(objectType))
             {
                 var boxType = typeof(Box<>).MakeGenericType(objectType);
                 return ((Box)JsonUtility.FromJson(jsonData, boxType)).GetValue();
@@ -129,7 +135,7 @@ namespace Chris.Serialization
         
         public static string SerializeObject(object @object, Type objectType)
         {
-            return SerializeObject_Imp(@object, objectType.IsArray || objectType.IsPrimitive);
+            return SerializeObject_Imp(@object, IsTypeNeedBox(objectType));
         }
         
         private static string SerializeObject_Imp(object @object, bool needBox)
@@ -203,7 +209,7 @@ namespace Chris.Serialization
 
         public SerializedObject<T> CloneT()
         {
-            return new SerializedObject<T>()
+            return new SerializedObject<T>
             {
                 serializedTypeString = serializedTypeString,
                 isArray = isArray,

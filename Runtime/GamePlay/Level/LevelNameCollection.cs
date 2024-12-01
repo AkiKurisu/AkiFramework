@@ -28,7 +28,7 @@ namespace Chris.Level
         }
     }
 
-    [CreateAssetMenu(fileName = "LevelNameCollection", menuName = "AkiFramework/Level/LevelNameCollection")]
+    [CreateAssetMenu(fileName = "LevelNameCollection", menuName = "Chris/Level/LevelNameCollection")]
     public class LevelNameCollection : PopupSet
     {
 

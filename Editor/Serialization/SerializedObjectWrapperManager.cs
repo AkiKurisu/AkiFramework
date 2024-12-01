@@ -36,21 +36,13 @@ namespace Chris.Serialization.Editor
             // Validate wrapped type
             if (!wrapper || wrapper.Value.GetType() != type || wrapper.FieldInfo != null)
             {
-                object value;
-                if (type.IsArray)
-                {
-                    value = Array.CreateInstance(type.GetElementType()!, 0);
-                }
-                else
-                {
-                    value = Activator.CreateInstance(type);
-                }
-                wrapper = Wrap(value);
+                wrapper = Wrap(type, ReflectionUtility.CreateDefaultValue(type));
                 GlobalObjectManager.UnregisterObject(softObjectHandle);
                 GlobalObjectManager.RegisterObject(wrapper, ref softObjectHandle);
             }
             return wrapper;
         }
+        
         /// <summary>
         /// Create an editor wrapper for providing <see cref="FieldInfo"/> and track it by <see cref="SoftObjectHandle"/>
         /// </summary>
@@ -65,7 +57,7 @@ namespace Chris.Serialization.Editor
             // Validate wrapped type
             if (!wrapper || wrapper.Value.GetType() != fieldInfo.FieldType || wrapper.FieldInfo != fieldInfo)
             {
-                wrapper = Wrap(Activator.CreateInstance(fieldInfo.FieldType), fieldInfo);
+                wrapper = Wrap(fieldInfo.FieldType, ReflectionUtility.CreateDefaultValue(fieldInfo.FieldType), fieldInfo);
                 GlobalObjectManager.UnregisterObject(softObjectHandle);
                 GlobalObjectManager.RegisterObject(wrapper, ref softObjectHandle);
             }
@@ -96,11 +88,11 @@ namespace Chris.Serialization.Editor
             }
             return wrapper;
         }
-        private static SerializedObjectWrapper Wrap(object value, FieldInfo fieldInfo = null)
+        
+        private static SerializedObjectWrapper Wrap(Type valueType ,object value = null, FieldInfo fieldInfo = null)
         {
-            Type type = value.GetType();
-            Type genericType = typeof(SerializedObjectWrapper<>).MakeGenericType(type);
-            Type dynamicType = DynamicTypeBuilder.MakeDerivedType(genericType, type);
+            var genericType = typeof(SerializedObjectWrapper<>).MakeGenericType(valueType);
+            var dynamicType = DynamicTypeBuilder.MakeDerivedType(genericType, valueType);
             if (fieldInfo != null)
             {
                 var valueFieldInfo = genericType.GetField("m_Value", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -113,7 +105,10 @@ namespace Chris.Serialization.Editor
             {
                 return null;
             }
-            wrapper.Value = value;
+            if(value!=null)
+            {
+                wrapper.Value = value;
+            }
             return wrapper;
         }
     }

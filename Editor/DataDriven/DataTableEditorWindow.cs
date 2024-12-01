@@ -13,47 +13,74 @@ namespace Chris.DataDriven.Editor
     /// </summary>
     public class DataTableEditorWindow : EditorWindow
     {
-        private static DataTableEditorWindow window;
-        private object splitterState;
-        private static readonly GUILayoutOption[] EmptyLayoutOption = new GUILayoutOption[0];
-        [MenuItem("Tools/AkiFramework/DataTable Editor")]
+        private static DataTableEditorWindow _window;
+        
+        private object _splitterState;
+        
+        private static readonly GUILayoutOption[] EmptyLayoutOption = Array.Empty<GUILayoutOption>();
+        
+        private Vector2 _tableScroll;
+        
+        private static readonly GUIContent OpenDataTableContent = EditorGUIUtility.TrTextContent("Open", "Open a DataTable", (Texture)null);
+
+        private const string PathCacheKey = "DataTableEditorWindow_LastPath";
+
+        private DataTable _currentTarget;
+        
+        private InlineDataTableEditor _currentEditor;
+        
+        private string _currentPath;
+        
+        private static GUIStyle _detailsStyle;
+        
+        private Vector2 _detailsScroll;
+        
+        [MenuItem("Tools/Chris/DataTable Editor")]
         public static void OpenWindow()
         {
-            if (window != null)
+            if (_window != null)
             {
-                window.Close();
+                _window.Close();
             }
             GetWindow<DataTableEditorWindow>("DataTable Editor").Show();
         }
+        
         public static void OpenWindow(DataTable dataTable)
         {
-            if (window != null)
+            if (_window != null)
             {
-                window.Close();
+                _window.Close();
             }
-            window = GetWindow<DataTableEditorWindow>("DataTable Editor");
-            window.Show();
-            window.OpenDataTable(dataTable);
+            _window = GetWindow<DataTableEditorWindow>("DataTable Editor");
+            _window.Show();
+            _window.OpenDataTable(dataTable);
         }
+        
         private void OnEnable()
         {
-            window = this;
-            splitterState = SplitterGUILayout.CreateSplitterState(new float[] { 50f, 50f }, new int[] { 32, 32 }, null);
+            _window = this;
+            _splitterState = SplitterGUILayout.CreateSplitterState(new float[] { 50f, 50f }, new int[] { 32, 32 }, null);
         }
+        
         private void OnDisable()
         {
-            if (currentEditor)
-            {
-                DestroyImmediate(currentEditor);
-            }
+            if (!_currentEditor) return;
+            
+            /* Trigger save assets to force cleanup editor cache */
+            EditorUtility.SetDirty(_currentEditor.Table);
+            AssetDatabase.SaveAssetIfDirty(_currentEditor.Table);
+            /* Auto register table if it has AddressableDataTableAttribute */
+            DataTableEditorUtils.RegisterTableToAssetGroup(_currentEditor.Table);
+            DestroyImmediate(_currentEditor);
         }
+        
         private void OnGUI()
         {
             // Head
             RenderHeadPanel();
 
             // Splittable
-            SplitterGUILayout.BeginVerticalSplit(splitterState, EmptyLayoutOption);
+            SplitterGUILayout.BeginVerticalSplit(_splitterState, EmptyLayoutOption);
             {
                 RenderTable();
 
@@ -61,11 +88,7 @@ namespace Chris.DataDriven.Editor
             }
             SplitterGUILayout.EndVerticalSplit();
         }
-        private static readonly GUIContent OpenDataTableContent = EditorGUIUtility.TrTextContent("Open", "Open a DataTable", (Texture)null);
-        private static readonly string PathCacheKey = "DataTableEditorWindow_LastPath";
-        private DataTable currentTarget;
-        private InlineDataTableEditor currentEditor;
-        private string currentPath;
+
         private void RenderHeadPanel()
         {
             EditorGUILayout.BeginVertical(EmptyLayoutOption);
@@ -84,56 +107,56 @@ namespace Chris.DataDriven.Editor
                 }
                 GUIUtility.ExitGUI();
             }
-            GUILayout.Label(currentPath);
+            GUILayout.Label(_currentPath);
             GUILayout.FlexibleSpace();
 
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.EndVertical();
         }
+        
         private void OpenDataTable(DataTable dataTable)
         {
-            currentTarget = dataTable;
-            currentPath = AssetDatabase.GetAssetPath(dataTable);
-            if (currentEditor)
+            _currentTarget = dataTable;
+            _currentPath = AssetDatabase.GetAssetPath(dataTable);
+            if (_currentEditor)
             {
-                DestroyImmediate(currentEditor);
+                DestroyImmediate(_currentEditor);
             }
-            currentEditor = (InlineDataTableEditor)UEditor.CreateEditor(currentTarget, typeof(InlineDataTableEditor));
+            _currentEditor = (InlineDataTableEditor)UEditor.CreateEditor(_currentTarget, typeof(InlineDataTableEditor));
         }
-
-        private Vector2 tableScroll;
+        
         private void RenderTable()
         {
             EditorGUILayout.BeginVertical(EmptyLayoutOption);
-            if (currentEditor)
+            if (_currentEditor)
             {
-                currentEditor.DrawToolBarInternal();
+                _currentEditor.DrawToolBarInternal();
                 GUILayout.Space(10);
             }
-            tableScroll = EditorGUILayout.BeginScrollView(tableScroll, new GUILayoutOption[]
+            _tableScroll = EditorGUILayout.BeginScrollView(_tableScroll, new GUILayoutOption[]
             {
                 GUILayout.ExpandWidth(true),
                 GUILayout.MaxWidth(2000f)
             });
-            if (currentEditor)
+            if (_currentEditor)
             {
-                currentEditor.OnInspectorGUI();
+                _currentEditor.OnInspectorGUI();
             }
             EditorGUILayout.EndScrollView();
             EditorGUILayout.EndVertical();
         }
-        private static GUIStyle detailsStyle;
-        private Vector2 detailsScroll;
+
         private void RenderDetailsPanel()
         {
-            detailsStyle ??= new GUIStyle(GUI.skin.box);
-            detailsScroll = EditorGUILayout.BeginScrollView(detailsScroll, detailsStyle, EmptyLayoutOption);
-            if (currentEditor)
+            _detailsStyle ??= new GUIStyle(GUI.skin.box);
+            _detailsScroll = EditorGUILayout.BeginScrollView(_detailsScroll, _detailsStyle, EmptyLayoutOption);
+            if (_currentEditor)
             {
-                currentEditor.DrawSelectedRowDetail();
+                _currentEditor.DrawSelectedRowDetail();
             }
             EditorGUILayout.EndScrollView();
         }
+        
 #pragma warning disable IDE0051
         [OnOpenAsset]
         private static bool OnOpenAsset(int instanceId, int _)
@@ -148,22 +171,26 @@ namespace Chris.DataDriven.Editor
             return false;
         }
 #pragma warning restore IDE0051
+        
         private class InlineDataTableEditor : DataTableEditor
         {
             public void DrawToolBarInternal()
             {
                 DrawToolBar();
             }
+            
             public override void OnInspectorGUI()
             {
                 DrawRowView();
             }
+            
             protected override DataTableRowView CreateDataTableRowView(DataTable table)
             {
                 var rowView = base.CreateDataTableRowView(table);
                 rowView.ReadOnly = true;
                 return rowView;
             }
+            
             public void DrawSelectedRowDetail()
             {
                 if (Table.GetRowStructType() == null) return;
@@ -184,6 +211,7 @@ namespace Chris.DataDriven.Editor
                     }
                 }
             }
+            
             private void DrawDataTableRowDetail(SerializedProperty property, Type elementType)
             {
                 property = property.FindPropertyRelative("RowData");
@@ -208,6 +236,14 @@ namespace Chris.DataDriven.Editor
                 {
                     jsonProp.stringValue = JsonUtility.ToJson(wrapper.Value);
                 }
+            }
+
+            protected override void OnDisable()
+            {
+                GlobalObjectManager.Cleanup();
+                Undo.undoRedoEvent -= OnUndo;
+                Table.Cleanup();
+                // Register DataTable to Addressable in EditorWindow::OnDisable
             }
         }
     }

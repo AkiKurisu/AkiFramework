@@ -17,7 +17,7 @@ namespace Chris.DataDriven
             RowData = SerializedObject<IDataTableRow>.FromObject(row);
         }
     }
-    [CreateAssetMenu(fileName = "DataTable", menuName = "AkiFramework/DataTable")]
+    [CreateAssetMenu(fileName = "DataTable", menuName = "Chris/DataTable")]
     public class DataTable : ScriptableObject
     {
         [SerializeField]

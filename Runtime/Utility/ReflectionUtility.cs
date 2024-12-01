@@ -227,5 +227,30 @@ namespace Chris
         {
             return UnityBuiltinTypes.Contains(type);
         }
+        
+        public static object CreateDefaultValue(Type type)
+        {
+            if (type.IsArray)
+            {
+                return Array.CreateInstance(type.GetElementType()!, 0);
+            }
+            if (type.IsValueType)
+            {
+                return Activator.CreateInstance(type);
+            }
+
+            if (type == typeof(string))
+            {
+                return string.Empty;
+            }
+            try
+            {
+                return Activator.CreateInstance(type);
+            }
+            catch
+            {
+                return null;
+            }
+        }
     }
 }

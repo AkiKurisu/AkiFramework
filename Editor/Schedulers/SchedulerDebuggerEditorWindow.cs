@@ -22,7 +22,7 @@ namespace Chris.Schedulers.Editor
         private int ManagedScheduledCapacity => Manager == null ? 0 : Manager.scheduledItems.InternalCapacity;
         private static SchedulerDebuggerEditorWindow window;
 
-        [MenuItem("Tools/AkiFramework/Scheduler Debugger")]
+        [MenuItem("Tools/Chris/Scheduler Debugger")]
         public static void OpenWindow()
         {
             if (window != null)
@@ -192,7 +192,7 @@ namespace Chris.Schedulers.Editor
                 }
                 else
                 {
-                    GUILayout.Label($"Enable Stack Trace in AkiFrameworkSettings to track all scheduled tasks.");
+                    GUILayout.Label($"Enable Stack Trace in ChrisSettings to track all scheduled tasks.");
                 }
             }
             EditorGUILayout.EndScrollView();
