@@ -213,7 +213,6 @@ namespace Chris
             typeof(AnimationCurve), 
             typeof(Bounds), typeof(BoundsInt), 
             typeof(Color),
-            typeof(Enum), 
             typeof(UObject),
             typeof(Quaternion), 
             typeof(Rect), typeof(RectInt), 
