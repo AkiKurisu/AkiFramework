@@ -2,7 +2,7 @@ using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
 namespace Chris.Mod.Editor
 {
-    [CreateAssetMenu(fileName = "ModExportConfig", menuName = "Mod/ModExportConfig")]
+    [CreateAssetMenu(fileName = "ModExportConfig", menuName = "Chris/Mod/ModExportConfig")]
     public class ModExportConfig : ScriptableObject
     {
         public string authorName = "Default";
