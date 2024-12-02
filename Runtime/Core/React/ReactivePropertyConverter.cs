@@ -31,7 +31,7 @@ namespace Chris.React
         }
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            serializer.Serialize(writer, ((ReactiveProperty<T>)value).Value);
+            serializer.Serialize(writer, (value as ReactiveProperty<T>)!.Value);
         }
     }
 }
