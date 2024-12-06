@@ -237,9 +237,11 @@ namespace Chris.Serialization
         /// Formatted type metadata, see <see cref="SerializedType"/>
         /// </summary>
         public string serializedTypeString;
+        
 #pragma warning disable CS8632
         private T? value;
 #pragma warning restore CS8632
+        
         /// <summary>
         /// Get default object from <see cref="SerializedType{T}"/>
         /// </summary>
@@ -256,6 +258,7 @@ namespace Chris.Serialization
             }
             return value;
         }
+        
         /// <summary>
         /// Get object type from <see cref="SerializedType{T}"/>
         /// </summary>
@@ -268,6 +271,12 @@ namespace Chris.Serialization
             }
             return SerializedType.FromString(serializedTypeString);
         }
+
+        /// <summary>
+        /// Get default <see cref="SerializedType{T}"/>
+        /// </summary>
+        public static SerializedType<T> Default => FromType(typeof(T));
+        
         /// <summary>
         /// Create <see cref="SerializedType{T}"/> from type
         /// </summary>
@@ -280,6 +289,7 @@ namespace Chris.Serialization
                 serializedTypeString = SerializedType.ToString(type)
             };
         }
+        
         internal void InternalUpdate()
         {
             if (value != null && SerializedType.ToString(value.GetType()) != serializedTypeString)
