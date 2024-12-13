@@ -193,7 +193,7 @@ namespace Chris
             return true;
         }
 
-        private static readonly HashSet<Type> SerializableNumericTypes = new HashSet<Type>()
+        private static readonly HashSet<Type> SerializableNumericTypes = new()
         {
             typeof(byte), typeof(sbyte),
             typeof(int), typeof(uint),
@@ -208,12 +208,11 @@ namespace Chris
             return SerializableNumericTypes.Contains(type);
         }
         
-        private static readonly HashSet<Type> UnityBuiltinTypes = new HashSet<Type>()
+        private static readonly HashSet<Type> UnityBuiltinTypes = new()
         {
             typeof(AnimationCurve), 
             typeof(Bounds), typeof(BoundsInt), 
             typeof(Color),
-            typeof(UObject),
             typeof(Quaternion), 
             typeof(Rect), typeof(RectInt), 
             typeof(Vector2), typeof(Vector2Int),

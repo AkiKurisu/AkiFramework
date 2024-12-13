@@ -1,8 +1,9 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-namespace Chris
+namespace Chris.Collections
 {
-    public sealed class WeightedRandomSelector<T>
+    public class RandomList<T>: IReadOnlyList<T>
     {
         private readonly List<T> _items;
         
@@ -11,26 +12,32 @@ namespace Chris
         private readonly System.Random _random;
         
         private T _lastSelected;
+        
         public int Count => _items.Count;
-        public WeightedRandomSelector(int capacity)
+        
+        public T this[int index] => _items[index];
+        
+        public RandomList(int capacity)
         {
             _items = new List<T>(capacity);
             _weights = new List<double>(capacity);
             _random = new System.Random();
         }
-        public WeightedRandomSelector()
+        
+        public RandomList()
         {
             _items = new List<T>();
             _weights = new List<double>();
             _random = new System.Random();
         }
-        public void AddItem(T item, double weight = 1)
+        
+        public void Add(T item, double weight = 1)
         {
             _items.Add(item);
             _weights.Add(weight);
         }
 
-        public T GetRandomItem(double decayFactor = 0.9)
+        public T GetNext(double decayFactor = 0.9)
         {
             while (true)
             {
@@ -60,6 +67,16 @@ namespace Chris
                 _lastSelected = default;
                 // Perform the selection again
             }
+        }
+        
+        public IEnumerator<T> GetEnumerator()
+        {
+            return _items.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
         }
     }
 }

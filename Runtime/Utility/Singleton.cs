@@ -2,38 +2,37 @@ using UnityEngine;
 namespace Chris
 {
     /// <summary>
-    /// Generic singleton, use as little as possible
-    /// If you want to create a manager only exists in specific scenarios, i recommend you using <see cref="IOC.SceneScopeContainer"/>
-    /// Else if the manager is always exist during lifeTime, you can try use <see cref="RuntimeAnchorBase{T}"/>.
+    /// Generic helper for singleton
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class Singleton<T> : MonoBehaviour where T : Singleton<T>
+    public abstract class Singleton<T> : MonoBehaviour where T : Singleton<T>
     {
-        private static T instance;
+        private static T _instance;
+        
         public static T Instance
         {
             get
             {
-                if (instance == null) instance = FindObjectOfType<T>();
-                return instance;
+                if (_instance == null) _instance = FindObjectOfType<T>();
+                return _instance;
             }
         }
+        
         protected virtual void Awake()
         {
-            if (instance != null && instance != this)
+            if (_instance != null && _instance != this)
                 Destroy(gameObject);
             else
-                instance = (T)this;
+                _instance = (T)this;
         }
-        public static bool IsInitialized
-        {
-            get { return instance != null; }
-        }
+        
+        public static bool IsInitialized => _instance != null;
+
         protected virtual void OnDestroy()
         {
-            if (instance == this)
+            if (_instance == this)
             {
-                instance = null;
+                _instance = null;
             }
         }
     }

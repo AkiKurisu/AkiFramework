@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Chris.Collections;
 using Chris.Serialization;
 using UnityEngine;
 namespace Chris.DataDriven

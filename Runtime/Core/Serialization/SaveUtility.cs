@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Runtime.Serialization.Formatters.Binary;
 using Newtonsoft.Json;
 using UnityEngine;
-namespace Chris
+namespace Chris.Serialization
 {
     public class SaveUtility
     {

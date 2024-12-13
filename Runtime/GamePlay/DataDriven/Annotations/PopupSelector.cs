@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
-namespace Chris
+namespace Chris.DataDriven
 {
-    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Field)]
     public class PopupSelector : PropertyAttribute
     {
         public Type PopupType { get; }
