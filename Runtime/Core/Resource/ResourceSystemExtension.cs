@@ -29,7 +29,7 @@ namespace Chris.Resource
         /// <returns></returns>
         public static bool IsValid(this ResourceHandle handle)
         {
-            return ResourceSystem.IsValid(handle.version, handle.index);
+            return ResourceSystem.IsValid(handle.Version, handle.Index);
         }
         /// <summary>
         /// Whether internal operation is valid
@@ -38,7 +38,7 @@ namespace Chris.Resource
         /// <returns></returns>
         public static bool IsValid<T>(this ResourceHandle<T> handle)
         {
-            return ResourceSystem.IsValid(handle.version, handle.index);
+            return ResourceSystem.IsValid(handle.Version, handle.Index);
         }
         /// <summary>
         /// Whether internal operation is done
@@ -47,7 +47,7 @@ namespace Chris.Resource
         /// <returns></returns>
         public static bool IsDone(this ResourceHandle handle)
         {
-            return ResourceSystem.IsValid(handle.version, handle.index) && handle.InternalHandle.IsDone;
+            return ResourceSystem.IsValid(handle.Version, handle.Index) && handle.InternalHandle.IsDone;
         }
         /// <summary>
         /// Whether internal operation is done
@@ -56,7 +56,7 @@ namespace Chris.Resource
         /// <returns></returns>
         public static bool IsDone<T>(this ResourceHandle<T> handle)
         {
-            return ResourceSystem.IsValid(handle.version, handle.index) && handle.InternalHandle.IsDone;
+            return ResourceSystem.IsValid(handle.Version, handle.Index) && handle.InternalHandle.IsDone;
         }
         /// <summary>
         /// Load asset async by <see cref="AssetReferenceT{T}"/> and convert to <see cref="ResourceHandle{T}"/>

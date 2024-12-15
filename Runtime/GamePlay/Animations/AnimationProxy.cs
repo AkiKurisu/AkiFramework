@@ -5,7 +5,7 @@ using UnityEngine.Playables;
 namespace Chris.Animations
 {
     /// <summary>
-    /// Animation proxy that can cross fade multi <see cref="RuntimeAnimatorController"/> 
+    /// Animation proxy that can cross-fade multi <see cref="RuntimeAnimatorController"/> 
     /// and <see cref="AnimationClip"/> in multi layer. 
     /// </summary>
     public partial class AnimationProxy : IDisposable
@@ -15,35 +15,42 @@ namespace Chris.Animations
         /// </summary>
         /// <value></value>
         public Animator Animator { get; }
+        
         /// <summary>
         /// Cached <see cref="RuntimeAnimatorController"/> of <see cref="Animator"/>
         /// </summary>
         /// <value></value>
         public RuntimeAnimatorController SourceController { get; private set; }
+        
         /// <summary>
         /// Get playing <see cref="PlayableGraph"/>
         /// </summary>
         /// <value></value>
         protected PlayableGraph Graph { get; private set; }
+        
         /// <summary>
         /// Get root montage node
         /// </summary>
         /// <value></value>
         protected AnimationMontageNode RootMontage { get; private set; }
+        
         /// <summary>
         /// Proxy default animation layer index
         /// </summary>
         public const int DefaultLayerIndex = 0;
+        
         /// <summary>
         /// Is proxy blendout
         /// </summary>
         /// <value></value>
         protected bool IsBlendIn { get; private set; }
+        
         /// <summary>
         /// Is proxy blendout
         /// </summary>
         /// <value></value>
         protected bool IsBlendOut { get; private set; }
+        
         /// <summary>
         /// Is proxy playing
         /// </summary>
@@ -55,6 +62,7 @@ namespace Chris.Animations
                 return Graph.IsValid() && Graph.IsPlaying();
             }
         }
+        
         /// <summary>
         /// Should proxy clear <see cref="RuntimeAnimatorController"/> of <see cref="Animator"/> when completely blend in 
         /// which can prevent animation artifacts. Set <see cref="RestoreAnimatorControllerOnStop"/> to true to automatically 
@@ -62,21 +70,27 @@ namespace Chris.Animations
         /// </summary>
         /// <value></value>
         public bool ClearAnimatorControllerOnStart { get; set; } = true;
+        
         /// <summary>
         /// Should proxy restore <see cref="RuntimeAnimatorController"/> after stopping
         /// </summary>
         /// <value></value>
         public bool RestoreAnimatorControllerOnStop { get; set; } = true;
+        
         private AnimationMontageNode[] _leafMontages;
+        
         private Playable[] _leafPlayables;
+        
         public AnimationProxy(Animator animator)
         {
             Animator = animator;
         }
+        
         private static string GetPlayableName(Animator animator)
         {
             return $"{animator.name}_AnimationProxyPlayable";
         }
+        
         /// <summary>
         /// Get ref leaf montage node
         /// </summary>
@@ -86,6 +100,7 @@ namespace Chris.Animations
         {
             return ref _leafMontages[GetLayerIndex(layerHandle)];
         }
+        
         /// <summary>
         /// Get ref leaf <see cref="Playable"/>
         /// </summary>
@@ -95,6 +110,7 @@ namespace Chris.Animations
         {
             return ref _leafPlayables[GetLayerIndex(layerHandle)];
         }
+        
         /// <summary>
         /// Create proxy root montage
         /// </summary>
@@ -121,6 +137,7 @@ namespace Chris.Animations
                 GetLeafMontageRef(default) = RootMontage;
             }
         }
+        
         /// <summary>
         /// Load animator to the graph
         /// </summary>
@@ -137,6 +154,7 @@ namespace Chris.Animations
             }
             BlendAnimatorInternal(animatorController, blendInDuration);
         }
+        
         /// <summary>
         /// Load animator to the graph in play mode
         /// </summary>
@@ -156,6 +174,7 @@ namespace Chris.Animations
             // Start play graph
             PlayInternal(blendInDuration);
         }
+        
         /// <summary>
         /// Load animator to the graph in blend mode
         /// </summary>
@@ -178,6 +197,7 @@ namespace Chris.Animations
                 Shrink(leafMontage, layerHandle);
             }
         }
+        
         /// <summary>
         /// Load animation clip to the graph
         /// </summary>
@@ -194,6 +214,7 @@ namespace Chris.Animations
             }
             BlendAnimationClipInternal(animationClip, blendInDuration);
         }
+        
         /// <summary>
         /// Load animation clip to the graph in play mode
         /// </summary>
@@ -213,6 +234,7 @@ namespace Chris.Animations
             // Start play graph
             PlayInternal(blendInDuration);
         }
+        
         /// <summary>
         /// Load animation clip to the graph in blend mode
         /// </summary>
@@ -234,6 +256,7 @@ namespace Chris.Animations
                 Shrink(leafMontage, layerHandle);
             }
         }
+        
         /// <summary>
         /// Start play graph and montage
         /// </summary>
@@ -252,6 +275,7 @@ namespace Chris.Animations
             }
             if (!IsPlaying) Graph.Play();
         }
+        
         /// <summary>
         /// Call this function to release not used playables after montage completely blend in
         /// </summary>
@@ -265,6 +289,7 @@ namespace Chris.Animations
             }
             GetLeafMontageRef(layerHandle) = node.Shrink();
         }
+        
         /// <summary>
         /// Call this function after animation proxy completly blend in
         /// </summary>
@@ -277,6 +302,7 @@ namespace Chris.Animations
                 Animator.runtimeAnimatorController = null;
             }
         }
+        
         /// <summary>
         /// Call this function after animation proxy completly blend out
         /// </summary>
@@ -288,6 +314,7 @@ namespace Chris.Animations
             Graph.Destroy();
         }
         #region Public API
+        
         /// <summary>
         /// Whether proxy override full body animation
         /// </summary>
@@ -297,6 +324,7 @@ namespace Chris.Animations
             /* Currently only root can be layer montage */
             return RootMontage is not AnimationLayerMontageNode;
         }
+        
         /// <summary>
         /// Get leaf montage node
         /// </summary>
@@ -306,6 +334,7 @@ namespace Chris.Animations
         {
             return _leafMontages[GetLayerIndex(layerHandle)];
         }
+        
         /// <summary>
         /// Get leaf <see cref="Playable"/>
         /// </summary>
@@ -315,6 +344,7 @@ namespace Chris.Animations
         {
             return _leafPlayables[GetLayerIndex(layerHandle)];
         }
+        
         /// <summary>
         /// Start playing animation from new <see cref="RuntimeAnimatorController"/> 
         /// and blend in if <see cref="blendInDuration"/> greater than 0
@@ -332,6 +362,7 @@ namespace Chris.Animations
             }
             LoadAnimator_Implementation(animatorController, blendInDuration, layerHandle);
         }
+        
         /// <summary>
         /// Start playing animation from new <see cref="AnimationClip"/> 
         /// and blend in if <see cref="blendInDuration"/> greater than 0
@@ -349,6 +380,7 @@ namespace Chris.Animations
             }
             LoadAnimationClip_Implementation(animationClip, blendInDuration, layerHandle);
         }
+        
         /// <summary>
         /// Stop animation proxy montage and blend out if <see cref="blendOutDuration"/> greater than 0
         /// </summary>
@@ -371,6 +403,7 @@ namespace Chris.Animations
             // so we dispatch event to ensure DoStop is called in Update()
             DispatchStopEvent(blendOutDuration);
         }
+        
         /// <summary>
         /// Release animation proxy
         /// </summary>
@@ -382,6 +415,7 @@ namespace Chris.Animations
             if (Graph.IsValid())
                 Graph.Destroy();
         }
+        
         /// <summary>
         /// Get proxy leaf animator controller name or animation clip name
         /// </summary>
@@ -402,6 +436,7 @@ namespace Chris.Animations
                 return proxy.GetAnimationClip().name;
             }
         }
+        
         /// <summary>
         /// Get proxy leaf animator controller current state or animation clip normalized time
         /// </summary>
@@ -427,6 +462,7 @@ namespace Chris.Animations
             }
             return normalizedTime;
         }
+        
         /// <summary>
         /// Get proxy leaf animator controller current state or animation clip duration
         /// </summary>
@@ -451,6 +487,7 @@ namespace Chris.Animations
             }
             return duration;
         }
+        
         /// <summary>
         /// Get animator controller instance proxy if leaf montage use <see cref="RuntimeAnimatorController"/> 
         /// </summary>
@@ -467,6 +504,7 @@ namespace Chris.Animations
             }
             return new AnimatorControllerInstanceProxy(playable, runtimeAnimatorController);
         }
+        
         /// <summary>
         /// Get animation clip instance proxy if leaf montage use <see cref="AnimationClip"/> 
         /// </summary>
@@ -481,6 +519,7 @@ namespace Chris.Animations
             }
             return new AnimationClipInstanceProxy(playable);
         }
+        
         #endregion Public API
     }
 }

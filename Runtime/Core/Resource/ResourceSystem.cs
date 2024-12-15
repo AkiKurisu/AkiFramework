@@ -178,7 +178,7 @@ namespace Chris.Resource
         public static void Release<T>(ResourceHandle<T> handle)
         {
             if (!handle.IsValid()) return;
-            if (handle.operationType == InstantiateOperation)
+            if (handle.OperationType == InstantiateOperation)
                 ReleaseInstance(handle.Result as GameObject);
             else
                 ReleaseAsset(handle);
@@ -190,7 +190,7 @@ namespace Chris.Resource
         public static void Release(ResourceHandle handle)
         {
             if (!handle.IsValid()) return;
-            if (handle.operationType == InstantiateOperation)
+            if (handle.OperationType == InstantiateOperation)
                 ReleaseInstance(handle.Result as GameObject);
             else
                 ReleaseAsset(handle);
@@ -224,7 +224,7 @@ namespace Chris.Resource
         }
         private static void ReleaseHandleInternal(ResourceHandle handle)
         {
-            internalList.RemoveAt(handle.index);
+            internalList.RemoveAt(handle.Index);
             version++;
         }
         #endregion
@@ -269,7 +269,7 @@ namespace Chris.Resource
         {
             if (internalList.IsAllocated(index))
             {
-                if (internalList[index].resourceHandle.version == version)
+                if (internalList[index].resourceHandle.Version == version)
                     return internalList[index].asyncOperationHandle;
                 return default;
             }
@@ -280,7 +280,7 @@ namespace Chris.Resource
         }
         public static bool IsValid(uint version, int index)
         {
-            return internalList.IsAllocated(index) && internalList[index].resourceHandle.version == version;
+            return internalList.IsAllocated(index) && internalList[index].resourceHandle.Version == version;
         }
         private struct AsyncOperationStructure
         {

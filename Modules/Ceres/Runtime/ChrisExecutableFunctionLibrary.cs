@@ -3,7 +3,6 @@ using Ceres.Graph.Flow;
 using Ceres.Graph.Flow.Annotations;
 using Ceres.Graph.Flow.Utilities;
 using Chris.Schedulers;
-using UnityEngine.Assertions;
 using UnityEngine.Scripting;
 using UObject = UnityEngine.Object;
 namespace Chris.Ceres
@@ -11,20 +10,24 @@ namespace Chris.Ceres
     [Preserve]
     public class ChrisExecutableFunctionLibrary: ExecutableFunctionLibrary
     {
-        [ExecutableFunction]
-        public static SchedulerHandle Flow_SetTimer([CeresMetadata(CeresMetadata.SELF_TARGET)] UObject context, 
-            float delaySeconds, EventDelegate eventDelegate)
+        [ExecutableFunction, CeresLabel("Schedule Timer by Event")]
+        public static SchedulerHandle Flow_SchedulerDelay([CeresMetadata(CeresMetadata.SELF_TARGET)] UObject context, 
+            float delaySeconds, EventDelegate<float> onUpdate, EventDelegate onComplete)
         {
-            Assert.IsTrue(eventDelegate.IsValid());
-            var handle = Scheduler.Delay(delaySeconds, () =>
-            {
-                eventDelegate.Invoke(context);
-            });
+            var handle = Scheduler.Delay(delaySeconds, onUpdate: onUpdate?.Create(context), onComplete: onComplete?.Create(context));
             return handle;
         }
         
-        [ExecutableFunction]
-        public static void Flow_ClearTimer(SchedulerHandle handle)
+        [ExecutableFunction, CeresLabel("Schedule FrameCounter by Event")]
+        public static SchedulerHandle Flow_SchedulerWaitFrame([CeresMetadata(CeresMetadata.SELF_TARGET)] UObject context, 
+            int frame, EventDelegate<int> onUpdate, EventDelegate onComplete)
+        {
+            var handle = Scheduler.WaitFrame(frame, onUpdate: onUpdate?.Create(context), onComplete: onComplete?.Create(context));
+            return handle;
+        }
+        
+        [ExecutableFunction(IsScriptMethod = true), CeresLabel("Cancel Scheduler")]
+        public static void Flow_SchedulerHandleCancel(SchedulerHandle handle)
         {
             handle.Cancel();
         }
