@@ -8,8 +8,6 @@ namespace Chris.Serialization.Editor
     {
         private const string NullType = "Null";
         
-        private static readonly GUIStyle DropdownStyle = new("ExposablePopupMenu");
-        
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             var reference = property.FindPropertyRelative("serializedTypeString");
@@ -57,7 +55,7 @@ namespace Chris.Serialization.Editor
             GUI.Label(position, label);
             position.x += position.width + 10;
             position.width = width - position.width - 10;
-            if (EditorGUI.DropdownButton(position, new GUIContent(id), FocusType.Keyboard, DropdownStyle))
+            if (EditorGUI.DropdownButton(position, new GUIContent(id), FocusType.Keyboard))
             {
                 var provider = ScriptableObject.CreateInstance<TypeSearchWindow>();
                 var fieldType = fieldInfo.FieldType;
@@ -65,7 +63,7 @@ namespace Chris.Serialization.Editor
                 {
                     fieldType = fieldType.GetElementType();
                 }
-                provider.Initialize(fieldType.GetGenericArguments()[0], (selectType) =>
+                provider.Initialize(fieldType!.GetGenericArguments()[0], (selectType) =>
                 {
                     reference.stringValue = selectType != null ? SerializedType.ToString(selectType) : string.Empty;
                     if (selectType != null)
@@ -108,10 +106,6 @@ namespace Chris.Serialization.Editor
     [CustomPropertyDrawer(typeof(SerializedObjectBase))]
     public class SerializedObjectBaseDrawer : PropertyDrawer
     {
-        private const string NullType = "Null";
-        
-        private static readonly GUIStyle DropdownStyle = new("ExposablePopupMenu");
-        
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             var reference = property.FindPropertyRelative("serializedTypeString");
@@ -127,10 +121,12 @@ namespace Chris.Serialization.Editor
 
             return SerializedObjectWrapperDrawer.CalculatePropertyHeight(wrapper);
         }
+        
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             DrawGUI(position, property, label);
         }
+        
         private void DrawGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             var reference = property.FindPropertyRelative("serializedTypeString");
@@ -139,7 +135,6 @@ namespace Chris.Serialization.Editor
             var handle = new SoftObjectHandle(objectHandleProp.ulongValue);
             var type = SerializedType.FromString(reference.stringValue);
             SerializedObjectWrapper wrapper = SerializedObjectWrapperManager.GetWrapper(type, handle);
-            string id = type != null ? type.Name : NullType;
             if (type != null && !wrapper)
             {
                 wrapper = SerializedObjectWrapperManager.CreateWrapper(type, ref handle);

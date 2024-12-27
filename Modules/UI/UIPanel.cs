@@ -4,6 +4,7 @@ using Chris.Serialization;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Pool;
+using UnityEngine.Serialization;
 namespace Chris.UI
 {
     /// <summary>
@@ -39,17 +40,24 @@ namespace Chris.UI
         /// </summary>
         [SerializeField]
         private SerializedType<IPanelItem>[] initialItems;
+        
         /// <summary>
         /// Add space between each <see cref="initialItems"/> 
         /// </summary>
-        public bool AddSpaceForInitialItems = true;
+        [FormerlySerializedAs("AddSpaceForInitialItems")]
+        public bool addSpaceForInitialItems = true;
+        
         /// <summary>
         /// Space amount between each <see cref="initialItems"/> 
         /// </summary>
-        public int ItemSpace = SpaceField.DefaultSpace;
+        [FormerlySerializedAs("ItemSpace")] 
+        public int itemSpace = SpaceField.DefaultSpace;
+        
         [SerializeField, Tooltip("Set to override content container, default use self transform")]
         private Transform contentContainer;
-        private PanelField panelField;
+        
+        private PanelField _panelField;
+        
         public Transform ContentContainer
         {
             get
@@ -61,28 +69,38 @@ namespace Chris.UI
                 return transform;
             }
         }
+
+        public RectTransform PanelRect { get; private set; }
+        
+
         protected virtual void Awake()
         {
-            panelField ??= new PanelField(this);
+            PanelRect = GetComponent<RectTransform>();
+            _panelField ??= new PanelField(this);
         }
+        
         protected virtual void Start()
         {
             InitializePanel().Forget();
         }
+        
         protected async UniTask InitializePanel()
         {
             await UniTask.Yield();
             CreateFields();
         }
+        
         private void OnDestroy()
         {
-            panelField.Dispose();
+            _panelField.Dispose();
         }
+        
         public PanelField GetRootPanel()
         {
-            panelField ??= new PanelField(this);
-            return panelField;
+            _panelField ??= new PanelField(this);
+            return _panelField;
         }
+        
         protected void CreateFields()
         {
             // Inject virtual panel items
@@ -100,26 +118,28 @@ namespace Chris.UI
             bool isFirst = true;
             foreach (var item in items)
             {
-                if (!isFirst && AddSpaceForInitialItems)
+                if (!isFirst && addSpaceForInitialItems)
                 {
-                    panelField.Add(new SpaceField(ItemSpace));
+                    _panelField.Add(new SpaceField(itemSpace));
                 }
-                panelField.AddRange(item.Fields);
+                _panelField.AddRange(item.Fields);
                 ListPool<BaseField>.Release(item.Fields);
                 isFirst = false;
             }
 
             // Create view
-            if (!panelField.IsInitialized)
+            if (!_panelField.IsInitialized)
             {
-                panelField.CreateView(transform, null);
+                _panelField.CreateView(transform, null);
             }
         }
+        
         public void ClearFields()
         {
-            if (panelField == null) return;
-            panelField.Clear();
+            if (_panelField == null) return;
+            _panelField.Clear();
         }
+        
         public TPanel Cast<TPanel>() where TPanel : UIPanel
         {
             return this as TPanel;

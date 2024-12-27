@@ -3,7 +3,7 @@ using UnityEngine;
 using Object = UnityEngine.Object;
 namespace Chris.Resource
 {
-    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Field)]
     public class AssetReferenceConstraintAttribute : PropertyAttribute
     {
         /// <summary>
@@ -23,26 +23,32 @@ namespace Chris.Resource
         /// </summary>
         /// <value></value>
         public bool ForceGroup { get; private set; }
-        public AssetReferenceConstraintAttribute(Type AssetType = null, string Formatter = null, string Group = null, bool ForceGroup = false)
+        public AssetReferenceConstraintAttribute(Type assetType = null, string formatter = null, string group = null, bool forceGroup = false)
         {
-            this.AssetType = AssetType;
-            this.Formatter = Formatter;
-            this.Group = Group;
-            this.ForceGroup = ForceGroup;
+            AssetType = assetType;
+            Formatter = formatter;
+            Group = group;
+            ForceGroup = forceGroup;
         }
     }
+    
     /// <summary>
     /// A lightweight asset reference only use address as identifier
     /// </summary>
     [Serializable]
-    public struct SoftAssetReference<T> where T : Object
+    public class SoftAssetReference<T> where T : Object
     {
+        // ReSharper disable once InconsistentNaming
         public string Address;
+        
 #if UNITY_EDITOR
         [SerializeField]
+        // ReSharper disable once InconsistentNaming
         internal string Guid;
+        
         [SerializeField]
-        internal bool Locked;
+        // ReSharper disable once InconsistentNaming
+        internal bool Locked = true;
 #endif
 
         /// <summary>
@@ -58,19 +64,29 @@ namespace Chris.Resource
 #endif
         }
 
-        public readonly ResourceHandle<T> LoadAsync()
+        public SoftAssetReference()
+        {
+            
+        }
+
+        public static readonly SoftAssetReference Empty = new();
+
+        public ResourceHandle<T> LoadAsync()
         {
             return ResourceSystem.LoadAssetAsync<T>(Address);
         }
 
         public static implicit operator SoftAssetReference<T>(string address)
         {
-            return new SoftAssetReference<T>() { Address = address };
+            return new SoftAssetReference<T>
+            {
+                Address = address
+            };
         }
 
         public static implicit operator SoftAssetReference<T>(SoftAssetReference assetReference)
         {
-            return new SoftAssetReference<T>()
+            return new SoftAssetReference<T>
             {
                 Address = assetReference.Address,
 #if UNITY_EDITOR
@@ -82,7 +98,7 @@ namespace Chris.Resource
 
         public static implicit operator SoftAssetReference(SoftAssetReference<T> assetReference)
         {
-            return new SoftAssetReference()
+            return new SoftAssetReference
             {
                 Address = assetReference.Address,
 #if UNITY_EDITOR
@@ -91,27 +107,25 @@ namespace Chris.Resource
 #endif
             };
         }
-        public override readonly string ToString()
-        {
-            return Address;
-        }
-        public readonly bool IsValid()
-        {
-            return !string.IsNullOrEmpty(Address);
-        }
     }
+    
     /// <summary>
     /// A lightweight asset reference only use address as identifier
     /// </summary>
     [Serializable]
-    public struct SoftAssetReference
+    public class SoftAssetReference
     {
+        // ReSharper disable once InconsistentNaming
         public string Address;
+        
 #if UNITY_EDITOR
         [SerializeField]
+        // ReSharper disable once InconsistentNaming
         internal string Guid;
+        
         [SerializeField]
-        internal bool Locked;
+        // ReSharper disable once InconsistentNaming
+        internal bool Locked = true;
 #endif
         /// <summary>
         /// Create asset reference from address
@@ -125,23 +139,33 @@ namespace Chris.Resource
             Locked = false;
 #endif
         }
+        
+        public SoftAssetReference()
+        {
+            
+        }
+        
+        public static readonly SoftAssetReference Empty = new();
 
-        public readonly ResourceHandle LoadAsync()
+        public ResourceHandle LoadAsync()
         {
             return ResourceSystem.LoadAssetAsync<Object>(Address);
         }
 
         public static implicit operator SoftAssetReference(string address)
         {
-            return new SoftAssetReference() { Address = address };
+            return new SoftAssetReference
+            {
+                Address = address
+            };
         }
 
-        public override readonly string ToString()
+        public override string ToString()
         {
             return Address;
         }
 
-        public readonly bool IsValid()
+        public bool IsValid()
         {
             return !string.IsNullOrEmpty(Address);
         }

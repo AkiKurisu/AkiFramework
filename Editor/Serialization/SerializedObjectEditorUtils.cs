@@ -10,10 +10,13 @@ namespace Chris.Serialization.Editor
         {
             serializedObjectBase.objectHandle = 0;
         }
+
         /// <summary>
         /// Compare internal editing object is equal
         /// </summary>
-        /// <param name="serializedObjectBase"></param>
+        /// <param name="object1"></param>
+        /// <param name="object2"></param>
+        /// <returns></returns>
         public static bool InternalEqual(SerializedObjectBase object1, SerializedObjectBase object2)
         {
             return object1.objectHandle == object2.objectHandle;

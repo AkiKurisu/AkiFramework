@@ -12,14 +12,22 @@ namespace Chris.Audios
     /// </summary>
     public class VoiceCommand : IComparable<VoiceCommand>, IDisposable
     {
-        private readonly static ObjectPool<VoiceCommand> pool = new(() => new(), x => x.Reset());
+        private static readonly ObjectPool<VoiceCommand> Pool = new(() => new VoiceCommand(), x => x.Reset());
+        
         public int Priority;
+        
         public float Volume;
+        
         public string Name;
-        public SoftAssetReference<AudioClip> Reference;
+        
+        public SoftAssetReference<AudioClip> Reference = SoftAssetReference<AudioClip>.Empty;
+        
         public AudioClip AudioClip;
+        
         public bool IsLoaded => AudioClip != null;
+        
         public bool IsLoading { get; private set; }
+        
         // Should use Get() allocated from pool
         private VoiceCommand()
         {
@@ -29,12 +37,12 @@ namespace Chris.Audios
         {
             Name = string.Empty;
             AudioClip = null;
-            Reference.Address = string.Empty;
+            Reference = SoftAssetReference<AudioClip>.Empty;
             IsLoading = false;
         }
         public static VoiceCommand Get(string name, SoftAssetReference<AudioClip> audioClip, int priority = -1, float volume = 0.5f)
         {
-            var cmd = pool.Get();
+            var cmd = Pool.Get();
             cmd.Name = name;
             cmd.Reference = audioClip;
             cmd.Priority = priority;
@@ -43,7 +51,7 @@ namespace Chris.Audios
         }
         public static VoiceCommand Get(string name, AudioClip audioClip, int priority = -1, float volume = 0.5f)
         {
-            var cmd = pool.Get();
+            var cmd = Pool.Get();
             cmd.Name = name;
             cmd.AudioClip = audioClip;
             cmd.Priority = priority;
@@ -72,7 +80,7 @@ namespace Chris.Audios
 
         public void Dispose()
         {
-            pool.Release(this);
+            Pool.Release(this);
             // TODO: Cancel asset loading
         }
     }

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-
 namespace Chris.Serialization
 {
     // Modified from Unity
@@ -226,20 +225,42 @@ namespace Chris.Serialization
         }
         #endregion
     }
-    /// <summary>
-    /// Serialized type that will serialize metadata of class implementing T
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
+
     [Serializable]
-    public sealed class SerializedType<T>
+    public abstract class SerializedTypeBase
     {
         /// <summary>
         /// Formatted type metadata, see <see cref="SerializedType"/>
         /// </summary>
         public string serializedTypeString;
+
         
+        /// <summary>
+        /// Whether type is valid
+        /// </summary>
+        /// <returns></returns>
+        public bool IsValid()
+        {
+            if (string.IsNullOrEmpty(serializedTypeString)) return false;
+            return GetObjectType() != null;
+        }
+        
+        /// <summary>
+        /// Get object type
+        /// </summary>
+        /// <returns></returns>
+        public abstract Type GetObjectType();
+    }
+
+    /// <summary>
+    /// Serialized type that will serialize metadata of class implementing T
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    [Serializable]
+    public class SerializedType<T>: SerializedTypeBase
+    {
 #pragma warning disable CS8632
-        private T? value;
+        private T? _value;
 #pragma warning restore CS8632
         
         /// <summary>
@@ -248,26 +269,22 @@ namespace Chris.Serialization
         /// <returns></returns>
         public T GetObject()
         {
-            if (value == null)
+            if (_value == null)
             {
                 var type = SerializedType.FromString(serializedTypeString);
                 if (type != null)
                 {
-                    value = (T)Activator.CreateInstance(type);
+                    _value = (T)Activator.CreateInstance(type);
                 }
             }
-            return value;
+            return _value;
         }
         
-        /// <summary>
-        /// Get object type from <see cref="SerializedType{T}"/>
-        /// </summary>
-        /// <returns></returns>
-        public Type GetObjectType()
+        public override Type GetObjectType()
         {
-            if (value != null)
+            if (_value != null)
             {
-                return value.GetType();
+                return _value.GetType();
             }
             return SerializedType.FromString(serializedTypeString);
         }
@@ -292,12 +309,36 @@ namespace Chris.Serialization
         
         internal void InternalUpdate()
         {
-            if (value != null && SerializedType.ToString(value.GetType()) != serializedTypeString)
+            if (_value != null && SerializedType.ToString(_value.GetType()) != serializedTypeString)
             {
-                value = default;
+                _value = default;
             }
         }
+        
+        public static implicit operator Type(SerializedType<T> serializedType)
+        {
+            return serializedType.GetObjectType();
+        }
     }
+
+    /// <summary>
+    /// <see cref="SerializedType{T}"/> for <see cref="Component"/>
+    /// </summary>
+    [Serializable]
+    public class SerializedComponentType : SerializedType<Component>
+    {
+        
+    }
+    
+    /// <summary>
+    /// <see cref="SerializedType{T}"/> for <see cref="Behaviour"/>
+    /// </summary>
+    [Serializable]
+    public class SerializedBehaviourType : SerializedType<Behaviour>
+    {
+        
+    }
+
     /// <summary>
     /// Attribute type that changed assembly, namespace or class name.
     /// </summary>

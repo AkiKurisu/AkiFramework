@@ -39,7 +39,7 @@ namespace Chris.DataDriven
         /// <returns></returns>
         public Type GetRowStructType()
         {
-            return m_rowType.GetObjectType();
+            return m_rowType;
         }
         /// <summary>
         /// Get data rows from table
