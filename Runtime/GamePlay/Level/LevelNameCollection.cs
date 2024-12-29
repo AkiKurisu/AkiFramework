@@ -1,4 +1,5 @@
 using System;
+using Chris.DataDriven;
 using UnityEngine;
 namespace Chris.Level
 {
@@ -19,7 +20,7 @@ namespace Chris.Level
         AllPlatform = PC | Mobile | Console
     }
 
-    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Field)]
     public class LevelNameAttribute : PopupSelector
     {
         public LevelNameAttribute(): base(typeof(LevelNameCollection))

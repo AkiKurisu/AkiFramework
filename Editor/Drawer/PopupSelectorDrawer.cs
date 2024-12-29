@@ -3,6 +3,7 @@ using UnityEditor;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Chris.DataDriven;
 namespace Chris.Editor
 {
     [CustomPropertyDrawer(typeof(PopupSelector), true)]
@@ -21,7 +22,7 @@ namespace Chris.Editor
                 setting = guids.Select(x => AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(x), type) as PopupSet)
                                 .FirstOrDefault(x => x.GetType() == type);
             }
-            if (setting == null)
+            if (!setting)
             {
                 setting = ScriptableObject.CreateInstance(type) as PopupSet;
                 string k_SettingsPath = $"Assets/{type.Name}.asset";
@@ -34,8 +35,8 @@ namespace Chris.Editor
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
-            var popupType = (attribute as PopupSelector).PopupType;
-            var title = (attribute as PopupSelector).PopupTitle;
+            var popupType = ((PopupSelector)attribute).PopupType;
+            var title = ((PopupSelector)attribute).PopupTitle;
             if (popupType.IsSubclassOf(typeof(PopupSet)) || popupType == typeof(PopupSet))
             {
                 if (property.propertyType == SerializedPropertyType.String)

@@ -218,12 +218,11 @@ namespace Chris
             if (!handle.IsValid() || !ActorsInWorld.IsAllocated(index)) return null;
             
             var actor = ActorsInWorld[index];
-            if (actor.GetActorHandle().GetSerialNumber() != handle.GetSerialNumber()) return null;
-            return actor;
+            return actor.GetActorHandle().GetSerialNumber() != handle.GetSerialNumber() ? null : actor;
         }
         
         /// <summary>
-        /// Get <see cref="SubsystemBase"/> from type <see cref="{T}"/>
+        /// Get <see cref="SubsystemBase"/> from type T
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
@@ -243,7 +242,7 @@ namespace Chris
         }
         
         /// <summary>
-        /// Register a <see cref="SubsystemBase"/> with type <see cref="{T}"/>
+        /// Register a <see cref="SubsystemBase"/> with type T
         /// </summary>
         /// <param name="subsystem"></param>
         /// <typeparam name="T"></typeparam>

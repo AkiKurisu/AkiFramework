@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-namespace Chris
+namespace Chris.Collections
 {
     // Code from UnityEditor.ArrayUtility
     // Helpers for builtin arrays ...

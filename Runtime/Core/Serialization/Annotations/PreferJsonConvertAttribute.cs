@@ -1,5 +1,5 @@
 using System;
-namespace Chris
+namespace Chris.Serialization
 {
     /// <summary>
     /// Prefer to use <see cref="JsonConvert"/> instead of <see cref="JsonUtility"/>

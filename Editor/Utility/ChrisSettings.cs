@@ -45,13 +45,13 @@ namespace Chris.Editor
         
         public override void OnActivate(string searchContext, VisualElement rootElement)
         {
-            if(ChrisSettings.instance.DataTableJsonSerializer.GetObjectType() == null)
+            if(!ChrisSettings.instance.DataTableJsonSerializer.IsValid())
             {
                 ChrisSettings.instance.DataTableJsonSerializer =
                     SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
                 ChrisSettings.SaveSettings();
             }  
-            _settingsObject = new(_settings = ChrisSettings.instance);
+            _settingsObject = new SerializedObject(_settings = ChrisSettings.instance);
         }
         public override void OnGUI(string searchContext)
         {
@@ -82,7 +82,7 @@ namespace Chris.Editor
             EditorGUILayout.PropertyField(_settingsObject.FindProperty(nameof(ChrisSettings.InlineRowReadOnly)), Styles.s_InlineRowReadOnly);
             if (_settingsObject.ApplyModifiedPropertiesWithoutUndo())
             {
-                if (ChrisSettings.instance.DataTableJsonSerializer.GetObjectType() == null)
+                if (!ChrisSettings.instance.DataTableJsonSerializer.IsValid())
                 {
                     ChrisSettings.instance.DataTableJsonSerializer = SerializedType<IDataTableJsonSerializer>.FromType(typeof(DataTableJsonSerializer));
                 }

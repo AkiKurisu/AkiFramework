@@ -32,26 +32,31 @@ namespace Chris
             _subsystems = _systems.Values.ToArray();
             _actorsUpdateSubscription = world.OnActorsUpdate.Subscribe(OnActorsUpdate);
         }
+        
         internal void RegisterSubsystem<T>(T subsystem) where T : SubsystemBase
         {
             _systems.Add(typeof(T), subsystem);
             subsystem.InternalInit();
         }
+        
         internal void Rebuild()
         {
             _subsystems = _systems.Values.ToArray();
             Init();
         }
+        
         public T GetSubsystem<T>() where T : SubsystemBase
         {
             if (_systems.TryGetValue(typeof(T), out var subsystem))
                 return (T)subsystem;
             return null;
         }
+        
         public SubsystemBase GetSubsystem(Type type)
         {
             return _systems.GetValueOrDefault(type);
         }
+        
         public void Init()
         {
             for (int i = 0; i < _subsystems.Length; ++i)
@@ -59,6 +64,7 @@ namespace Chris
                 _subsystems[i].InternalInit();
             }
         }
+        
         public void Tick()
         {
             for (int i = 0; i < _subsystems.Length; ++i)
@@ -66,6 +72,7 @@ namespace Chris
                 _subsystems[i].Tick();
             }
         }
+        
         public void FixedTick()
         {
             for (int i = 0; i < _subsystems.Length; ++i)
@@ -73,6 +80,7 @@ namespace Chris
                 _subsystems[i].FixedTick();
             }
         }
+        
         public void Dispose()
         {
             for (int i = 0; i < _subsystems.Length; ++i)
@@ -82,6 +90,7 @@ namespace Chris
             _subsystems = null;
             _actorsUpdateSubscription.Dispose();
         }
+        
         private void OnActorsUpdate(Unit _)
         {
             for (int i = 0; i < _subsystems.Length; ++i)
@@ -100,11 +109,13 @@ namespace Chris
         /// Buffered dirty flag when world actors changed
         /// </summary>
         protected internal bool IsActorsDirty { get; set; }
+        
         /// <summary>
         /// Is system initialized
         /// </summary>
         /// <value></value>
         protected bool IsInitialized { get; private set; }
+        
         /// <summary>
         /// Is system destroyed
         /// </summary>
@@ -156,7 +167,7 @@ namespace Chris
 
         internal void SetWorld(GameWorld world)
         {
-            this._world = world;
+            _world = world;
         }
 
         /// <summary>
@@ -214,17 +225,18 @@ namespace Chris
         /// <param name="world"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T Get<T>(GameWorld world) where T : WorldSubsystem, new()
+        public static T GetOrCreate<T>(GameWorld world) where T : WorldSubsystem, new()
         {
             if (!GameWorld.IsValid()) return null;
+            
             var system = world.GetSubsystem<T>();
-            if (system == null)
-            {
-                system = new();
-                if (!system.CanCreate(world)) return null;
-                system.SetWorld(world);
-                world.RegisterSubsystem(system);
-            }
+            if (system != null) return system;
+            
+            system = new T();
+            if (!system.CanCreate(world)) return null;
+            
+            system.SetWorld(world);
+            world.RegisterSubsystem(system);
             return system;
         }
 
@@ -233,9 +245,9 @@ namespace Chris
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        public static T Get<T>() where T : WorldSubsystem, new()
+        public static T GetOrCreate<T>() where T : WorldSubsystem, new()
         {
-            return !GameWorld.IsValid() ? null : Get<T>(GameWorld.Get());
+            return !GameWorld.IsValid() ? null : GetOrCreate<T>(GameWorld.Get());
         }
     }
 }

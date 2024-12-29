@@ -2,21 +2,31 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
+using R3;
 using UnityEngine;
 namespace Chris.Serialization.Editor
 {
     [Serializable]
     public class SerializedObjectWrapper<T> : SerializedObjectWrapper
     {
+        // ReSharper disable once InconsistentNaming
         [SerializeField] 
         private T m_Value;
 
         public override object Value
         {
-            get { return m_Value; }
-            set { m_Value = (T)value; }
+            get => m_Value;
+            set => m_Value = (T)value;
+        }
+
+        public readonly Subject<T> ValueChange = new();
+
+        private void OnValidate()
+        {
+            ValueChange.OnNext(m_Value);
         }
     }
+    
     /// <summary>
     /// Class to manage SerializedObjectWrapper
     /// </summary>
@@ -63,6 +73,7 @@ namespace Chris.Serialization.Editor
             }
             return wrapper;
         }
+        
         /// <summary>
         /// Manually destroy wrapper
         /// </summary>
@@ -71,6 +82,7 @@ namespace Chris.Serialization.Editor
         {
             GlobalObjectManager.UnregisterObject(softObjectHandle);
         }
+        
         /// <summary>
         /// Get editor wrapper if exists
         /// </summary>

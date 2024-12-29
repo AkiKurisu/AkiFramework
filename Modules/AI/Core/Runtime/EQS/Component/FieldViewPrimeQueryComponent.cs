@@ -22,7 +22,7 @@ namespace Chris.AI.EQS
         public Vector3 Offset;
         private void Start()
         {
-            system = WorldSubsystem.Get<FieldViewPrimeQuerySystem>();
+            system = WorldSubsystem.GetOrCreate<FieldViewPrimeQuerySystem>();
             if (system == null)
             {
                 Debug.LogError($"[FieldViewPrimeQueryComponent] Can not get FieldViewPrimeQuerySystem dynamically.");

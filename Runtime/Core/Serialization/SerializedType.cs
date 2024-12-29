@@ -1,13 +1,13 @@
+// Modified from UnityEditor.Graphs
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-
+using UObject = UnityEngine.Object;
 namespace Chris.Serialization
 {
-    // Modified from Unity
     public static class SerializedType
     {
         [Serializable]
@@ -113,7 +113,7 @@ namespace Chris.Serialization
                 return string.Empty;
 
             data.typeName = string.Empty;
-            data.isGeneric = t.ContainsGenericParameters && !t.IsGenericTypeDefinition;
+            data.isGeneric = t.ContainsGenericParameters; /* eg. List<T> not List<> */
 
             data.typeName = data.isGeneric switch
             {
@@ -133,7 +133,7 @@ namespace Chris.Serialization
             /* Only support generic definition */
             if (IsGeneric(serializedTypeString))
             {
-                Debug.LogError("SerializedType not support generic type has assigned generic parameters");
+                Debug.LogError("SerializedType not support unassigned generic type");
                 return null;
             }
             if (SerializedTypeRedirector.TryRedirect(serializedTypeString, out var type))
@@ -226,20 +226,42 @@ namespace Chris.Serialization
         }
         #endregion
     }
-    /// <summary>
-    /// Serialized type that will serialize metadata of class implementing T
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
+
     [Serializable]
-    public sealed class SerializedType<T>
+    public abstract class SerializedTypeBase
     {
         /// <summary>
         /// Formatted type metadata, see <see cref="SerializedType"/>
         /// </summary>
         public string serializedTypeString;
+
         
+        /// <summary>
+        /// Whether type is valid
+        /// </summary>
+        /// <returns></returns>
+        public bool IsValid()
+        {
+            if (string.IsNullOrEmpty(serializedTypeString)) return false;
+            return GetObjectType() != null;
+        }
+        
+        /// <summary>
+        /// Get object type
+        /// </summary>
+        /// <returns></returns>
+        public abstract Type GetObjectType();
+    }
+
+    /// <summary>
+    /// Serialized type that will serialize metadata of class implementing T
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    [Serializable]
+    public class SerializedType<T>: SerializedTypeBase
+    {
 #pragma warning disable CS8632
-        private T? value;
+        private T? _value;
 #pragma warning restore CS8632
         
         /// <summary>
@@ -248,26 +270,22 @@ namespace Chris.Serialization
         /// <returns></returns>
         public T GetObject()
         {
-            if (value == null)
+            if (_value == null)
             {
                 var type = SerializedType.FromString(serializedTypeString);
                 if (type != null)
                 {
-                    value = (T)Activator.CreateInstance(type);
+                    _value = (T)Activator.CreateInstance(type);
                 }
             }
-            return value;
+            return _value;
         }
         
-        /// <summary>
-        /// Get object type from <see cref="SerializedType{T}"/>
-        /// </summary>
-        /// <returns></returns>
-        public Type GetObjectType()
+        public override Type GetObjectType()
         {
-            if (value != null)
+            if (_value != null)
             {
-                return value.GetType();
+                return _value.GetType();
             }
             return SerializedType.FromString(serializedTypeString);
         }
@@ -284,7 +302,7 @@ namespace Chris.Serialization
         /// <returns></returns>
         public static SerializedType<T> FromType(Type type)
         {
-            return new SerializedType<T>()
+            return new SerializedType<T>
             {
                 serializedTypeString = SerializedType.ToString(type)
             };
@@ -292,17 +310,23 @@ namespace Chris.Serialization
         
         internal void InternalUpdate()
         {
-            if (value != null && SerializedType.ToString(value.GetType()) != serializedTypeString)
+            if (_value != null && SerializedType.ToString(_value.GetType()) != serializedTypeString)
             {
-                value = default;
+                _value = default;
             }
         }
+        
+        public static implicit operator Type(SerializedType<T> serializedType)
+        {
+            return serializedType.GetObjectType();
+        }
     }
+
     /// <summary>
     /// Attribute type that changed assembly, namespace or class name.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public class FormerlySerializedTypeAttribute : Attribute
+    public sealed class FormerlySerializedTypeAttribute : Attribute
     {
         public string OldSerializedType { get; }
         public FormerlySerializedTypeAttribute(string oldSerializedType)
@@ -315,7 +339,7 @@ namespace Chris.Serialization
     /// Attribute type that will not show in SerializedType search window
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public class HideInSerializedTypeAttribute : Attribute
+    public sealed class HideInSerializedTypeAttribute : Attribute
     {
         
     }
@@ -323,15 +347,18 @@ namespace Chris.Serialization
     public static class SerializedTypeRedirector
     {
         private static readonly Lazy<Dictionary<string, Type>> UpdatableType;
+        
         static SerializedTypeRedirector()
         {
             UpdatableType = new Lazy<Dictionary<string, Type>>(() =>
             {
-                return AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
-                                                    .Where(x => x.GetCustomAttribute<FormerlySerializedTypeAttribute>() != null)
-                                                    .ToDictionary(x => x.GetCustomAttribute<FormerlySerializedTypeAttribute>().OldSerializedType, x => x);
+                return AppDomain.CurrentDomain.GetAssemblies()
+                        .SelectMany(x => x.GetTypes())
+                        .Where(x => x.GetCustomAttribute<FormerlySerializedTypeAttribute>() != null)
+                        .ToDictionary(x => x.GetCustomAttribute<FormerlySerializedTypeAttribute>().OldSerializedType, x => x);
             });
         }
+        
         /// <summary>
         /// Try get redirected type
         /// </summary>

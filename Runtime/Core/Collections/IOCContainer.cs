@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System;
-namespace Chris
+namespace Chris.Collections
 {
     internal class IOCContainer
     {

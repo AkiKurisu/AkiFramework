@@ -6,14 +6,15 @@ namespace Chris.DataDriven
 {
     public abstract class DataTableManager
     {
-        private static bool isLoaded;
+        private static bool _isLoaded;
+        
 #if AF_INITIALIZE_DATATABLE_MANAGER_ON_LOAD
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
 #endif
         public static void Initialize()
         {
-            if (isLoaded) return;
-            isLoaded = true;
+            if (_isLoaded) return;
+            _isLoaded = true;
             var managerTypes = AppDomain.CurrentDomain.GetAssemblies()
                             .SelectMany(x => x.GetTypes())
                             .Where(x => typeof(DataTableManager).IsAssignableFrom(x) && !x.IsAbstract)
@@ -26,20 +27,21 @@ namespace Chris.DataDriven
                 manager!.Initialize(true).Forget();
             }
         }
+        
         /// <summary>
         /// Manual initialization api
         /// </summary>
         /// <returns></returns>
         public static async UniTask InitializeAsync()
         {
-            if (isLoaded) return;
-            isLoaded = true;
+            if (_isLoaded) return;
+            _isLoaded = true;
             var managerTypes = AppDomain.CurrentDomain.GetAssemblies()
                             .SelectMany(x => x.GetTypes())
                             .Where(x => typeof(DataTableManager).IsAssignableFrom(x) && !x.IsAbstract)
                             .ToArray();
 
-            var args = new object[1] { null };
+            var args = new object[] { null };
             using var parallel = UniParallel.Get();
             foreach (var type in managerTypes)
             {
@@ -68,6 +70,7 @@ namespace Chris.DataDriven
             }
             return null;
         }
+        
         /// <summary>
         /// Async initiaize manager at start of game, loading your dataTables in this stage
         /// </summary>
@@ -75,25 +78,28 @@ namespace Chris.DataDriven
         /// <returns></returns>
         protected abstract UniTask Initialize(bool sync);
     }
+    
     public abstract class DataTableManager<TManager> : DataTableManager where TManager : DataTableManager<TManager>
     {
-        private static TManager instance;
+        private static TManager _instance;
+        
         // Force implementation has this constructor
         public DataTableManager(object _)
         {
-            instance = (TManager)this;
+            _instance = (TManager)this;
         }
+        
         /// <summary>
         /// Get <see cref="{TManager}"/>
         /// </summary>
         /// <returns></returns>
         public static TManager Get()
         {
-            if (instance == null)
+            if (_instance == null)
             {
                 Initialize(); /* Initialize in blocking mode */
             }
-            return instance;
+            return _instance;
         }
     }
 }

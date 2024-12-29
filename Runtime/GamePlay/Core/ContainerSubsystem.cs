@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Chris.Collections;
 using UnityEngine.Assertions;
 namespace Chris
 {
@@ -15,7 +16,7 @@ namespace Chris
 
         public static ContainerSubsystem Get()
         {
-            return WorldSubsystem.Get<ContainerSubsystem>();
+            return WorldSubsystem.GetOrCreate<ContainerSubsystem>();
         }
         
         /// <summary>

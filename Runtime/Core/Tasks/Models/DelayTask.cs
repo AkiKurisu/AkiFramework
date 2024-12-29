@@ -1,5 +1,4 @@
 using Chris.Schedulers;
-
 namespace Chris.Tasks
 {
     /// <summary>
@@ -7,24 +6,25 @@ namespace Chris.Tasks
     /// </summary>
     public class DelayTask : PooledTaskBase<DelayTask>
     {
-        private SchedulerHandle handle;
+        private SchedulerHandle _handle;
+        
         [StackTraceFrame]
         public unsafe static DelayTask GetPooled(float delay)
         {
             var task = GetPooled();
-            task.handle = Scheduler.DelayUnsafe(delay, new SchedulerUnsafeBinding(task, &StopDelayTask));
+            task._handle = Scheduler.DelayUnsafe(delay, new SchedulerUnsafeBinding(task, &StopDelayTask));
             return task;
         }
         protected override void Init()
         {
             base.Init();
-            handle = default;
+            _handle = default;
         }
         protected override void Reset()
         {
             base.Reset();
-            handle.Dispose();
-            handle = default;
+            _handle.Dispose();
+            _handle = default;
         }
         private static void StopDelayTask(object instance)
         {

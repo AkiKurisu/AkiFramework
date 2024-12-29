@@ -1,11 +1,14 @@
+using System;
 using UnityEngine;
-namespace Chris
+namespace Chris.DataDriven
 {
     public class PopupSet : ScriptableObject
     {
         [SerializeField]
-        private string[] values = new string[0];
+        private string[] values = Array.Empty<string>();
+       
         public string[] Values => values;
+        
         public int GetStateID(string state)
         {
             if (values == null) return -1;

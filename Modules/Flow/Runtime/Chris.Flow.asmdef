@@ -1,0 +1,25 @@
+{
+    "name": "Chris.Flow",
+    "rootNamespace": "Chris.Flow",
+    "references": [
+        "GUID:7dddf801c0fab33408b06985cd6a607e",
+        "GUID:e61a2a07ba2680848ad23eef5b7c024b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "AF_CERES_INSTALL"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.kurisu.ceres",
+            "expression": "0.1.0",
+            "define": "AF_CERES_INSTALL"
+        }
+    ],
+    "noEngineReferences": false
+}

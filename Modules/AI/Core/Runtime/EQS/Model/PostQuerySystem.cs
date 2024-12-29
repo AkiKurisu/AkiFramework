@@ -175,7 +175,7 @@ namespace Chris.AI.EQS
             using (ConsumeCommandsPM.Auto())
             {
                 batchLength = 0;
-                var actorDatas = Get<ActorQuerySystem>().GetAllActors(Allocator.Temp);
+                var actorDatas = GetOrCreate<ActorQuerySystem>().GetAllActors(Allocator.Temp);
                 while (batchLength < MaxWorkerCount)
                 {
                     if (!commandBuffer.TryDequeue(out var command))

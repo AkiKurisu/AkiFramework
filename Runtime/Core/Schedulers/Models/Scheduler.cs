@@ -10,19 +10,28 @@ namespace Chris.Schedulers
         FixedUpdate,
         LateUpdate,
     }
+    
     /// <summary>
     /// Unsafe binding to provide zero-allocation delegate
     /// </summary>
     public readonly unsafe struct SchedulerUnsafeBinding
     {
         private const byte Ptr = 0;
+        
         private const byte Delegate = 1;
+        
         private readonly byte _assigned;
+        
         private readonly byte _mType;
+        
         private readonly object _mObj;
+        
         private readonly void* _mPtr;
+        
         private readonly Action _mDelegate;
+        
         internal readonly Action GetDelegate() => _mDelegate;
+        
         public SchedulerUnsafeBinding(object instance, delegate* managed<object, void> mPtr)
         {
             _mType = Ptr;
@@ -31,6 +40,7 @@ namespace Chris.Schedulers
             _mDelegate = null;
             _assigned = 1;
         }
+        
         public SchedulerUnsafeBinding(delegate* managed<void> mPtr)
         {
             _mType = Ptr;
@@ -39,12 +49,13 @@ namespace Chris.Schedulers
             _mDelegate = null;
             _assigned = 1;
         }
-        public SchedulerUnsafeBinding(Action _delegate)
+        
+        public SchedulerUnsafeBinding(Action @delegate)
         {
             _mType = Delegate;
             _mObj = null;
             _mPtr = default;
-            _mDelegate = _delegate;
+            _mDelegate = @delegate;
             _assigned = 1;
         }
 
@@ -61,34 +72,46 @@ namespace Chris.Schedulers
             else
                 ((delegate* managed<void>)_mPtr)();
         }
+        
         public bool IsValid()
         {
             if (_assigned == 0) return false;
             if (_mType == Delegate) return _mDelegate != null;
             return _mPtr != null;
         }
+        
         public static implicit operator SchedulerUnsafeBinding(Action action)
         {
             return new SchedulerUnsafeBinding(action);
         }
+        
         public static implicit operator SchedulerUnsafeBinding(delegate* managed<void> ptr)
         {
             return new SchedulerUnsafeBinding(ptr);
         }
     }
+    
     /// <summary>
     /// Unsafe binding to provide zero-allocation delegate
     /// </summary>
     public readonly unsafe struct SchedulerUnsafeBinding<T>
     {
         private const byte Ptr = 0;
+        
         private const byte Delegate = 1;
+        
         private readonly byte _assigned;
+        
         private readonly byte _mType;
+        
         private readonly object _mObj;
+        
         private readonly void* _mPtr;
+        
         private readonly Action<T> _mDelegate;
+        
         internal readonly Action<T> GetDelegate() => _mDelegate;
+        
         public SchedulerUnsafeBinding(object instance, delegate* managed<object, T, void> mPtr)
         {
             _mType = Ptr;
@@ -97,6 +120,7 @@ namespace Chris.Schedulers
             _mDelegate = null;
             _assigned = 1;
         }
+        
         public SchedulerUnsafeBinding(delegate* managed<T, void> mPtr)
         {
             _mType = Ptr;
@@ -105,12 +129,13 @@ namespace Chris.Schedulers
             _mDelegate = null;
             _assigned = 1;
         }
-        public SchedulerUnsafeBinding(Action<T> _delegate)
+        
+        public SchedulerUnsafeBinding(Action<T> @delegate)
         {
             _mType = Delegate;
             _mObj = null;
             _mPtr = default;
-            _mDelegate = _delegate;
+            _mDelegate = @delegate;
             _assigned = 1;
         }
 
@@ -127,21 +152,25 @@ namespace Chris.Schedulers
             else
                 ((delegate* managed<T, void>)_mPtr)(arg);
         }
+        
         public bool IsValid()
         {
             if (_assigned == 0) return false;
             if (_mType == Delegate) return _mDelegate != null;
             return _mPtr != null;
         }
+        
         public static implicit operator SchedulerUnsafeBinding<T>(Action<T> action)
         {
             return new SchedulerUnsafeBinding<T>(action);
         }
+        
         public static implicit operator SchedulerUnsafeBinding<T>(delegate* managed<T, void> ptr)
         {
             return new SchedulerUnsafeBinding<T>(ptr);
         }
     }
+    
     /// <summary>
     /// Main api for schedulers
     /// </summary>
@@ -151,20 +180,23 @@ namespace Chris.Schedulers
         /// Delay some time and invoke callBack
         /// </summary>
         /// <param name="delay"></param>
-        /// <param name="callBack"></param>
+        /// <param name="onComplete"></param>
+        /// <param name="tickFrame"></param>
         /// <param name="isLooped"></param>
         /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle DelayUnsafe(float delay, SchedulerUnsafeBinding callBack, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
+        public static SchedulerHandle DelayUnsafe(float delay, SchedulerUnsafeBinding onComplete, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            return Timer.Register(delay, callBack, default, tickFrame, isLooped, ignoreTimeScale).Handle;
+            return Timer.Register(delay, onComplete, default, tickFrame, isLooped, ignoreTimeScale).Handle;
         }
+
         /// <summary>
         /// Delay some time and invoke callBack
         /// </summary>
         /// <param name="delay"></param>
         /// <param name="onUpdate"></param>
+        /// <param name="tickFrame"></param>
         /// <param name="isLooped"></param>
         /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
@@ -173,74 +205,92 @@ namespace Chris.Schedulers
         {
             return Timer.Register(delay, default, onUpdate, tickFrame, isLooped, ignoreTimeScale).Handle;
         }
+
         /// <summary>
         /// Delay some time and invoke callBack
         /// </summary>
-        /// <param name="callBack"></param>
+        /// <param name="onComplete"></param>
         /// <param name="onUpdate"></param>
         /// <param name="delay"></param>
-        /// <returns></returns>
-        [StackTraceFrame]
-        public static SchedulerHandle DelayUnsafe(float delay, SchedulerUnsafeBinding callBack, SchedulerUnsafeBinding<float> onUpdate, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
-        {
-            return Timer.Register(delay, callBack, onUpdate, tickFrame, isLooped, ignoreTimeScale).Handle;
-        }
-        /// <summary>
-        /// Delay some time and invoke callBack
-        /// </summary>
-        /// <param name="delay"></param>
-        /// <param name="callBack"></param>
+        /// <param name="tickFrame"></param>
         /// <param name="isLooped"></param>
         /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle Delay(float delay, Action callBack, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
+        public static SchedulerHandle DelayUnsafe(float delay, SchedulerUnsafeBinding onComplete, SchedulerUnsafeBinding<float> onUpdate, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            return Timer.Register(delay, callBack, default, tickFrame, isLooped, ignoreTimeScale).Handle;
+            return Timer.Register(delay, onComplete, onUpdate, tickFrame, isLooped, ignoreTimeScale).Handle;
         }
+
         /// <summary>
         /// Delay some time and invoke callBack
         /// </summary>
-        /// <param name="delay"></param>
-        /// <param name="onUpdate"></param>
+        /// <param name="delaySeconds"></param>
+        /// <param name="onComplete"></param>
+        /// <param name="tickFrame"></param>
         /// <param name="isLooped"></param>
         /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle Delay(float delay, Action<float> onUpdate, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
+        public static SchedulerHandle Delay(float delaySeconds, Action onComplete, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            return Timer.Register(delay, default, onUpdate, tickFrame, isLooped, ignoreTimeScale).Handle;
+            return Timer.Register(delaySeconds, onComplete, default, tickFrame, isLooped, ignoreTimeScale).Handle;
         }
+
         /// <summary>
         /// Delay some time and invoke callBack
         /// </summary>
-        /// <param name="callBack"></param>
+        /// <param name="delaySeconds"></param>
         /// <param name="onUpdate"></param>
-        /// <param name="delay"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
+        /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle Delay(float delay, Action callBack, Action<float> onUpdate,
+        public static SchedulerHandle Delay(float delaySeconds, Action<float> onUpdate, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
+        {
+            return Timer.Register(delaySeconds, default, onUpdate, tickFrame, isLooped, ignoreTimeScale).Handle;
+        }
+
+        /// <summary>
+        /// Delay some time and invoke callBack
+        /// </summary>
+        /// <param name="onComplete"></param>
+        /// <param name="onUpdate"></param>
+        /// <param name="delaySeconds"></param>
+        /// <param name="isLooped"></param>
+        /// <param name="ignoreTimeScale"></param>
+        /// <param name="tickFrame"></param>
+        /// <returns></returns>
+        [StackTraceFrame]
+        public static SchedulerHandle Delay(float delaySeconds, Action onComplete, Action<float> onUpdate,
         TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            return Timer.Register(delay, callBack, onUpdate, tickFrame, isLooped, ignoreTimeScale).Handle;
+            return Timer.Register(delaySeconds, onComplete, onUpdate, tickFrame, isLooped, ignoreTimeScale).Handle;
         }
+
         /// <summary>
         /// Wait some frames and invoke callBack
         /// </summary>
-        /// <param name="callBack"></param>
+        /// <param name="onComplete"></param>
         /// <param name="frame"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle WaitFrameUnsafe(int frame, SchedulerUnsafeBinding callBack,
+        public static SchedulerHandle WaitFrameUnsafe(int frame, SchedulerUnsafeBinding onComplete,
          TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            return FrameCounter.Register(frame, callBack, default, tickFrame, isLooped).Handle;
+            return FrameCounter.Register(frame, onComplete, default, tickFrame, isLooped).Handle;
         }
+
         /// <summary>
         /// Wait some frames and invoke callBack
         /// </summary>
         /// <param name="onUpdate"></param>
         /// <param name="frame"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
         /// <returns></returns>
         [StackTraceFrame]
         public static SchedulerHandle WaitFrameUnsafe(int frame, SchedulerUnsafeBinding<int> onUpdate,
@@ -248,214 +298,258 @@ namespace Chris.Schedulers
         {
             return FrameCounter.Register(frame, default, onUpdate, tickFrame, isLooped).Handle;
         }
+
         /// <summary>
         /// Wait some frames and invoke callBack
         /// </summary>
-        /// <param name="callBack"></param>
+        /// <param name="onComplete"></param>
         /// <param name="onUpdate"></param>
         /// <param name="frame"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle WaitFrameUnsafe(int frame, SchedulerUnsafeBinding callBack, SchedulerUnsafeBinding<int> onUpdate,
+        public static SchedulerHandle WaitFrameUnsafe(int frame, SchedulerUnsafeBinding onComplete, SchedulerUnsafeBinding<int> onUpdate,
          TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            return FrameCounter.Register(frame, callBack, onUpdate, tickFrame, isLooped).Handle;
+            return FrameCounter.Register(frame, onComplete, onUpdate, tickFrame, isLooped).Handle;
         }
+
         /// <summary>
         /// Wait some frames and invoke callBack
         /// </summary>
-        /// <param name="callBack"></param>
+        /// <param name="onComplete"></param>
         /// <param name="frame"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle WaitFrame(int frame, Action callBack, TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
+        public static SchedulerHandle WaitFrame(int frame, Action onComplete, TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            return FrameCounter.Register(frame, callBack, default, tickFrame, isLooped).Handle;
+            return FrameCounter.Register(frame, onComplete, default, tickFrame, isLooped).Handle;
         }
+
         /// <summary>
         /// Wait some frames and invoke callBack
         /// </summary>
         /// <param name="onUpdate"></param>
         /// <param name="frame"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
         /// <returns></returns>
         [StackTraceFrame]
         public static SchedulerHandle WaitFrame(int frame, Action<int> onUpdate, TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
             return FrameCounter.Register(frame, default, onUpdate, tickFrame, isLooped).Handle;
         }
+
         /// <summary>
         /// Wait some frames and invoke callBack
         /// </summary>
-        /// <param name="callBack"></param>
+        /// <param name="onComplete"></param>
         /// <param name="onUpdate"></param>
         /// <param name="frame"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static SchedulerHandle WaitFrame(int frame, Action callBack, Action<int> onUpdate,
+        public static SchedulerHandle WaitFrame(int frame, Action onComplete, Action<int> onUpdate,
          TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            return FrameCounter.Register(frame, callBack, onUpdate, tickFrame, isLooped).Handle;
+            return FrameCounter.Register(frame, onComplete, onUpdate, tickFrame, isLooped).Handle;
         }
         #region Unreal Style
+
         /// <summary>
         /// Delay some time and invoke callBack
         /// </summary>
         /// <param name="handle">Handle to overwrite</param>
-        /// <param name="delay"></param>
-        /// <param name="callBack"></param>
+        /// <param name="delaySeconds"></param>
+        /// <param name="onComplete"></param>
+        /// <param name="tickFrame"></param>
         /// <param name="isLooped"></param>
         /// <param name="ignoreTimeScale"></param>
         [StackTraceFrame]
-        public static void DelayUnsafe(ref SchedulerHandle handle, float delay, SchedulerUnsafeBinding callBack,
+        public static void DelayUnsafe(ref SchedulerHandle handle, float delaySeconds, SchedulerUnsafeBinding onComplete,
          TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            Timer.Register(delay, callBack, default, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
+            Timer.Register(delaySeconds, onComplete, default, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
         }
+
         /// <summary>
         /// Delay some time and invoke callBack
         /// </summary>
         /// <param name="handle">Handle to overwrite</param>
-        /// <param name="delay"></param>
+        /// <param name="delaySeconds"></param>
         /// <param name="onUpdate"></param>
+        /// <param name="tickFrame"></param>
         /// <param name="isLooped"></param>
         /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static void DelayUnsafe(ref SchedulerHandle handle, float delay, SchedulerUnsafeBinding<float> onUpdate,
+        public static void DelayUnsafe(ref SchedulerHandle handle, float delaySeconds, SchedulerUnsafeBinding<float> onUpdate,
         TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            Timer.Register(delay, default, onUpdate, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
+            Timer.Register(delaySeconds, default, onUpdate, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
         }
+
         /// <summary>
         /// Delay some time and invoke callBack
         /// </summary>
         /// <param name="handle">Handle to overwrite</param>
-        /// <param name="delay"></param>
-        /// <param name="callBack"></param>
+        /// <param name="delaySeconds"></param>
+        /// <param name="onComplete"></param>
         /// <param name="onUpdate"></param>
+        /// <param name="isLooped"></param>
         /// <param name="ignoreTimeScale"></param>
+        /// <param name="tickFrame"></param>
         [StackTraceFrame]
-        public static void DelayUnsafe(ref SchedulerHandle handle, float delay, SchedulerUnsafeBinding callBack,
+        public static void DelayUnsafe(ref SchedulerHandle handle, float delaySeconds, SchedulerUnsafeBinding onComplete,
          SchedulerUnsafeBinding<float> onUpdate, TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            Timer.Register(delay, callBack, onUpdate, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
+            Timer.Register(delaySeconds, onComplete, onUpdate, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
         }
+
         /// <summary>
         /// Delay some time and invoke callBack
         /// </summary>
         /// <param name="handle">Handle to overwrite</param>
-        /// <param name="delay"></param>
-        /// <param name="callBack"></param>
+        /// <param name="delaySeconds"></param>
+        /// <param name="onComplete"></param>
         /// <param name="isLooped"></param>
+        /// <param name="tickFrame"></param>
         /// <param name="ignoreTimeScale"></param>
         [StackTraceFrame]
-        public static void Delay(ref SchedulerHandle handle, float delay, Action callBack, bool isLooped = false,
+        public static void Delay(ref SchedulerHandle handle, float delaySeconds, Action onComplete, bool isLooped = false,
          TickFrame tickFrame = TickFrame.Update, bool ignoreTimeScale = false)
         {
-            Timer.Register(delay, callBack, default, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
+            Timer.Register(delaySeconds, onComplete, default, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
         }
+
         /// <summary>
         /// Delay some time and invoke callBack
         /// </summary>
         /// <param name="handle">Handle to overwrite</param>
-        /// <param name="delay"></param>
+        /// <param name="delaySeconds"></param>
         /// <param name="onUpdate"></param>
+        /// <param name="tickFrame"></param>
         /// <param name="isLooped"></param>
         /// <param name="ignoreTimeScale"></param>
         /// <returns></returns>
         [StackTraceFrame]
-        public static void Delay(ref SchedulerHandle handle, float delay, Action<float> onUpdate,
+        public static void Delay(ref SchedulerHandle handle, float delaySeconds, Action<float> onUpdate,
         TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            Timer.Register(delay, default, onUpdate, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
+            Timer.Register(delaySeconds, default, onUpdate, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
         }
+
         /// <summary>
         /// Delay some time and invoke callBack
         /// </summary>
         /// <param name="handle">Handle to overwrite</param>
-        /// <param name="delay"></param>
-        /// <param name="callBack"></param>
+        /// <param name="delaySeconds"></param>
+        /// <param name="onComplete"></param>
         /// <param name="onUpdate"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
         /// <param name="ignoreTimeScale"></param>
         [StackTraceFrame]
-        public static void Delay(ref SchedulerHandle handle, float delay, Action callBack, Action<float> onUpdate,
+        public static void Delay(ref SchedulerHandle handle, float delaySeconds, Action onComplete, Action<float> onUpdate,
         TickFrame tickFrame = TickFrame.Update, bool isLooped = false, bool ignoreTimeScale = false)
         {
-            Timer.Register(delay, callBack, onUpdate, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
+            Timer.Register(delaySeconds, onComplete, onUpdate, tickFrame, isLooped, ignoreTimeScale).Assign(ref handle);
         }
+
         /// <summary>
         /// Wait some frames and invoke callBack
         /// </summary>
         /// <param name="handle">Handle to overwrite</param>
         /// <param name="frame"></param>
-        /// <param name="callBack"></param>
+        /// <param name="onComplete"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
         [StackTraceFrame]
-        public static void WaitFrameUnsafe(ref SchedulerHandle handle, int frame, SchedulerUnsafeBinding callBack,
+        public static void WaitFrameUnsafe(ref SchedulerHandle handle, int frame, SchedulerUnsafeBinding onComplete,
          TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            FrameCounter.Register(frame, callBack, default, tickFrame, isLooped).Assign(ref handle);
+            FrameCounter.Register(frame, onComplete, default, tickFrame, isLooped).Assign(ref handle);
         }
+
         /// <summary>
         /// Wait some frames and invoke callBack
         /// </summary>
         /// <param name="handle">Handle to overwrite</param>
         /// <param name="frame"></param>
         /// <param name="onUpdate"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
         [StackTraceFrame]
         public static void WaitFrameUnsafe(ref SchedulerHandle handle, int frame, SchedulerUnsafeBinding<int> onUpdate,
           TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
             FrameCounter.Register(frame, default, onUpdate, tickFrame, isLooped).Assign(ref handle);
         }
+
         /// <summary>
         /// Wait some frames and invoke callBack
         /// </summary>
         /// <param name="handle">Handle to overwrite</param>
         /// <param name="frame"></param>
-        /// <param name="callBack"></param>
+        /// <param name="onComplete"></param>
         /// <param name="onUpdate"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
         [StackTraceFrame]
-        public static void WaitFrameUnsafe(ref SchedulerHandle handle, int frame, SchedulerUnsafeBinding callBack,
+        public static void WaitFrameUnsafe(ref SchedulerHandle handle, int frame, SchedulerUnsafeBinding onComplete,
          SchedulerUnsafeBinding<int> onUpdate, TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            FrameCounter.Register(frame, callBack, onUpdate, tickFrame, isLooped).Assign(ref handle);
+            FrameCounter.Register(frame, onComplete, onUpdate, tickFrame, isLooped).Assign(ref handle);
         }
+
         /// <summary>
         /// Wait some frames and invoke callBack
         /// </summary>
         /// <param name="handle">Handle to overwrite</param>
         /// <param name="frame"></param>
-        /// <param name="callBack"></param>
+        /// <param name="onComplete"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
         [StackTraceFrame]
-        public static void WaitFrame(ref SchedulerHandle handle, int frame, Action callBack,
+        public static void WaitFrame(ref SchedulerHandle handle, int frame, Action onComplete,
          TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            FrameCounter.Register(frame, callBack, default, tickFrame, isLooped).Assign(ref handle);
+            FrameCounter.Register(frame, onComplete, default, tickFrame, isLooped).Assign(ref handle);
         }
+
         /// <summary>
         /// Wait some frames and invoke callBack
         /// </summary>
         /// <param name="handle">Handle to overwrite</param>
         /// <param name="frame"></param>
         /// <param name="onUpdate"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
         [StackTraceFrame]
         public static void WaitFrame(ref SchedulerHandle handle, int frame, Action<int> onUpdate,
         TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
             FrameCounter.Register(frame, default, onUpdate, tickFrame, isLooped).Assign(ref handle);
         }
+
         /// <summary>
         /// Wait some frames and invoke callBack
         /// </summary>
         /// <param name="handle">Handle to overwrite</param>
         /// <param name="frame"></param>
-        /// <param name="callBack"></param>
+        /// <param name="onComplete"></param>
         /// <param name="onUpdate"></param>
+        /// <param name="tickFrame"></param>
+        /// <param name="isLooped"></param>
         [StackTraceFrame]
-        public static void WaitFrame(ref SchedulerHandle handle, int frame, Action callBack, Action<int> onUpdate,
+        public static void WaitFrame(ref SchedulerHandle handle, int frame, Action onComplete, Action<int> onUpdate,
         TickFrame tickFrame = TickFrame.Update, bool isLooped = false)
         {
-            FrameCounter.Register(frame, callBack, onUpdate, tickFrame, isLooped).Assign(ref handle);
+            FrameCounter.Register(frame, onComplete, onUpdate, tickFrame, isLooped).Assign(ref handle);
         }
         #endregion
     }

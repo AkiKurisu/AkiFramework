@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-namespace Chris
+namespace Chris.Collections
 {
     /// <summary>
     /// Shuffling extension used for card game
     /// </summary>
     public static class ShufflingExtension
     {
-        private static readonly Random rng = new();
+        private static readonly Random Rng = new();
+        
         /// <summary>
         /// Fisher–Yates Shuffle
         /// </summary>
@@ -20,25 +21,26 @@ namespace Chris
             while (n > 1)
             {
                 n--;
-                int k = rng.Next(n + 1);
+                int k = Rng.Next(n + 1);
                 (list[n], list[k]) = (list[k], list[n]);
             }
         }
 
         public static T Random<T>(this IReadOnlyList<T> list)
         {
-            return list[rng.Next(list.Count)];
+            return list[Rng.Next(list.Count)];
         }
 
         public static T Last<T>(this IReadOnlyList<T> list)
         {
-            return list[list.Count - 1];
+            return list[^1];
         }
 
         public static List<T> GetRandomElements<T>(this List<T> list, int elementsCount)
         {
-            return list.OrderBy(arg => Guid.NewGuid()).Take(list.Count < elementsCount ? list.Count : elementsCount)
-                .ToList();
+            return list.OrderBy(arg => Guid.NewGuid())
+                        .Take(list.Count < elementsCount ? list.Count : elementsCount)
+                        .ToList();
         }
     }
 }

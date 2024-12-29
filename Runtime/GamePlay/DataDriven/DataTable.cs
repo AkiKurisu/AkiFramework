@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Chris.Collections;
 using Chris.Serialization;
 using UnityEngine;
 namespace Chris.DataDriven
@@ -38,7 +39,7 @@ namespace Chris.DataDriven
         /// <returns></returns>
         public Type GetRowStructType()
         {
-            return m_rowType.GetObjectType();
+            return m_rowType;
         }
         /// <summary>
         /// Get data rows from table

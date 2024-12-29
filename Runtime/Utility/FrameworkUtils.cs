@@ -71,12 +71,14 @@ namespace Chris
 
             return null;
         }
+        
         internal static T GetOrAddComponent<T>(this GameObject gameObject) where T : Component
         {
             var component = gameObject.GetComponent<T>();
             if (!component) component = gameObject.AddComponent<T>();
             return component;
         }
+        
         internal static StackFrame GetCurrentStackFrame()
         {
             StackTrace stackTrace = new(1, true);
@@ -94,6 +96,7 @@ namespace Chris
             if (frameId < stackTrace.FrameCount - 1) ++frameId;
             return stackTrace.GetFrame(frameId);
         }
+        
         internal static string GetDelegatePath(Delegate callback)
         {
             var declType = callback.Method.DeclaringType?.Name ?? string.Empty;

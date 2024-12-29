@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 namespace Chris.Serialization.Editor
 {
     // Thanks to https://gist.github.com/tomkail/ba4136e6aa990f4dc94e0d39ec6a058c
-    public class SerializedObjectWrapperDrawer
+    public static class SerializedObjectWrapperDrawer
     {
         public static float CalculatePropertyHeight(ScriptableObject data)
         {
