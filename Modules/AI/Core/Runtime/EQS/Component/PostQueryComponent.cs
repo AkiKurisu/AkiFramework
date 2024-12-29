@@ -21,7 +21,7 @@ namespace Chris.AI.EQS
         private PostQuerySystem system;
         private void Start()
         {
-            system = WorldSubsystem.Get<PostQuerySystem>();
+            system = WorldSubsystem.GetOrCreate<PostQuerySystem>();
             if (system == null)
             {
                 Debug.LogError($"[PostQueryComponent] Can not get PostQuerySystem dynamically.");

@@ -9,6 +9,7 @@ namespace Chris.Serialization
         {
             public abstract object GetValue();
         }
+        
         [Serializable]
         private class Box<T>: Box
         {
@@ -20,6 +21,7 @@ namespace Chris.Serialization
                 return m_Value;
             }
         }
+        
         /// <summary>
         /// Formatted type metadata, see <see cref="SerializedType"/>
         /// </summary>
@@ -89,7 +91,7 @@ namespace Chris.Serialization
 
         public SerializedObject<T> Convert<T>()
         {
-            return new SerializedObject<T>()
+            return new SerializedObject<T>
             {
                 serializedTypeString = serializedTypeString,
                 isArray = isArray,

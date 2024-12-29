@@ -6,7 +6,6 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Cysharp.Threading.Tasks;
-
 namespace Chris.Resource
 {
     /// <summary>
@@ -18,6 +17,7 @@ namespace Chris.Resource
         public InvalidResourceRequestException() : base() { }
         public InvalidResourceRequestException(string address, string message) : base(message) { InvalidAddress = address; }
     }
+    
     /// <summary>
     /// Resource system that loads resource by address and label based on Addressables.
     /// </summary>
@@ -134,12 +134,12 @@ namespace Chris.Resource
                 throw new InvalidResourceRequestException(stringValue, $"Address {stringValue} not valid for loading {typeof(TAsset)} asset");
             }
         }
+
         /// <summary>
         /// Load asset async
         /// </summary>
         /// <param name="address"></param>
-        /// <param name="action"></param>
-        /// <param name="unRegisterHandle"></param>
+        /// <param name="callBack"></param>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
         public static ResourceHandle<T> LoadAssetAsync<T>(string address, Action<T> callBack = null)
@@ -151,24 +151,25 @@ namespace Chris.Resource
         }
         #endregion
         #region Instantiate
+
         /// <summary>
         /// Instantiate GameObject async
         /// </summary>
         /// <param name="address"></param>
         /// <param name="parent"></param>
-        /// <param name="action"></param>
-        /// <param name="bindObject"></param>
+        /// <param name="callBack"></param>
         /// <returns></returns>
         public static ResourceHandle<GameObject> InstantiateAsync(string address, Transform parent, Action<GameObject> callBack = null)
         {
             AsyncOperationHandle<GameObject> handle = Addressables.InstantiateAsync(address, parent);
             var resourceHandle = CreateHandle(handle, InstantiateOperation);
-            handle.Completed += (h) => instanceIDMap.Add(h.Result.GetInstanceID(), resourceHandle);
+            handle.Completed += (h) => InstanceIDMap.Add(h.Result.GetInstanceID(), resourceHandle);
             if (callBack != null)
                 handle.Completed += (h) => callBack.Invoke(h.Result);
             return resourceHandle;
         }
         #endregion
+        
         #region Release
         /// <summary>
         /// Release resource
@@ -195,8 +196,9 @@ namespace Chris.Resource
             else
                 ReleaseAsset(handle);
         }
+        
         /// <summary>
-        /// Release Asset, should align with <see cref="LoadAssetAsync"/>
+        /// Release Asset, should align with <see cref="LoadAssetAsync{T}"/>
         /// </summary>
         /// <param name="handle"></param>
         public static void ReleaseAsset(ResourceHandle handle)
@@ -208,13 +210,14 @@ namespace Chris.Resource
             }
             ReleaseHandleInternal(handle);
         }
+        
         /// <summary>
         /// Release GameObject Instance, should align with <see cref="InstantiateAsync"/>
         /// </summary>
         /// <param name="obj"></param>
         public static void ReleaseInstance(GameObject obj)
         {
-            if (instanceIDMap.TryGetValue(obj.GetInstanceID(), out var handle))
+            if (InstanceIDMap.TryGetValue(obj.GetInstanceID(), out var handle))
             {
                 if (!handle.IsValid()) return;
                 ReleaseHandleInternal(handle);
@@ -224,10 +227,11 @@ namespace Chris.Resource
         }
         private static void ReleaseHandleInternal(ResourceHandle handle)
         {
-            internalList.RemoveAt(handle.Index);
-            version++;
+            Operations.RemoveAt(handle.Index);
+            _version++;
         }
         #endregion
+        
         #region  Multi Assets Load
         public static ResourceHandle<IList<T>> LoadAssetsAsync<T>(object key, Action<IList<T>> callBack = null)
         {
@@ -236,6 +240,7 @@ namespace Chris.Resource
                 handle.Completed += (h) => callBack.Invoke(h.Result);
             return CreateHandle(handle, AssetLoadOperation);
         }
+        
         public static ResourceHandle<IList<T>> LoadAssetsAsync<T>(IEnumerable key, MergeMode mode, Action<IList<T>> callBack = null)
         {
             AsyncOperationHandle<IList<T>> handle = Addressables.LoadAssetsAsync<T>(key, null, (Addressables.MergeMode)mode);
@@ -244,48 +249,54 @@ namespace Chris.Resource
             return CreateHandle(handle, AssetLoadOperation);
         }
         #endregion
+        
         /// <summary>
         /// Start from 1 since 0 is always invalid handle
         /// </summary>
-        private static uint version = 1;
-        private static readonly Dictionary<int, ResourceHandle> instanceIDMap = new();
-        private static readonly SparseList<AsyncOperationStructure> internalList = new(10, int.MaxValue);
+        private static uint _version = 1;
+        
+        private static readonly Dictionary<int, ResourceHandle> InstanceIDMap = new();
+        
+        private static readonly SparseList<AsyncOperationStructure> Operations = new(10, int.MaxValue);
+        
         internal static ResourceHandle<T> CreateHandle<T>(AsyncOperationHandle<T> asyncOperationHandle, byte operation)
         {
-            var index = internalList.AddUninitialized();
-            var handle = new ResourceHandle<T>(version, index, operation);
-            internalList[index] = new AsyncOperationStructure()
+            var index = Operations.AddUninitialized();
+            var handle = new ResourceHandle<T>(_version, index, operation);
+            Operations[index] = new AsyncOperationStructure
             {
-                asyncOperationHandle = asyncOperationHandle,
-                resourceHandle = handle
+                AsyncOperationHandle = asyncOperationHandle,
+                ResourceHandle = handle
             };
             return handle;
         }
+        
         internal static AsyncOperationHandle<T> CastOperationHandle<T>(uint version, int index)
         {
             return CastOperationHandle(version, index).Convert<T>();
         }
+        
         internal static AsyncOperationHandle CastOperationHandle(uint version, int index)
         {
-            if (internalList.IsAllocated(index))
+            if (Operations.IsAllocated(index))
             {
-                if (internalList[index].resourceHandle.Version == version)
-                    return internalList[index].asyncOperationHandle;
+                if (Operations[index].ResourceHandle.Version == version)
+                    return Operations[index].AsyncOperationHandle;
                 return default;
             }
-            else
-            {
-                return default;
-            }
+
+            return default;
         }
         public static bool IsValid(uint version, int index)
         {
-            return internalList.IsAllocated(index) && internalList[index].resourceHandle.Version == version;
+            return Operations.IsAllocated(index) && Operations[index].ResourceHandle.Version == version;
         }
+        
         private struct AsyncOperationStructure
         {
-            public AsyncOperationHandle asyncOperationHandle;
-            public ResourceHandle resourceHandle;
+            public AsyncOperationHandle AsyncOperationHandle;
+            
+            public ResourceHandle ResourceHandle;
         }
     }
 }

@@ -26,6 +26,7 @@ namespace Chris.Serialization.Editor
             ValueChange.OnNext(m_Value);
         }
     }
+    
     /// <summary>
     /// Class to manage SerializedObjectWrapper
     /// </summary>
@@ -72,6 +73,7 @@ namespace Chris.Serialization.Editor
             }
             return wrapper;
         }
+        
         /// <summary>
         /// Manually destroy wrapper
         /// </summary>
@@ -80,6 +82,7 @@ namespace Chris.Serialization.Editor
         {
             GlobalObjectManager.UnregisterObject(softObjectHandle);
         }
+        
         /// <summary>
         /// Get editor wrapper if exists
         /// </summary>

@@ -121,7 +121,7 @@ namespace Chris.AI.EQS
 
                 if (commands.Length == 0) return;
 
-                actorData = Get<ActorQuerySystem>().GetAllActors(Allocator.TempJob);
+                actorData = GetOrCreate<ActorQuerySystem>().GetAllActors(Allocator.TempJob);
                 results = new NativeParallelMultiHashMap<int, ActorHandle>(1024, Allocator.Persistent);
                 execution = commands.ToArray(Allocator.TempJob);
                 jobHandle = new OverlapFieldViewBatchJob()

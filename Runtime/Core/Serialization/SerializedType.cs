@@ -1,12 +1,13 @@
+// Modified from UnityEditor.Graphs
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
+using UObject = UnityEngine.Object;
 namespace Chris.Serialization
 {
-    // Modified from Unity
     public static class SerializedType
     {
         [Serializable]
@@ -112,7 +113,7 @@ namespace Chris.Serialization
                 return string.Empty;
 
             data.typeName = string.Empty;
-            data.isGeneric = t.ContainsGenericParameters && !t.IsGenericTypeDefinition;
+            data.isGeneric = t.ContainsGenericParameters; /* eg. List<T> not List<> */
 
             data.typeName = data.isGeneric switch
             {
@@ -132,7 +133,7 @@ namespace Chris.Serialization
             /* Only support generic definition */
             if (IsGeneric(serializedTypeString))
             {
-                Debug.LogError("SerializedType not support generic type has assigned generic parameters");
+                Debug.LogError("SerializedType not support unassigned generic type");
                 return null;
             }
             if (SerializedTypeRedirector.TryRedirect(serializedTypeString, out var type))
@@ -301,7 +302,7 @@ namespace Chris.Serialization
         /// <returns></returns>
         public static SerializedType<T> FromType(Type type)
         {
-            return new SerializedType<T>()
+            return new SerializedType<T>
             {
                 serializedTypeString = SerializedType.ToString(type)
             };
@@ -322,28 +323,10 @@ namespace Chris.Serialization
     }
 
     /// <summary>
-    /// <see cref="SerializedType{T}"/> for <see cref="Component"/>
-    /// </summary>
-    [Serializable]
-    public class SerializedComponentType : SerializedType<Component>
-    {
-        
-    }
-    
-    /// <summary>
-    /// <see cref="SerializedType{T}"/> for <see cref="Behaviour"/>
-    /// </summary>
-    [Serializable]
-    public class SerializedBehaviourType : SerializedType<Behaviour>
-    {
-        
-    }
-
-    /// <summary>
     /// Attribute type that changed assembly, namespace or class name.
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public class FormerlySerializedTypeAttribute : Attribute
+    public sealed class FormerlySerializedTypeAttribute : Attribute
     {
         public string OldSerializedType { get; }
         public FormerlySerializedTypeAttribute(string oldSerializedType)
@@ -356,7 +339,7 @@ namespace Chris.Serialization
     /// Attribute type that will not show in SerializedType search window
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
-    public class HideInSerializedTypeAttribute : Attribute
+    public sealed class HideInSerializedTypeAttribute : Attribute
     {
         
     }
@@ -364,15 +347,18 @@ namespace Chris.Serialization
     public static class SerializedTypeRedirector
     {
         private static readonly Lazy<Dictionary<string, Type>> UpdatableType;
+        
         static SerializedTypeRedirector()
         {
             UpdatableType = new Lazy<Dictionary<string, Type>>(() =>
             {
-                return AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypes())
-                                                    .Where(x => x.GetCustomAttribute<FormerlySerializedTypeAttribute>() != null)
-                                                    .ToDictionary(x => x.GetCustomAttribute<FormerlySerializedTypeAttribute>().OldSerializedType, x => x);
+                return AppDomain.CurrentDomain.GetAssemblies()
+                        .SelectMany(x => x.GetTypes())
+                        .Where(x => x.GetCustomAttribute<FormerlySerializedTypeAttribute>() != null)
+                        .ToDictionary(x => x.GetCustomAttribute<FormerlySerializedTypeAttribute>().OldSerializedType, x => x);
             });
         }
+        
         /// <summary>
         /// Try get redirected type
         /// </summary>

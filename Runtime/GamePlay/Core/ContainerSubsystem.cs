@@ -16,7 +16,7 @@ namespace Chris
 
         public static ContainerSubsystem Get()
         {
-            return WorldSubsystem.Get<ContainerSubsystem>();
+            return WorldSubsystem.GetOrCreate<ContainerSubsystem>();
         }
         
         /// <summary>

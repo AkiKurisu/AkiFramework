@@ -54,7 +54,7 @@ namespace Chris.AI.EQS
         public Vector3 Offset;
         private void Start()
         {
-            system = WorldSubsystem.Get<FieldViewQuerySystem>();
+            system = WorldSubsystem.GetOrCreate<FieldViewQuerySystem>();
             if (system == null)
             {
                 Debug.LogError($"[FieldViewQueryComponent] Can not get FieldViewQuerySystem dynamically.");
