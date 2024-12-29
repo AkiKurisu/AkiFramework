@@ -1,38 +1,51 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
+using Ceres.Graph.Flow.Annotations;
 using Chris.Gameplay;
 using Chris.Tasks;
 using Kurisu.AkiBT;
 namespace Chris.AI
 {
     [RequireComponent(typeof(BlackBoardComponent))]
-    public abstract class AIController : ActorController
+    public abstract class AIController : PlayerController
     {
         [SerializeField]
         private BehaviorTask[] behaviorTasks;
         protected Dictionary<string, TaskBase> TaskMap { get; } = new();
         public bool IsAIEnabled { get; protected set; }
         public BlackBoard BlackBoard { get; private set; }
-        protected virtual void Awake()
+        
+        [ImplementableEvent]
+        protected override void Awake()
         {
             BlackBoard = GetComponent<BlackBoardComponent>().GetBlackBoard();
+            base.Awake();
         }
-        protected virtual void Start()
+        
+        [ImplementableEvent]
+        protected override void Start()
         {
             SetupBehaviorTree();
+            base.Start();
         }
+        
+        [ExecutableFunction]
         public sealed override bool IsBot()
         {
             return true;
         }
+        
         public IAIPawn GetAIPawn()
         {
             return GetActor() as IAIPawn;
         }
+        
         public TPawn GetPawn<TPawn>() where TPawn : Actor, IAIPawn
         {
             return GetActor() as TPawn;
         }
+        
         private void SetupBehaviorTree()
         {
             foreach (var task in behaviorTasks)
@@ -40,6 +53,8 @@ namespace Chris.AI
                 AddTask(task);
             }
         }
+        
+        [ImplementableEvent]
         protected override void OnDestroy()
         {
             foreach (var task in TaskMap.Values)
@@ -49,6 +64,8 @@ namespace Chris.AI
             }
             base.OnDestroy();
         }
+        
+        [ExecutableFunction]
         public void EnableAI()
         {
             IsAIEnabled = true;
@@ -58,6 +75,8 @@ namespace Chris.AI
                     task.Start();
             }
         }
+        
+        [ExecutableFunction]
         public void DisableAI()
         {
             IsAIEnabled = false;
@@ -66,18 +85,27 @@ namespace Chris.AI
                 task.Pause();
             }
         }
-        protected virtual void OnEnable()
+        
+        [ImplementableEvent]
+        protected override void OnEnable()
         {
             EnableAI();
+            base.OnEnable();
         }
-        protected virtual void OnDisable()
+        
+        [ImplementableEvent]
+        protected override void OnDisable()
         {
             DisableAI();
+            base.OnDisable();
         }
+        
+        [ExecutableFunction]
         public TaskBase GetTask(string taskID)
         {
             return TaskMap[taskID];
         }
+        
         public void AddTask<T>(T task) where T : TaskBase, IAITask
         {
             string id = task.GetTaskID();
@@ -95,9 +123,11 @@ namespace Chris.AI
                 task.Start();
             }
         }
-        public IEnumerable<TaskBase> GetAllTasks()
+        
+        [ExecutableFunction]
+        public TaskBase[] GetAllTasks()
         {
-            return TaskMap.Values;
+            return TaskMap.Values.ToArray();
         }
     }
 }

@@ -10,7 +10,7 @@ using UObject = UnityEngine.Object;
 namespace Chris.Gameplay
 {
     /// <summary>
-    /// Actor is an MonoBehaviour identifier to place GameObject in framework's GamePlay level.
+    /// Actor is a MonoBehaviour to place GameObject in GamePlay level.
     /// </summary>
     public class Actor : MonoBehaviour, IFlowGraphContainer
     {
@@ -24,7 +24,7 @@ namespace Chris.Gameplay
         
         private GameWorld _world;
         
-        private ActorController _controller;
+        private PlayerController _controller;
         
         private ActorHandle _handle;
         
@@ -133,12 +133,12 @@ namespace Chris.Gameplay
             actor._handle = default;
         }
         
-        public TController GetTController<TController>() where TController : ActorController
+        public TController GetTController<TController>() where TController : PlayerController
         {
             return _controller as TController;
         }
         
-        public ActorController GetController()
+        public PlayerController GetController()
         {
             return _controller;
         }
@@ -167,7 +167,7 @@ namespace Chris.Gameplay
             actor._actorComponents.Remove(component);
         }
         
-        internal void BindController(ActorController controller)
+        internal void BindController(PlayerController controller)
         {
             if (_controller != null)
             {
@@ -177,7 +177,7 @@ namespace Chris.Gameplay
             _controller = controller;
         }
         
-        internal void UnbindController(ActorController controller)
+        internal void UnbindController(PlayerController controller)
         {
             if (_controller == controller)
             {
