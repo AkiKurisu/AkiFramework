@@ -16,18 +16,16 @@ namespace Chris.Gameplay
     {
         #region Scheduler
 
-        [ExecutableFunction, CeresLabel("Schedule Timer by Event")]
-        public static SchedulerHandle Flow_SchedulerDelay(
-            [CeresMetadata(CeresMetadata.SELF_TARGET)] UObject context, 
+        [ExecutableFunction(IsSelfTarget = true), CeresLabel("Schedule Timer by Event")]
+        public static SchedulerHandle Flow_SchedulerDelay(UObject context, 
             float delaySeconds, EventDelegate<float> onUpdate, EventDelegate onComplete)
         {
             var handle = Scheduler.Delay(delaySeconds, onUpdate: onUpdate?.Create(context), onComplete: onComplete?.Create(context));
             return handle;
         }
         
-        [ExecutableFunction, CeresLabel("Schedule FrameCounter by Event")]
-        public static SchedulerHandle Flow_SchedulerWaitFrame(
-            [CeresMetadata(CeresMetadata.SELF_TARGET)] UObject context, 
+        [ExecutableFunction(IsSelfTarget = true), CeresLabel("Schedule FrameCounter by Event")]
+        public static SchedulerHandle Flow_SchedulerWaitFrame(UObject context, 
             int frame, EventDelegate<int> onUpdate, EventDelegate onComplete)
         {
             var handle = Scheduler.WaitFrame(frame, onUpdate: onUpdate?.Create(context), onComplete: onComplete?.Create(context));
@@ -46,7 +44,7 @@ namespace Chris.Gameplay
 
         [ExecutableFunction]
         public static SubsystemBase Flow_GetSubsystem(
-            [CeresMetadata(CeresMetadata.RESOVLE_RETURN)] SerializedType<SubsystemBase> type)
+            [CeresMetadata(ExecutableFunction.RESOLVE_RETURN)] SerializedType<SubsystemBase> type)
         {
             return GameWorld.Get().GetSubsystem(type);
         }

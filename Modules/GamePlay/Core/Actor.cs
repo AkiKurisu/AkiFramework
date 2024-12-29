@@ -199,7 +199,7 @@ namespace Chris.Gameplay
         
         [ExecutableFunction]
         public ActorComponent GetActorComponent(
-            [CeresMetadata(CeresMetadata.RESOVLE_RETURN)] SerializedType<ActorComponent> type)
+            [CeresMetadata(ExecutableFunction.RESOLVE_RETURN)] SerializedType<ActorComponent> type)
         {
             foreach (var component in _actorComponents)
             {
