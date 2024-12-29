@@ -1,4 +1,5 @@
 using System;
+using Chris.Gameplay;
 using Unity.Mathematics;
 using UnityEngine;
 namespace Chris.AI.EQS
@@ -9,32 +10,37 @@ namespace Chris.AI.EQS
     public class PostQueryComponent : ActorComponent
     {
         [Header("Data")]
-        public PostQueryParameters PostQuery = new()
+        public PostQueryParameters postQuery = new()
         {
             Angle = 120,
             Distance = 30,
             Step = 6,
             Depth = 3
         };
-        public LayerMask RaycastLayerMask;
-        public Vector3 RaycastOffset;
-        private PostQuerySystem system;
+        
+        public LayerMask raycastLayerMask;
+        
+        public Vector3 raycastOffset
+            ;
+        private PostQuerySystem _system;
+        
         private void Start()
         {
-            system = WorldSubsystem.GetOrCreate<PostQuerySystem>();
-            if (system == null)
+            _system = WorldSubsystem.GetOrCreate<PostQuerySystem>();
+            if (_system == null)
             {
                 Debug.LogError($"[PostQueryComponent] Can not get PostQuerySystem dynamically.");
             }
         }
+        
         /// <summary>
-        /// Requst a new post query from target's view
+        /// Request a new post query from target's view
         /// </summary>
         /// <param name="target"></param>
         /// <returns></returns>
         public bool RequestPostQuery(Actor target)
         {
-            if (system == null)
+            if (_system == null)
             {
                 return false;
             }
@@ -43,28 +49,29 @@ namespace Chris.AI.EQS
                 Debug.LogWarning($"[PostQueryComponent] Can not request post query from self view.");
                 return false;
             }
-            if (!system.IsFree(GetActor().GetActorHandle()))
+            if (!_system.IsFree(GetActor().GetActorHandle()))
             {
                 return false;
             }
             PostQueryCommand command = new()
             {
-                self = GetActor().GetActorHandle(),
-                target = target.GetActorHandle(),
-                parameters = PostQuery,
-                offset = RaycastOffset,
-                layerMask = RaycastLayerMask
+                Self = GetActor().GetActorHandle(),
+                Target = target.GetActorHandle(),
+                Parameters = postQuery,
+                Offset = raycastOffset,
+                LayerMask = raycastLayerMask
             };
-            system.EnqueueCommand(command);
+            _system.EnqueueCommand(command);
             return true;
         }
+        
         /// <summary>
         /// Get current posts
         /// </summary>
         /// <returns></returns>
         public ReadOnlySpan<float3> GetPosts()
         {
-            return system.GetPosts(GetActor().GetActorHandle()).AsReadOnlySpan();
+            return _system.GetPosts(GetActor().GetActorHandle()).AsReadOnlySpan();
         }
     }
 }

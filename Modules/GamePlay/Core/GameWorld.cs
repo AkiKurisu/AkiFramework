@@ -1,9 +1,10 @@
 using System;
+using Ceres.Graph.Flow.Annotations;
 using Chris.Collections;
 using R3;
 using UnityEngine;
 using UnityEngine.Assertions;
-namespace Chris
+namespace Chris.Gameplay
 {
     /// <summary>
     /// Struct to represent an GamePlay actor level entity
@@ -212,6 +213,12 @@ namespace Chris
             OnActorsUpdate.OnNext(Unit.Default);
         }
         
+        /// <summary>
+        /// Get actor from <see cref="ActorHandle"/>
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        [ExecutableFunction]
         public Actor GetActor(ActorHandle handle)
         {
             int index = handle.GetIndex();

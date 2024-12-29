@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Chris.Gameplay;
 using UnityEngine;
 using UnityEngine.Pool;
 namespace Chris.AI.EQS
@@ -6,78 +7,92 @@ namespace Chris.AI.EQS
     public interface IFieldViewQueryComponent
     {
         /// <summary>
-        /// Requst a new query from target's field view
+        /// Request a new query from target's field view
         /// </summary>
         /// <returns></returns>
         bool RequestFieldViewQuery();
+
         /// <summary>
         /// Detect whether can see the target
         /// </summary>
         /// <param name="target"></param>
         /// <param name="fromPosition"></param>
-        /// <param name="viewDirection"></param>
+        /// <param name="fromRotation"></param>
         /// <param name="filterTags"></param>
         /// <returns></returns>
         bool Detect(Vector3 target, Vector3 fromPosition, Quaternion fromRotation, string[] filterTags = null);
+        
         /// <summary>
         /// Query actors overlap in field of view from cache
         /// </summary>
         /// <param name="actors"></param>
         void CollectViewActors(List<Actor> actors);
+        
         /// <summary>
         /// Query actors overlap in field of view from cache
         /// </summary>
         /// <param name="actors"></param>
         void CollectViewActors<T>(List<T> actors) where T : Actor;
     }
+    
     public abstract class FieldViewQueryComponentBase : ActorComponent, IFieldViewQueryComponent
     {
         public abstract void CollectViewActors(List<Actor> actors);
+        
         public abstract void CollectViewActors<T>(List<T> actors) where T : Actor;
+        
         public abstract bool Detect(Vector3 target, Vector3 fromPosition, Quaternion fromRotation, string[] filterTags = null);
+        
         public abstract bool RequestFieldViewQuery();
     }
+    
     /// <summary>
     /// Field view query data provider associated with an Actor as component
     /// </summary>
     public class FieldViewQueryComponent : FieldViewQueryComponentBase
     {
         [Header("Data")]
-        public FieldView FieldView = new()
+        public FieldView fieldView = new()
         {
-            Radius = 20,
-            Angle = 120
+            radius = 20,
+            angle = 120
         };
-        public LayerMask QueryLayerMask;
-        private FieldViewQuerySystem system;
+        
+        public LayerMask queryLayerMask;
+        
+        private FieldViewQuerySystem _system;
+        
         [Header("Gizmos")]
-        public Vector3 Offset;
+        public Vector3 offset;
+        
         private void Start()
         {
-            system = WorldSubsystem.GetOrCreate<FieldViewQuerySystem>();
-            if (system == null)
+            _system = WorldSubsystem.GetOrCreate<FieldViewQuerySystem>();
+            if (_system == null)
             {
                 Debug.LogError($"[FieldViewQueryComponent] Can not get FieldViewQuerySystem dynamically.");
             }
         }
         public override bool RequestFieldViewQuery()
         {
-            if (system == null)
+            if (_system == null)
             {
                 return false;
             }
-            system.EnqueueCommand(new FieldViewQueryCommand()
+            _system.EnqueueCommand(new FieldViewQueryCommand()
             {
                 self = GetActor().GetActorHandle(),
-                fieldView = FieldView,
-                layerMask = QueryLayerMask
+                fieldView = fieldView,
+                layerMask = queryLayerMask
             });
             return true;
         }
+        
         public override void CollectViewActors(List<Actor> actors)
         {
-            system.GetActorsInFieldView(GetActor().GetActorHandle(), actors);
+            _system.GetActorsInFieldView(GetActor().GetActorHandle(), actors);
         }
+        
         public override void CollectViewActors<T>(List<T> actors)
         {
             var list = ListPool<Actor>.Get();
@@ -88,13 +103,15 @@ namespace Chris.AI.EQS
             }
             ListPool<Actor>.Release(list);
         }
+        
         public override bool Detect(Vector3 target, Vector3 fromPosition, Quaternion fromRotation, string[] filterTags = null)
         {
-            return FieldView.Detect(target, fromPosition, fromRotation, QueryLayerMask, filterTags);
+            return fieldView.Detect(target, fromPosition, fromRotation, queryLayerMask, filterTags);
         }
+        
         private void OnDrawGizmos()
         {
-            FieldView.DrawGizmos(transform.position + Offset, transform.forward);
+            fieldView.DrawGizmos(transform.position + offset, transform.forward);
         }
     }
 }

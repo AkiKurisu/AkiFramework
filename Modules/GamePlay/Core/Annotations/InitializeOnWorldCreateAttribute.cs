@@ -1,5 +1,5 @@
 using System;
-namespace Chris
+namespace Chris.Gameplay
 {
     /// <summary>
     /// Whether <see cref="WorldSubsystem"/> should be created and initialize when world create

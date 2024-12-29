@@ -1,7 +1,7 @@
 using System;
 using Chris.DataDriven;
 using UnityEngine;
-namespace Chris.Level
+namespace Chris.Gameplay.Level
 {
     public enum LoadLevelMode
     {

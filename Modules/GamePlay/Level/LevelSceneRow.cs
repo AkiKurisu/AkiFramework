@@ -2,7 +2,7 @@ using System;
 using Chris.DataDriven;
 using Chris.Resource;
 using UnityEngine;
-namespace Chris.Level
+namespace Chris.Gameplay.Level
 {
     [Serializable, AddressableDataTable(address:LevelSceneDataTableManager.TableKey)]
     public class LevelSceneRow : IDataTableRow

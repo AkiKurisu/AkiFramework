@@ -1,5 +1,5 @@
 using UnityEngine;
-namespace Chris
+namespace Chris.Gameplay
 {
     public class ActorController : MonoBehaviour
     {

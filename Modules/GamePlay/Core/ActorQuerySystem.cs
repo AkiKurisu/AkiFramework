@@ -3,31 +3,40 @@ using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Mathematics;
 using Unity.Profiling;
-namespace Chris
+namespace Chris.Gameplay
 {
     /// <summary>
     /// Actor world basic data
     /// </summary>
     public struct ActorData
     {
-        public ActorHandle handle;
-        public int layer;
-        public byte active;
-        public quaternion rotation;
-        public float3 position;
+        public ActorHandle Handle;
+        
+        public int Layer;
+        
+        public bool Active;
+        
+        public quaternion Rotation;
+        
+        public float3 Position;
     }
+    
     /// <summary>
     /// Represent a DOP actor query system.
     /// </summary>
     public class ActorQuerySystem : WorldSubsystem
     {
-        private NativeArray<ActorData> _actorData = default;
+        private NativeArray<ActorData> _actorData;
+        
         private readonly List<Actor> _actors = new();
+        
         private static readonly ProfilerMarker TickPM = new("ActorQuerySystem.Tick");
+        
         protected override void Initialize()
         {
             RebuildArray();
         }
+        
         public override void Tick()
         {
             using (TickPM.Auto())
@@ -45,14 +54,15 @@ namespace Chris
                         _actors[i].transform.GetPositionAndRotation(out var pos, out var rot);
                         fixed (ActorData* ptr = &UnsafeUtility.ArrayElementAsRef<ActorData>(arrayPtr, i))
                         {
-                            ptr->position = pos;
-                            ptr->rotation = rot;
-                            ptr->active = (byte)(_actors[i].isActiveAndEnabled ? 0 : 1);
+                            ptr->Position = pos;
+                            ptr->Rotation = rot;
+                            ptr->Active = _actors[i].isActiveAndEnabled;
                         }
                     }
                 }
             }
         }
+        
         private void RebuildArray()
         {
             _actors.Clear();
@@ -62,13 +72,14 @@ namespace Chris
             {
                 _actorData[i] = new ActorData()
                 {
-                    handle = _actors[i].GetActorHandle(),
+                    Handle = _actors[i].GetActorHandle(),
                     // not update layer in tick to prevent allocation
                     // TODO: Move out of actor data, or use custom layer mask
-                    layer = _actors[i].gameObject.layer
+                    Layer = _actors[i].gameObject.layer
                 };
             }
         }
+        
         /// <summary>
         /// Allocate an actor data array for query
         /// </summary>
@@ -82,6 +93,7 @@ namespace Chris
             }
             return new NativeArray<ActorData>(_actorData, allocator);
         }
+        
         protected override void Release()
         {
             _actorData.DisposeSafe();

@@ -9,53 +9,67 @@ namespace Chris.AI
     {
         public struct RequestContext
         {
-            public AIController controller;
-            public IReadOnlyList<TaskBase> tasks;
-            public Action callBack;
+            public AIController Controller;
+            
+            public IReadOnlyList<TaskBase> Tasks;
+            
+            public Action CallBack;
         }
+        
         [SerializeField]
         private UnityEvent OnPlay;
+        
         [SerializeField]
-        private UnityEvent OnStop;
-        protected AIController controller;
-        private SequenceTask sequenceTask;
-        private IReadOnlyList<TaskBase> tasks;
-        private Action callBack;
+        private UnityEvent OnStop
+            ;
+        protected AIController Controller;
+        
+        private SequenceTask _sequenceTask;
+        
+        private IReadOnlyList<TaskBase> _tasks;
+        
+        private Action _callBack;
+        
         public SequenceTask GetDirectorTask()
         {
-            return sequenceTask;
+            return _sequenceTask;
         }
+        
         public AIController GetController()
         {
-            return controller;
+            return Controller;
         }
         public void Play(RequestContext proxyContext)
         {
-            callBack = proxyContext.callBack;
-            controller = proxyContext.controller;
-            tasks = proxyContext.tasks;
+            _callBack = proxyContext.CallBack;
+            Controller = proxyContext.Controller;
+            _tasks = proxyContext.Tasks;
             OnPlayDirector();
             OnPlay?.Invoke();
         }
+        
         protected virtual void OnPlayDirector() { }
+        
         protected void RunDirectorTasks()
         {
-            sequenceTask?.Dispose();
-            sequenceTask = SequenceTask.GetPooled(tasks, OnPlayEnd);
-            sequenceTask.Acquire();
-            sequenceTask.Run();
+            _sequenceTask?.Dispose();
+            _sequenceTask = SequenceTask.GetPooled(_tasks, OnPlayEnd);
+            _sequenceTask.Acquire();
+            _sequenceTask.Run();
         }
+        
         private void OnPlayEnd()
         {
-            callBack?.Invoke();
+            _callBack?.Invoke();
             Stop();
         }
+        
         public virtual void Stop()
         {
-            sequenceTask?.Dispose();
-            sequenceTask = null;
-            callBack = null;
-            controller = null;
+            _sequenceTask?.Dispose();
+            _sequenceTask = null;
+            _callBack = null;
+            Controller = null;
             OnStop?.Invoke();
         }
     }

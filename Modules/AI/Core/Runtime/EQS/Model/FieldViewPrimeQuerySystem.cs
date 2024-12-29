@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Chris.Gameplay;
 using Chris.Schedulers;
 using Unity.Burst;
 using Unity.Collections;
@@ -35,34 +36,34 @@ namespace Chris.AI.EQS
             {
                 FieldViewPrimeQueryCommand source = datas[index];
                 ActorData self = actors[source.self.GetIndex()];
-                float3 forward = math.mul(self.rotation, new float3(0, 0, 1));
+                float3 forward = math.mul(self.Rotation, new float3(0, 0, 1));
                 for (int i = 0; i < actors.Length; i++)
                 {
                     if (i == index) continue;
                     ActorData actor = actors[i];
-                    if (!MathUtils.IsInLayerMask(actor.layer, source.layerMask)) continue;
+                    if (!MathUtils.IsInLayerMask(actor.Layer, source.layerMask)) continue;
                     float radius = source.fieldView.PolygonRadius;
-                    float centerDistance = math.distance(self.position + forward * radius, actor.position);
+                    float centerDistance = math.distance(self.Position + forward * radius, actor.Position);
                     // Inside
                     if (centerDistance >= radius)
                     {
-                        using var polygons = AllocatePolygonCorners(source.fieldView, self.position, self.rotation, forward, Allocator.Temp);
-                        if (!MathUtils.IsPointInPolygon(polygons, actor.position))
+                        using var polygons = AllocatePolygonCorners(source.fieldView, self.Position, self.Rotation, forward, Allocator.Temp);
+                        if (!MathUtils.IsPointInPolygon(polygons, actor.Position))
                         {
                             // When target is nearly on edge, detect whether target is in fov now
                             const float threshold = 0.9f;
-                            if (centerDistance >= threshold * radius && MathUtils.InViewAngle(self.position, actor.position, forward, source.fieldView.Angle))
+                            if (centerDistance >= threshold * radius && MathUtils.InViewAngle(self.Position, actor.Position, forward, source.fieldView.angle))
                             {
-                                resultActors.Add(index, actor.handle);
+                                resultActors.Add(index, actor.Handle);
                             }
                             continue;
                         }
                     }
                     // Outside
-                    if (math.distance(self.position, actor.position) <= source.fieldView.Radius
-                    && MathUtils.InViewAngle(self.position, actor.position, forward, source.fieldView.Angle))
+                    if (math.distance(self.Position, actor.Position) <= source.fieldView.radius
+                    && MathUtils.InViewAngle(self.Position, actor.Position, forward, source.fieldView.angle))
                     {
-                        resultActors.Add(index, actor.handle);
+                        resultActors.Add(index, actor.Handle);
                     }
                 }
             }
@@ -70,10 +71,10 @@ namespace Chris.AI.EQS
             private static NativeArray<float3> AllocatePolygonCorners(FieldViewPrime fieldViewPrime, float3 position, quaternion rotation, float3 forward, Allocator allocator)
             {
                 float radius = fieldViewPrime.PolygonRadius;
-                var frustumCorners = new NativeArray<float3>(fieldViewPrime.Sides, allocator);
-                float angleStep = 360f / fieldViewPrime.Sides;
+                var frustumCorners = new NativeArray<float3>(fieldViewPrime.sides, allocator);
+                float angleStep = 360f / fieldViewPrime.sides;
 
-                for (int i = 0; i < fieldViewPrime.Sides; i++)
+                for (int i = 0; i < fieldViewPrime.sides; i++)
                 {
                     float angle = math.degrees(i * angleStep);
                     frustumCorners[i] = new float3(math.cos(angle) * radius, 0, math.sin(angle) * radius);

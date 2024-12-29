@@ -7,7 +7,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
-namespace Chris.Level
+namespace Chris.Gameplay.Level
 {
     public class LevelReference
     {

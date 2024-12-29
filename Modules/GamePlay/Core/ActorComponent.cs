@@ -1,31 +1,36 @@
 using System;
 using UnityEngine;
-namespace Chris
+namespace Chris.Gameplay
 {
     public abstract class ActorComponent : MonoBehaviour
     {
-        private Actor actor;
+        private Actor _actor;
+        
         protected virtual void Awake()
         {
             RegisterActorComponent(this, GetComponent<Actor>());
         }
+        
         public T GetTActor<T>() where T : Actor
         {
-            return actor as T;
+            return _actor as T;
         }
+        
         public Actor GetActor()
         {
-            return actor;
+            return _actor;
         }
+        
         protected static void RegisterActorComponent(ActorComponent component, Actor actor)
         {
             if (!actor)
             {
                 throw new ArgumentNullException(nameof(actor));
             }
-            component.actor = actor;
+            component._actor = actor;
             Actor.RegisterActorComponent(actor, component);
         }
+        
         protected static void UnregisterActor(ActorComponent component, Actor actor)
         {
             if (!actor)
@@ -33,7 +38,7 @@ namespace Chris
                 throw new ArgumentNullException(nameof(actor));
             }
             Actor.RegisterActorComponent(actor, component);
-            component.actor = null;
+            component._actor = null;
         }
     }
 }

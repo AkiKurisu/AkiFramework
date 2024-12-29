@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using R3;
 using UnityEngine;
-namespace Chris
+namespace Chris.Gameplay
 {
     internal class WorldSubsystemCollection : IDisposable
     {

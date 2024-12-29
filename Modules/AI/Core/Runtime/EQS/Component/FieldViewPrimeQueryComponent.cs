@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Chris.Gameplay;
 using UnityEngine;
 using UnityEngine.Pool;
 namespace Chris.AI.EQS
@@ -11,10 +12,10 @@ namespace Chris.AI.EQS
         [Header("Data")]
         public FieldViewPrime FieldView = new()
         {
-            Radius = 20,
-            Angle = 120,
-            Sides = 8,
-            Blend = 0.5f
+            radius = 20,
+            angle = 120,
+            sides = 8,
+            blend = 0.5f
         };
         public LayerMask QueryLayerMask;
         private FieldViewPrimeQuerySystem system;

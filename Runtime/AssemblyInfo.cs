@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("Chris.AI")]
-[assembly: InternalsVisibleTo("Ceres.Editor")]
+[assembly: InternalsVisibleTo("Chris.Gameplay")]
 [assembly: InternalsVisibleTo("Chris.Editor")]
+[assembly: InternalsVisibleTo("Ceres.Editor")]

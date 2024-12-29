@@ -4,16 +4,15 @@ using Ceres.Graph.Flow.Annotations;
 using Ceres.Graph.Flow.Utilities;
 using Chris.Schedulers;
 using Chris.Serialization;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Scripting;
 using UObject = UnityEngine.Object;
-namespace Chris.Flow
+namespace Chris.Gameplay
 {
     /// <summary>
-    /// Executable function library for Chris
+    /// Executable function library for Gameplay
     /// </summary>
     [Preserve]
-    public class ChrisExecutableFunctionLibrary: ExecutableFunctionLibrary
+    public class GameplayExecutableFunctionLibrary: ExecutableFunctionLibrary
     {
         #region Scheduler
 
@@ -39,23 +38,6 @@ namespace Chris.Flow
         public static void Flow_SchedulerHandleCancel(SchedulerHandle handle)
         {
             handle.Cancel();
-        }
-        
-        [ExecutableFunction(IsScriptMethod = true), CeresLabel("To Scheduler Handle")]
-        public static unsafe SchedulerHandle Flow_DoubleToSchedulerHandle(
-            [CeresMetadata(CeresMetadata.SELF_TARGET)] double doubleValue)
-        {
-            UnsafeUtility.CopyPtrToStructure(&doubleValue, out ulong handle);
-            return new SchedulerHandle(handle);
-        }
-        
-        [ExecutableFunction(IsScriptMethod = true), CeresLabel("To Double")]
-        public static unsafe double Flow_SchedulerHandleToDouble(
-            [CeresMetadata(CeresMetadata.SELF_TARGET)] SchedulerHandle schedulerHandle)
-        {
-            ulong handle = schedulerHandle.Handle;
-            UnsafeUtility.CopyPtrToStructure(&handle, out double doubleValue);
-            return doubleValue;
         }
         
         #endregion Scheduler

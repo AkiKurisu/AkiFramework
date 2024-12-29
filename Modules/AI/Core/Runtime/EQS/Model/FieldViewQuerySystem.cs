@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Chris.Gameplay;
 using Chris.Schedulers;
 using Unity.Burst;
 using Unity.Collections;
@@ -15,10 +16,11 @@ namespace Chris.AI.EQS
         public FieldView fieldView;
         public LayerMask layerMask;
     }
+    
     public class FieldViewQuerySystem : WorldSubsystem
     {
         /// <summary>
-        /// Batch field view query, performe better than <see cref="EnvironmentQuery.OverlapFieldViewJob"/>
+        /// Batch field view query, perform better than <see cref="EnvironmentQuery.OverlapFieldViewJob"/>
         /// </summary>
         [BurstCompile]
         private struct OverlapFieldViewBatchJob : IJobParallelFor
@@ -34,115 +36,128 @@ namespace Chris.AI.EQS
             {
                 FieldViewQueryCommand source = datas[index];
                 ActorData self = actors[source.self.GetIndex()];
-                float3 forward = math.mul(self.rotation, new float3(0, 0, 1));
+                float3 forward = math.mul(self.Rotation, new float3(0, 0, 1));
                 for (int i = 0; i < actors.Length; i++)
                 {
                     if (i == index) continue;
                     ActorData actor = actors[i];
-                    if (MathUtils.IsInLayerMask(actor.layer, source.layerMask)
-                    && math.distance(self.position, actor.position) <= source.fieldView.Radius
-                    && MathUtils.InViewAngle(self.position, actor.position, forward, source.fieldView.Angle))
+                    if (MathUtils.IsInLayerMask(actor.Layer, source.layerMask)
+                    && math.distance(self.Position, actor.Position) <= source.fieldView.radius
+                    && MathUtils.InViewAngle(self.Position, actor.Position, forward, source.fieldView.angle))
                     {
-                        resultActors.Add(index, actor.handle);
+                        resultActors.Add(index, actor.Handle);
                     }
                 }
             }
         }
-        private SchedulerHandle updateTickHandle;
-        private SchedulerHandle lateUpdateTickHandle;
+        private SchedulerHandle _updateTickHandle;
+        
+        private SchedulerHandle _lateUpdateTickHandle;
+        
         /// <summary>
-        /// Set sysytem tick frame
+        /// Set system tick frame
         /// </summary>
         /// <value></value>
         public static int FramePerTick { get; set; } = DefaultFramePerTick;
+        
         /// <summary>
         /// Default tick frame: 2 fps
         /// </summary>
         public const int DefaultFramePerTick = 25;
-        private readonly Dictionary<ActorHandle, int> handleIndices = new();
-        private NativeParallelMultiHashMap<int, ActorHandle> results;
-        private NativeList<FieldViewQueryCommand> commands;
-        private NativeArray<FieldViewQueryCommand> execution;
-        private NativeParallelMultiHashMap<int, ActorHandle> cache;
-        private NativeArray<ActorData> actorData;
-        private JobHandle jobHandle;
+        
+        private readonly Dictionary<ActorHandle, int> _handleIndices = new();
+        
+        private NativeParallelMultiHashMap<int, ActorHandle> _results;
+        
+        private NativeList<FieldViewQueryCommand> _commands;
+        
+        private NativeArray<FieldViewQueryCommand> _execution;
+        
+        private NativeParallelMultiHashMap<int, ActorHandle> _cache;
+        
+        private NativeArray<ActorData> _actorData;
+        
+        private JobHandle _jobHandle;
+        
         private static readonly ProfilerMarker ScheduleJobPM = new("FieldViewQuerySystem.ScheduleJob");
+        
         private static readonly ProfilerMarker CompleteJobPM = new("FieldViewQuerySystem.CompleteJob");
+        
         protected override void Initialize()
         {
             Assert.IsFalse(FramePerTick <= 3);
-            commands = new NativeList<FieldViewQueryCommand>(100, Allocator.Persistent);
-            Scheduler.WaitFrame(ref updateTickHandle, FramePerTick, ScheduleJob, TickFrame.FixedUpdate, isLooped: true);
+            _commands = new NativeList<FieldViewQueryCommand>(100, Allocator.Persistent);
+            Scheduler.WaitFrame(ref _updateTickHandle, FramePerTick, ScheduleJob, TickFrame.FixedUpdate, isLooped: true);
             // Allow job scheduled in 3 frames
-            Scheduler.WaitFrame(ref lateUpdateTickHandle, 3, CompleteJob, TickFrame.FixedUpdate, isLooped: true);
-            lateUpdateTickHandle.Pause();
+            Scheduler.WaitFrame(ref _lateUpdateTickHandle, 3, CompleteJob, TickFrame.FixedUpdate, isLooped: true);
+            _lateUpdateTickHandle.Pause();
         }
         private void ScheduleJob(int _)
         {
             using (ScheduleJobPM.Auto())
             {
 
-                if (commands.Length == 0) return;
+                if (_commands.Length == 0) return;
 
-                actorData = GetOrCreate<ActorQuerySystem>().GetAllActors(Allocator.TempJob);
-                results = new NativeParallelMultiHashMap<int, ActorHandle>(1024, Allocator.Persistent);
-                execution = commands.ToArray(Allocator.TempJob);
-                jobHandle = new OverlapFieldViewBatchJob()
+                _actorData = GetOrCreate<ActorQuerySystem>().GetAllActors(Allocator.TempJob);
+                _results = new NativeParallelMultiHashMap<int, ActorHandle>(1024, Allocator.Persistent);
+                _execution = _commands.ToArray(Allocator.TempJob);
+                _jobHandle = new OverlapFieldViewBatchJob()
                 {
-                    actors = actorData,
-                    datas = execution,
-                    resultActors = results
-                }.Schedule(execution.Length, 32);
-                lateUpdateTickHandle.Resume();
+                    actors = _actorData,
+                    datas = _execution,
+                    resultActors = _results
+                }.Schedule(_execution.Length, 32);
+                _lateUpdateTickHandle.Resume();
             }
         }
         private void CompleteJob(int _)
         {
             using (CompleteJobPM.Auto())
             {
-                jobHandle.Complete();
-                cache.DisposeSafe();
-                cache = results;
-                actorData.Dispose();
-                execution.Dispose();
-                lateUpdateTickHandle.Pause();
+                _jobHandle.Complete();
+                _cache.DisposeSafe();
+                _cache = _results;
+                _actorData.Dispose();
+                _execution.Dispose();
+                _lateUpdateTickHandle.Pause();
             }
         }
         protected override void Release()
         {
-            jobHandle.Complete();
-            commands.Dispose();
-            execution.DisposeSafe();
-            cache.DisposeSafe();
-            results.DisposeSafe();
-            actorData.DisposeSafe();
-            lateUpdateTickHandle.Dispose();
-            updateTickHandle.Dispose();
+            _jobHandle.Complete();
+            _commands.Dispose();
+            _execution.DisposeSafe();
+            _cache.DisposeSafe();
+            _results.DisposeSafe();
+            _actorData.DisposeSafe();
+            _lateUpdateTickHandle.Dispose();
+            _updateTickHandle.Dispose();
         }
         public void EnqueueCommand(FieldViewQueryCommand command)
         {
-            if (handleIndices.TryGetValue(command.self, out var index))
+            if (_handleIndices.TryGetValue(command.self, out var index))
             {
-                commands[index] = command;
+                _commands[index] = command;
             }
             else
             {
-                int length = commands.Length;
-                handleIndices[command.self] = length;
-                commands.Add(command);
+                int length = _commands.Length;
+                _handleIndices[command.self] = length;
+                _commands.Add(command);
             }
         }
         public void GetActorsInFieldView(ActorHandle handle, List<Actor> actors)
         {
-            if (!handleIndices.TryGetValue(handle, out var index))
+            if (!_handleIndices.TryGetValue(handle, out var index))
             {
                 Debug.LogWarning($"[FieldViewQuerySystem] Actor {handle.Handle}'s field view has not been initialized");
                 return;
             }
-            if (!cache.IsCreated) return;
+            if (!_cache.IsCreated) return;
 
             var world = GetWorld();
-            foreach (var id in cache.GetValuesForKey(index))
+            foreach (var id in _cache.GetValuesForKey(index))
             {
                 actors.Add(world.GetActor(id));
             }

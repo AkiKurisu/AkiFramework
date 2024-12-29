@@ -1,13 +1,27 @@
+using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using Ceres.Graph;
+using Ceres.Graph.Flow;
+using Ceres.Graph.Flow.Annotations;
 using UnityEngine;
 using UnityEngine.Assertions;
-namespace Chris
+using UObject = UnityEngine.Object;
+namespace Chris.Gameplay
 {
     /// <summary>
     /// Actor is an MonoBehaviour identifier to place GameObject in framework's GamePlay level.
     /// </summary>
-    public abstract class Actor : MonoBehaviour
+    public class Actor : MonoBehaviour, IFlowGraphContainer
     {
+        [NonSerialized]
+        private FlowGraph _graph;
+        
+        [SerializeField]
+        private FlowGraphData graphData;
+        
+        public UObject Object => this;
+        
         private GameWorld _world;
         
         private ActorController _controller;
@@ -16,13 +30,69 @@ namespace Chris
         
         private readonly HashSet<ActorComponent> _actorComponents = new();
         
-        protected virtual void Awake()
+        protected FlowGraph Graph
         {
-            RegisterActor(this);
+            get
+            {
+                if (_graph == null)
+                {
+                    _graph = GetFlowGraph();
+                    _graph.Compile();
+                }
+
+                return _graph;
+            }
         }
         
+        [ImplementableEvent]
+        protected virtual void Awake()
+        {
+            _graph = GetFlowGraph();
+            _graph.Compile();
+            RegisterActor(this);
+            ProcessEvent();
+        }
+        
+        [ImplementableEvent]
+        protected virtual void OnEnable()
+        {
+            ProcessEvent();
+        }
+
+        [ImplementableEvent]
+        protected virtual void Start()
+        {
+            ProcessEvent();
+        }
+        
+        [ImplementableEvent]
+        protected virtual void OnDisable()
+        {
+            ProcessEvent();
+        }
+        
+        [ImplementableEvent]
+        protected virtual void Update()
+        {
+            ProcessEvent();
+        }
+        
+        [ImplementableEvent]
+        protected virtual void FixedUpdate()
+        {
+            ProcessEvent();
+        }
+        
+        [ImplementableEvent]
+        protected virtual void LateUpdate()
+        {
+            ProcessEvent();
+        }
+
+        [ImplementableEvent]
         protected virtual void OnDestroy()
         {
+            ProcessEvent();
             UnregisterActor(this);
             _actorComponents.Clear();
         }
@@ -31,12 +101,14 @@ namespace Chris
         /// Get actor's world
         /// </summary>
         /// <returns></returns>
+        [ExecutableFunction]
         public GameWorld GetWorld() => _world;
         
         /// <summary>
         /// Get actor's id according to actor's world
         /// </summary>
         /// <returns></returns>
+        [ExecutableFunction]
         public ActorHandle GetActorHandle() => _handle;
         
         /// <summary>
@@ -97,19 +169,19 @@ namespace Chris
         
         internal void BindController(ActorController controller)
         {
-            if (this._controller != null)
+            if (_controller != null)
             {
                 Debug.LogError("[Actor] Actor already bound to a controller!");
                 return;
             }
-            this._controller = controller;
+            _controller = controller;
         }
         
         internal void UnbindController(ActorController controller)
         {
-            if (this._controller == controller)
+            if (_controller == controller)
             {
-                this._controller = null;
+                _controller = null;
             }
         }
         
@@ -128,6 +200,28 @@ namespace Chris
             {
                 if (component is TComponent tComponent) components.Add(tComponent);
             }
+        }
+        
+        protected void ProcessEvent([CallerMemberName] string eventName = "", params object[] parameters)
+        {
+            using var evt = ExecuteFlowEvent.Create(eventName, parameters);
+            /* Execute event in quiet way */
+            Graph.TryExecuteEvent(this, evt.FunctionName, evt);
+        }
+        
+        public CeresGraph GetGraph()
+        {
+            return GetFlowGraph();
+        }
+
+        public FlowGraph GetFlowGraph()
+        {
+            return new FlowGraph(graphData.CloneT<FlowGraphData>());
+        }
+
+        public void SetGraphData(CeresGraphData graph)
+        {
+            graphData = (FlowGraphData)graph;
         }
     }
 }

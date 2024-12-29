@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Chris.Gameplay;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -15,31 +16,39 @@ namespace Chris.AI.EQS
         public struct OverlapFieldViewJob : IJobParallelFor
         {
             [ReadOnly]
-            public float3 center;
+            public float3 Center;
+            
             [ReadOnly]
-            public float3 forward;
+            public float3 Forward;
+            
             [ReadOnly]
-            public LayerMask layerMask;
+            public LayerMask LayerMask;
+            
             [ReadOnly]
-            public float radius;
+            public float Radius;
+            
             [ReadOnly]
-            public float angle;
+            public float Angle;
+            
             [ReadOnly]
-            public ActorHandle ignored;
+            public ActorHandle Ignored;
+            
             [ReadOnly]
-            public NativeArray<ActorData> actors;
+            public NativeArray<ActorData> Actors;
+            
             [NativeDisableParallelForRestriction]
-            public NativeList<ActorHandle> resultActors;
+            public NativeList<ActorHandle> ResultActors;
+            
             [BurstCompile]
             public void Execute(int index)
             {
-                ActorData actor = actors[index];
-                if (MathUtils.IsInLayerMask(actor.layer, layerMask)
-                && actor.handle != ignored
-                && math.distance(center, actor.position) <= radius
-                && MathUtils.InViewAngle(center, actor.position, forward, angle))
+                ActorData actor = Actors[index];
+                if (MathUtils.IsInLayerMask(actor.Layer, LayerMask)
+                && actor.Handle != Ignored
+                && math.distance(Center, actor.Position) <= Radius
+                && MathUtils.InViewAngle(Center, actor.Position, Forward, Angle))
                 {
-                    resultActors.Add(actor.handle);
+                    ResultActors.Add(actor.Handle);
                 }
             }
         }
@@ -59,14 +68,14 @@ namespace Chris.AI.EQS
             var actorData = WorldSubsystem.GetOrCreate<ActorQuerySystem>().GetAllActors(Allocator.TempJob);
             var job = new OverlapFieldViewJob()
             {
-                center = position,
-                forward = forward,
-                radius = radius,
-                angle = angle,
-                layerMask = targetMask,
-                ignored = ignoredActor == null ? default : ignoredActor.GetActorHandle(),
-                actors = actorData,
-                resultActors = resultActors
+                Center = position,
+                Forward = forward,
+                Radius = radius,
+                Angle = angle,
+                LayerMask = targetMask,
+                Ignored = ignoredActor == null ? default : ignoredActor.GetActorHandle(),
+                Actors = actorData,
+                ResultActors = resultActors
             };
             job.Schedule(actorData.Length, 32).Complete();
             foreach (var id in resultActors)

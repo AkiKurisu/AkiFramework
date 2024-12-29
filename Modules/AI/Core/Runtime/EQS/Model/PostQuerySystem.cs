@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using Chris.Gameplay;
 using Chris.Schedulers;
 using Unity.Collections;
 using Unity.Jobs;
@@ -15,11 +15,15 @@ namespace Chris.AI.EQS
     /// </summary>
     public struct PostQueryCommand
     {
-        public ActorHandle self;
-        public ActorHandle target;
-        public float3 offset;
-        public int layerMask;
-        public PostQueryParameters parameters;
+        public ActorHandle Self;
+        
+        public ActorHandle Target;
+        
+        public float3 Offset;
+        
+        public int LayerMask;
+        
+        public PostQueryParameters Parameters;
     }
     public class PostQuerySystem : WorldSubsystem
     {
@@ -27,32 +31,38 @@ namespace Chris.AI.EQS
         public struct PrepareCommandJob : IJobParallelFor
         {
             [ReadOnly]
-            public PostQueryCommand command;
+            public PostQueryCommand Command;
+            
             [ReadOnly]
-            public ActorData source;
+            public ActorData Source;
+            
             [ReadOnly]
-            public ActorData target;
+            public ActorData Target;
+            
             [ReadOnly]
-            public int length;
+            public int Length;
+            
             [WriteOnly, NativeDisableParallelForRestriction]
-            public NativeArray<RaycastCommand> raycastCommands;
+            public NativeArray<RaycastCommand> RaycastCommands;
+            
             public void Execute(int index)
             {
-                var direction = math.normalize(source.position - target.position);
+                var direction = math.normalize(Source.Position - Target.Position);
 
-                float angle = command.parameters.Angle / 2;
+                float angle = Command.Parameters.Angle / 2;
 
-                quaternion rot = quaternion.RotateY(math.radians(math.lerp(-angle, angle, (float)index / length)));
+                quaternion rot = quaternion.RotateY(math.radians(math.lerp(-angle, angle, (float)index / Length)));
 
-                raycastCommands[index] = new RaycastCommand()
+                RaycastCommands[index] = new RaycastCommand()
                 {
-                    from = target.position + command.offset,
+                    from = Target.Position + Command.Offset,
                     direction = math.rotate(rot, direction),
-                    distance = command.parameters.Distance,
-                    queryParameters = new QueryParameters() { layerMask = command.layerMask }
+                    distance = Command.Parameters.Distance,
+                    queryParameters = new QueryParameters() { layerMask = Command.LayerMask }
                 };
             }
         }
+        
         /// <summary>
         /// Worker per actor
         /// </summary>
@@ -82,18 +92,18 @@ namespace Chris.AI.EQS
             {
                 HasPendingCommand = false;
                 IsRunning = true;
-                int length = command.parameters.Step * command.parameters.Depth;
+                int length = command.Parameters.Step * command.Parameters.Depth;
                 _raycastCommands.DisposeSafe();
                 _raycastCommands = new(length, Allocator.TempJob);
                 _hits.DisposeSafe();
                 _hits = new(length, Allocator.TempJob);
                 var job = new PrepareCommandJob()
                 {
-                    command = command,
-                    raycastCommands = _raycastCommands,
-                    length = length,
-                    source = actorDatas[command.self.GetIndex()],
-                    target = actorDatas[command.target.GetIndex()]
+                    Command = command,
+                    RaycastCommands = _raycastCommands,
+                    Length = length,
+                    Source = actorDatas[command.Self.GetIndex()],
+                    Target = actorDatas[command.Target.GetIndex()]
                 };
                 _jobHandle = job.Schedule(length, 32, default);
                 _jobHandle = RaycastCommand.ScheduleBatch(_raycastCommands, _hits, _raycastCommands.Length, _jobHandle);
@@ -183,16 +193,16 @@ namespace Chris.AI.EQS
                         break;
                     }
 
-                    var worker = workerDic[command.self];
+                    var worker = workerDic[command.Self];
 
                     if (worker.IsRunning)
                     {
-                        Debug.LogWarning($"[PostQuerySystem] Should not enquene new command [ActorId: {command.self.Handle}] before last command completed!");
+                        Debug.LogWarning($"[PostQuerySystem] Should not enquene new command [ActorId: {command.Self.Handle}] before last command completed!");
                         continue;
                     }
 
                     worker.ExecuteCommand(ref command, ref actorDatas);
-                    batchHandles[batchLength++] = command.self;
+                    batchHandles[batchLength++] = command.Self;
                 }
                 actorDatas.Dispose();
             }
@@ -227,9 +237,9 @@ namespace Chris.AI.EQS
         /// <param name="command"></param>
         public void EnqueueCommand(PostQueryCommand command)
         {
-            if (!workerDic.TryGetValue(command.self, out var worker))
+            if (!workerDic.TryGetValue(command.Self, out var worker))
             {
-                worker = workerDic[command.self] = new();
+                worker = workerDic[command.Self] = new();
             }
             worker.SetPending();
             commandBuffer.Enqueue(command);

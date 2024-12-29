@@ -1,8 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Chris.Gameplay;
 using Chris.Tasks;
 using Kurisu.AkiBT;
-
 namespace Chris.AI
 {
     [RequireComponent(typeof(BlackBoardComponent))]
