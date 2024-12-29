@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Ceres.Annotations;
 using Ceres.Graph;
 using Ceres.Graph.Flow;
 using Ceres.Graph.Flow.Annotations;
+using Chris.Serialization;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UObject = UnityEngine.Object;
@@ -138,6 +140,7 @@ namespace Chris.Gameplay
             return _controller as TController;
         }
         
+        [ExecutableFunction]
         public PlayerController GetController()
         {
             return _controller;
@@ -190,6 +193,17 @@ namespace Chris.Gameplay
             foreach (var component in _actorComponents)
             {
                 if (component is TComponent tComponent) return tComponent;
+            }
+            return null;
+        }
+        
+        [ExecutableFunction]
+        public ActorComponent GetActorComponent(
+            [CeresMetadata(CeresMetadata.RESOVLE_RETURN)] SerializedType<ActorComponent> type)
+        {
+            foreach (var component in _actorComponents)
+            {
+                if (component.GetType()  == type) return component;
             }
             return null;
         }
