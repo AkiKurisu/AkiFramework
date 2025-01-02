@@ -19,7 +19,8 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [
-        "AF_ADDRESSABLES_INSATLL"
+        "AF_ADDRESSABLES_INSATLL",
+        "!UNITY_6000"
     ],
     "versionDefines": [
         {
